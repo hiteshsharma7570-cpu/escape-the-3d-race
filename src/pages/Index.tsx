@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { GameBoard3D } from "@/components/game/GameBoard3D";
+import { GameBoard2D } from "@/components/game/GameBoard2D";
 import { GameDashboard } from "@/components/game/GameDashboard";
 import { INITIAL_GAME_STATE } from "@/types/game";
 import { GameState } from "@/types/game";
@@ -139,7 +139,7 @@ const Index = () => {
         {/* Main Game Area */}
         <div className="grid lg:grid-cols-3 gap-6">
           <div className="lg:col-span-2">
-            <GameBoard3D 
+            <GameBoard2D 
               currentPosition={gameState.position} 
               diceValue={gameState.diceValue}
             />
