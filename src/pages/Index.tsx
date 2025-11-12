@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { GameBoard2D } from "@/components/game/GameBoard2D";
 import { GameDashboard } from "@/components/game/GameDashboard";
+import { Dice } from "@/components/game/Dice";
 import { INITIAL_GAME_STATE } from "@/types/game";
 import { GameState } from "@/types/game";
 import { BOARD_TILES, handleTileEffect } from "@/lib/gameLogic";
@@ -138,11 +139,18 @@ const Index = () => {
 
         {/* Main Game Area */}
         <div className="grid lg:grid-cols-3 gap-6">
-          <div className="lg:col-span-2">
+          <div className="lg:col-span-2 space-y-4">
             <GameBoard2D 
               currentPosition={gameState.position} 
               diceValue={gameState.diceValue}
             />
+            
+            {/* Dice Display */}
+            <div className="flex justify-center">
+              <div className="bg-card border border-border rounded-xl p-6 shadow-lg">
+                <Dice value={gameState.diceValue} isRolling={gameState.isRolling} />
+              </div>
+            </div>
           </div>
           
           <div>
