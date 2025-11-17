@@ -5,29 +5,43 @@ import { Dice } from "@/components/game/Dice";
 import { SessionLobby } from "@/components/game/SessionLobby";
 import { PlayerSetup } from "@/components/game/PlayerSetup";
 import { Leaderboard } from "@/components/game/Leaderboard";
+import { AchievementsPanel } from "@/components/game/AchievementsPanel";
 import { INITIAL_GAME_STATE } from "@/types/game";
 import { GameState } from "@/types/game";
 import { BOARD_TILES, handleTileEffect } from "@/lib/gameLogic";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
-import { Trophy, HelpCircle, Music, Volume2, VolumeX, LogOut } from "lucide-react";
+import { Trophy, HelpCircle, Music, Volume2, VolumeX, LogOut, Award } from "lucide-react";
 import { useGameSounds } from "@/hooks/useGameSounds";
 import { useGameSession } from "@/hooks/useGameSession";
 import { useGamePlayers } from "@/hooks/useGamePlayers";
+import { useAchievements } from "@/hooks/useAchievements";
+import { usePlayerStats } from "@/hooks/usePlayerStats";
 
 const Index = () => {
   const [gameState, setGameState] = useState<GameState>(INITIAL_GAME_STATE);
   const [gameMode, setGameMode] = useState<"lobby" | "setup" | "playing">("lobby");
+  const [showAchievements, setShowAchievements] = useState(false);
   const { playSound, isMusicEnabled, isSoundEnabled, toggleMusic, toggleSound } = useGameSounds();
   const { sessions, currentSession, isLoading, createSession, joinSession, endSession } = useGameSession();
   const { players, currentPlayerId, createPlayer, updatePlayer } = useGamePlayers(currentSession?.id || null);
+  const { achievements, checkAchievements, getProgress, isUnlocked } = useAchievements(currentPlayerId);
+  const { stats, incrementGamesWon } = usePlayerStats(currentPlayerId);
 
-  // Sync game state with database when it changes
+  // Sync game state with database and check achievements when it changes
   useEffect(() => {
     if (currentPlayerId && gameMode === "playing") {
       updatePlayer(currentPlayerId, gameState);
+      checkAchievements(gameState, stats.gamesWon);
     }
-  }, [gameState.cash, gameState.position, gameState.passiveIncome, gameState.hasEscapedRatRace]);
+  }, [gameState.cash, gameState.position, gameState.passiveIncome, gameState.hasEscapedRatRace, gameState.assets.length]);
+
+  // Check for rat race escape and update stats
+  useEffect(() => {
+    if (gameState.hasEscapedRatRace && currentPlayerId) {
+      incrementGamesWon();
+    }
+  }, [gameState.hasEscapedRatRace]);
 
   const handleCreateSession = async (name: string) => {
     const session = await createSession(name);
@@ -258,8 +272,9 @@ const Index = () => {
             variant="outline"
             size="icon"
             className="bg-card"
+            onClick={() => setShowAchievements(!showAchievements)}
           >
-            <Trophy className="w-4 h-4" />
+            <Award className="w-4 h-4" />
           </Button>
         </div>
       </div>
@@ -279,7 +294,17 @@ const Index = () => {
           />
         </div>
         <div>
-          <Leaderboard players={players} currentPlayerId={currentPlayerId} />
+          {showAchievements ? (
+            <AchievementsPanel
+              achievements={achievements}
+              isUnlocked={isUnlocked}
+              getProgress={getProgress}
+              gameState={gameState}
+              gamesWon={stats.gamesWon}
+            />
+          ) : (
+            <Leaderboard players={players} currentPlayerId={currentPlayerId} />
+          )}
         </div>
       </div>
     </div>
