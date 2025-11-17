@@ -1,0 +1,76 @@
+import { useState } from "react";
+import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { UserCircle } from "lucide-react";
+
+interface PlayerSetupProps {
+  sessionName: string;
+  onPlayerCreate: (playerName: string, profession: string) => void;
+}
+
+export const PlayerSetup = ({ sessionName, onPlayerCreate }: PlayerSetupProps) => {
+  const [playerName, setPlayerName] = useState("");
+  const [profession, setProfession] = useState("Teacher");
+
+  const professions = ["Teacher", "Engineer", "Doctor", "Lawyer", "Business Owner"];
+
+  const handleSubmit = () => {
+    if (playerName.trim()) {
+      onPlayerCreate(playerName.trim(), profession);
+    }
+  };
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-background to-accent/20 p-4 flex items-center justify-center">
+      <Card className="w-full max-w-md p-6">
+        <div className="flex items-center gap-3 mb-6">
+          <UserCircle className="w-8 h-8 text-primary" />
+          <div>
+            <h1 className="text-2xl font-bold text-primary">Player Setup</h1>
+            <p className="text-sm text-muted-foreground">Session: {sessionName}</p>
+          </div>
+        </div>
+
+        <div className="space-y-4">
+          <div className="space-y-2">
+            <Label htmlFor="playerName">Your Name</Label>
+            <Input
+              id="playerName"
+              placeholder="Enter your name..."
+              value={playerName}
+              onChange={(e) => setPlayerName(e.target.value)}
+              onKeyPress={(e) => e.key === "Enter" && handleSubmit()}
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="profession">Choose Profession</Label>
+            <select
+              id="profession"
+              value={profession}
+              onChange={(e) => setProfession(e.target.value)}
+              className="w-full px-3 py-2 rounded-md border border-border bg-background"
+            >
+              {professions.map((prof) => (
+                <option key={prof} value={prof}>
+                  {prof}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <Button
+            onClick={handleSubmit}
+            disabled={!playerName.trim()}
+            className="w-full"
+            size="lg"
+          >
+            Start Playing
+          </Button>
+        </div>
+      </Card>
+    </div>
+  );
+};

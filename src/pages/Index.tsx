@@ -1,18 +1,71 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { GameBoard2D } from "@/components/game/GameBoard2D";
 import { GameDashboard } from "@/components/game/GameDashboard";
 import { Dice } from "@/components/game/Dice";
+import { SessionLobby } from "@/components/game/SessionLobby";
+import { PlayerSetup } from "@/components/game/PlayerSetup";
+import { Leaderboard } from "@/components/game/Leaderboard";
 import { INITIAL_GAME_STATE } from "@/types/game";
 import { GameState } from "@/types/game";
 import { BOARD_TILES, handleTileEffect } from "@/lib/gameLogic";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
-import { Trophy, HelpCircle, Music, Volume2, VolumeX } from "lucide-react";
+import { Trophy, HelpCircle, Music, Volume2, VolumeX, LogOut } from "lucide-react";
 import { useGameSounds } from "@/hooks/useGameSounds";
+import { useGameSession } from "@/hooks/useGameSession";
+import { useGamePlayers } from "@/hooks/useGamePlayers";
 
 const Index = () => {
   const [gameState, setGameState] = useState<GameState>(INITIAL_GAME_STATE);
+  const [gameMode, setGameMode] = useState<"lobby" | "setup" | "playing">("lobby");
   const { playSound, isMusicEnabled, isSoundEnabled, toggleMusic, toggleSound } = useGameSounds();
+  const { sessions, currentSession, isLoading, createSession, joinSession, endSession } = useGameSession();
+  const { players, currentPlayerId, createPlayer, updatePlayer } = useGamePlayers(currentSession?.id || null);
+
+  // Sync game state with database when it changes
+  useEffect(() => {
+    if (currentPlayerId && gameMode === "playing") {
+      updatePlayer(currentPlayerId, gameState);
+    }
+  }, [gameState.cash, gameState.position, gameState.passiveIncome, gameState.hasEscapedRatRace]);
+
+  const handleCreateSession = async (name: string) => {
+    const session = await createSession(name);
+    if (session) {
+      setGameMode("setup");
+      toast.success(`Session "${name}" created!`);
+    }
+  };
+
+  const handleJoinSession = async (sessionId: string) => {
+    const session = await joinSession(sessionId);
+    if (session) {
+      setGameMode("setup");
+      toast.success(`Joined session!`);
+    }
+  };
+
+  const handlePlayerCreate = async (playerName: string, profession: string) => {
+    if (!currentSession) return;
+
+    const initialState = { ...INITIAL_GAME_STATE, playerName, profession };
+    setGameState(initialState);
+
+    const player = await createPlayer(currentSession.id, playerName, profession, initialState);
+    if (player) {
+      setGameMode("playing");
+      toast.success(`Welcome, ${playerName}!`);
+    }
+  };
+
+  const handleLeaveSession = async () => {
+    if (currentSession) {
+      await endSession(currentSession.id);
+      setGameMode("lobby");
+      setGameState(INITIAL_GAME_STATE);
+      toast.info("Left session");
+    }
+  };
 
   const rollDice = () => {
     if (gameState.isRolling) return;
@@ -140,73 +193,93 @@ const Index = () => {
     );
   };
 
-  return (
-    <div className="min-h-screen bg-background p-4">
-      <div className="max-w-7xl mx-auto">
-        {/* Header */}
-        <div className="flex justify-between items-center mb-6">
-          <div>
-            <h1 className="text-4xl font-bold text-primary mb-2">Rat Race 3D</h1>
-            <p className="text-muted-foreground">Escape the Rat Race, then conquer the Fast Track to win!</p>
-          </div>
-          <div className="flex gap-2">
-            <Button
-              variant="outline"
-              size="icon"
-              onClick={toggleSound}
-              title={isSoundEnabled ? "Mute Sound Effects" : "Unmute Sound Effects"}
-            >
-              {isSoundEnabled ? <Volume2 className="h-5 w-5" /> : <VolumeX className="h-5 w-5" />}
-            </Button>
-            <Button
-              variant="outline"
-              size="icon"
-              onClick={toggleMusic}
-              title={isMusicEnabled ? "Stop Music" : "Play Music"}
-            >
-              <Music className={`h-5 w-5 ${isMusicEnabled ? 'text-primary' : ''}`} />
-            </Button>
-            <Button
-              variant="outline"
-              size="icon"
-              onClick={showInstructions}
-            >
-              <HelpCircle className="h-5 w-5" />
-            </Button>
-            {gameState.hasEscapedRatRace && (
-              <div className="flex items-center gap-2 bg-success text-success-foreground px-4 py-2 rounded-lg">
-                <Trophy className="h-5 w-5" />
-                <span className="font-bold">Rat Race Escaped!</span>
-              </div>
-            )}
-          </div>
-        </div>
+  if (gameMode === "lobby") {
+    return (
+      <SessionLobby
+        sessions={sessions}
+        isLoading={isLoading}
+        onCreateSession={handleCreateSession}
+        onJoinSession={handleJoinSession}
+      />
+    );
+  }
 
-        {/* Main Game Area */}
-        <div className="grid lg:grid-cols-3 gap-6">
-          <div className="lg:col-span-2 space-y-4">
-            <GameBoard2D 
-              currentPosition={gameState.position} 
-              diceValue={gameState.diceValue}
-            />
-            
-            {/* Dice Display */}
-            <div className="flex justify-center">
-              <div className="bg-card border border-border rounded-xl p-6 shadow-lg">
-                <Dice value={gameState.diceValue} isRolling={gameState.isRolling} />
-              </div>
-            </div>
-          </div>
-          
-          <div>
-            <GameDashboard
-              gameState={gameState}
-              onRollDice={rollDice}
-              onTakeLoan={takeLoan}
-              onRepayLoan={repayLoan}
-              onPayOffDebts={payOffDebts}
-            />
-          </div>
+  if (gameMode === "setup" && currentSession) {
+    return (
+      <PlayerSetup
+        sessionName={currentSession.name}
+        onPlayerCreate={handlePlayerCreate}
+      />
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-background to-accent/20 p-4">
+      {/* Top Controls */}
+      <div className="flex justify-between items-center mb-4 max-w-7xl mx-auto">
+        <div className="flex items-center gap-2">
+          <h2 className="text-lg font-semibold">Session: {currentSession?.name}</h2>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleLeaveSession}
+            className="gap-2"
+          >
+            <LogOut className="w-4 h-4" />
+            Leave
+          </Button>
+        </div>
+        <div className="flex gap-2">
+          <Button
+            variant="outline"
+            size="icon"
+            onClick={toggleMusic}
+            className="bg-card"
+          >
+            {isMusicEnabled ? <Music className="w-4 h-4" /> : <VolumeX className="w-4 h-4" />}
+          </Button>
+          <Button
+            variant="outline"
+            size="icon"
+            onClick={toggleSound}
+            className="bg-card"
+          >
+            {isSoundEnabled ? <Volume2 className="w-4 h-4" /> : <VolumeX className="w-4 h-4" />}
+          </Button>
+          <Button
+            variant="outline"
+            size="icon"
+            className="bg-card"
+            onClick={showInstructions}
+          >
+            <HelpCircle className="w-4 h-4" />
+          </Button>
+          <Button
+            variant="outline"
+            size="icon"
+            className="bg-card"
+          >
+            <Trophy className="w-4 h-4" />
+          </Button>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 max-w-7xl mx-auto">
+        <div className="lg:col-span-2 space-y-4">
+          <GameBoard2D currentPosition={gameState.position} diceValue={gameState.diceValue} />
+          <Dice value={gameState.diceValue} isRolling={gameState.isRolling} />
+        </div>
+        <div>
+          <GameDashboard
+            gameState={gameState}
+            onRollDice={rollDice}
+            onTakeLoan={takeLoan}
+            onRepayLoan={repayLoan}
+            onPayOffDebts={payOffDebts}
+          />
+        </div>
+        <div>
+          <Leaderboard players={players} currentPlayerId={currentPlayerId} />
         </div>
       </div>
     </div>
