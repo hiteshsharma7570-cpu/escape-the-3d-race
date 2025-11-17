@@ -14,7 +14,80 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      game_players: {
+        Row: {
+          cash: number
+          created_at: string
+          has_escaped_rat_race: boolean
+          id: string
+          net_worth: number
+          passive_income: number
+          player_name: string
+          position: number
+          profession: string
+          salary: number
+          session_id: string
+          updated_at: string
+        }
+        Insert: {
+          cash?: number
+          created_at?: string
+          has_escaped_rat_race?: boolean
+          id?: string
+          net_worth?: number
+          passive_income?: number
+          player_name: string
+          position?: number
+          profession: string
+          salary?: number
+          session_id: string
+          updated_at?: string
+        }
+        Update: {
+          cash?: number
+          created_at?: string
+          has_escaped_rat_race?: boolean
+          id?: string
+          net_worth?: number
+          passive_income?: number
+          player_name?: string
+          position?: number
+          profession?: string
+          salary?: number
+          session_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "game_players_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "game_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      game_sessions: {
+        Row: {
+          created_at: string
+          id: string
+          is_active: boolean
+          name: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          name: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          name?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
