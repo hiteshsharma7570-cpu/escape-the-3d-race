@@ -14,6 +14,39 @@ export type Database = {
   }
   public: {
     Tables: {
+      achievements: {
+        Row: {
+          created_at: string
+          description: string
+          icon: string
+          id: string
+          name: string
+          threshold: number
+          tier: string
+          type: string
+        }
+        Insert: {
+          created_at?: string
+          description: string
+          icon: string
+          id: string
+          name: string
+          threshold: number
+          tier?: string
+          type: string
+        }
+        Update: {
+          created_at?: string
+          description?: string
+          icon?: string
+          id?: string
+          name?: string
+          threshold?: number
+          tier?: string
+          type?: string
+        }
+        Relationships: []
+      }
       game_players: {
         Row: {
           cash: number
@@ -87,6 +120,42 @@ export type Database = {
           name?: string
         }
         Relationships: []
+      }
+      player_achievements: {
+        Row: {
+          achievement_id: string
+          id: string
+          player_id: string
+          unlocked_at: string
+        }
+        Insert: {
+          achievement_id: string
+          id?: string
+          player_id: string
+          unlocked_at?: string
+        }
+        Update: {
+          achievement_id?: string
+          id?: string
+          player_id?: string
+          unlocked_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "player_achievements_achievement_id_fkey"
+            columns: ["achievement_id"]
+            isOneToOne: false
+            referencedRelation: "achievements"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "player_achievements_player_id_fkey"
+            columns: ["player_id"]
+            isOneToOne: false
+            referencedRelation: "game_players"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Views: {
