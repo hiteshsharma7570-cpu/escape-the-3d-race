@@ -4,21 +4,42 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { UserCircle } from "lucide-react";
+import { playerSchema } from "@/lib/validationSchemas";
 
 interface PlayerSetupProps {
   sessionName: string;
   onPlayerCreate: (playerName: string, profession: string) => void;
 }
 
+const professions = ["Teacher", "Engineer", "Doctor", "Lawyer", "Business Owner"] as const;
+
 export const PlayerSetup = ({ sessionName, onPlayerCreate }: PlayerSetupProps) => {
   const [playerName, setPlayerName] = useState("");
-  const [profession, setProfession] = useState("Teacher");
-
-  const professions = ["Teacher", "Engineer", "Doctor", "Lawyer", "Business Owner"];
+  const [profession, setProfession] = useState<string>("Teacher");
+  const [errors, setErrors] = useState<{ playerName?: string; profession?: string }>({});
 
   const handleSubmit = () => {
-    if (playerName.trim()) {
-      onPlayerCreate(playerName.trim(), profession);
+    const result = playerSchema.safeParse({ playerName, profession });
+    if (!result.success) {
+      const fieldErrors: { playerName?: string; profession?: string } = {};
+      result.error.errors.forEach((err) => {
+        if (err.path[0] === 'playerName') fieldErrors.playerName = err.message;
+        if (err.path[0] === 'profession') fieldErrors.profession = err.message;
+      });
+      setErrors(fieldErrors);
+      return;
+    }
+    setErrors({});
+    onPlayerCreate(result.data.playerName, result.data.profession);
+  };
+
+  const handleNameChange = (value: string) => {
+    setPlayerName(value);
+    if (errors.playerName) {
+      const result = playerSchema.shape.playerName.safeParse(value);
+      if (result.success) {
+        setErrors((prev) => ({ ...prev, playerName: undefined }));
+      }
     }
   };
 
@@ -40,9 +61,13 @@ export const PlayerSetup = ({ sessionName, onPlayerCreate }: PlayerSetupProps) =
               id="playerName"
               placeholder="Enter your name..."
               value={playerName}
-              onChange={(e) => setPlayerName(e.target.value)}
+              onChange={(e) => handleNameChange(e.target.value)}
               onKeyPress={(e) => e.key === "Enter" && handleSubmit()}
+              maxLength={30}
             />
+            {errors.playerName && (
+              <p className="text-sm text-destructive">{errors.playerName}</p>
+            )}
           </div>
 
           <div className="space-y-2">
@@ -59,6 +84,9 @@ export const PlayerSetup = ({ sessionName, onPlayerCreate }: PlayerSetupProps) =
                 </option>
               ))}
             </select>
+            {errors.profession && (
+              <p className="text-sm text-destructive">{errors.profession}</p>
+            )}
           </div>
 
           <Button

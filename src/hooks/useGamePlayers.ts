@@ -3,6 +3,8 @@ import { supabase } from "@/integrations/supabase/client";
 import type { Tables } from "@/integrations/supabase/types";
 import { GameState } from "@/types/game";
 import { calculateNetWorth } from "@/lib/gameLogic";
+import { playerSchema } from "@/lib/validationSchemas";
+import { toast } from "sonner";
 
 type GamePlayer = Tables<"game_players">;
 
@@ -57,25 +59,44 @@ export const useGamePlayers = (sessionId: string | null) => {
     profession: string,
     gameState: GameState
   ) => {
+    // Validate input
+    const result = playerSchema.safeParse({ playerName, profession });
+    if (!result.success) {
+      toast.error(result.error.errors[0].message);
+      return null;
+    }
+
+    // Get current user
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      toast.error("You must be logged in to join a game");
+      return null;
+    }
+
     const netWorth = calculateNetWorth(gameState);
 
     const { data, error } = await supabase
       .from("game_players")
       .insert({
         session_id: sessionId,
-        player_name: playerName,
-        profession,
+        player_name: result.data.playerName,
+        profession: result.data.profession,
         cash: gameState.cash,
         salary: gameState.salary,
         passive_income: gameState.passiveIncome,
         net_worth: netWorth,
         position: gameState.position,
         has_escaped_rat_race: gameState.hasEscapedRatRace,
+        user_id: user.id,
       })
       .select()
       .single();
 
-    if (!error && data) {
+    if (error) {
+      toast.error("Failed to create player");
+      return null;
+    }
+    if (data) {
       setCurrentPlayerId(data.id);
       return data;
     }
