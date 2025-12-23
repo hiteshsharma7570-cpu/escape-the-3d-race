@@ -37,6 +37,8 @@ export interface PendingDecision {
     cost: number;
     income: number;
     value: number;
+    risk: "low" | "medium" | "high";
+    description: string;
   };
 }
 
