@@ -61,6 +61,7 @@ export type Database = {
           salary: number
           session_id: string
           updated_at: string
+          user_id: string | null
         }
         Insert: {
           cash?: number
@@ -75,6 +76,7 @@ export type Database = {
           salary?: number
           session_id: string
           updated_at?: string
+          user_id?: string | null
         }
         Update: {
           cash?: number
@@ -89,6 +91,7 @@ export type Database = {
           salary?: number
           session_id?: string
           updated_at?: string
+          user_id?: string | null
         }
         Relationships: [
           {
@@ -106,18 +109,21 @@ export type Database = {
           id: string
           is_active: boolean
           name: string
+          user_id: string | null
         }
         Insert: {
           created_at?: string
           id?: string
           is_active?: boolean
           name: string
+          user_id?: string | null
         }
         Update: {
           created_at?: string
           id?: string
           is_active?: boolean
           name?: string
+          user_id?: string | null
         }
         Relationships: []
       }
