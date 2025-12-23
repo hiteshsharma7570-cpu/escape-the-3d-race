@@ -49,18 +49,32 @@ export const handleTileEffect = (state: GameState, tile: Tile): GameState => {
       break;
 
     case "opportunity":
-      // Generate opportunity and set as pending decision
+      // Generate opportunity with risk levels
       const opportunities = [
-        { name: "Stock Investment", cost: 50000, income: 2400, value: 50000 },
-        { name: "Rental Property", cost: 500000, income: 14400, value: 500000 },
-        { name: "Side Business", cost: 100000, income: 6000, value: 100000 },
+        // Low Risk - Stable, modest returns
+        { name: "Fixed Deposit", cost: 25000, income: 600, value: 25000, risk: "low" as const, description: "Safe bank deposit with guaranteed returns" },
+        { name: "Government Bonds", cost: 50000, income: 1200, value: 50000, risk: "low" as const, description: "Secure government-backed bonds" },
+        { name: "Dividend Stocks", cost: 75000, income: 2000, value: 75000, risk: "low" as const, description: "Blue-chip stocks with steady dividends" },
+        
+        // Medium Risk - Balanced risk/reward
+        { name: "Rental Property", cost: 500000, income: 14400, value: 500000, risk: "medium" as const, description: "Residential property for rental income" },
+        { name: "Side Business", cost: 100000, income: 6000, value: 100000, risk: "medium" as const, description: "Part-time business venture" },
+        { name: "REITs", cost: 150000, income: 5400, value: 150000, risk: "medium" as const, description: "Real Estate Investment Trust" },
+        { name: "Mutual Funds", cost: 200000, income: 6000, value: 200000, risk: "medium" as const, description: "Diversified portfolio managed by experts" },
+        
+        // High Risk - High potential returns
+        { name: "Startup Investment", cost: 250000, income: 15000, value: 250000, risk: "high" as const, description: "Equity in an early-stage company" },
+        { name: "Crypto Portfolio", cost: 100000, income: 8000, value: 100000, risk: "high" as const, description: "Diversified cryptocurrency holdings" },
+        { name: "Commercial Property", cost: 1000000, income: 40000, value: 1000000, risk: "high" as const, description: "Office/retail space for lease" },
+        { name: "Franchise Business", cost: 750000, income: 30000, value: 750000, risk: "high" as const, description: "Branded franchise operation" },
       ];
       const opp = opportunities[Math.floor(Math.random() * opportunities.length)];
       newState.pendingDecision = {
         type: "opportunity",
         opportunity: opp,
       };
-      logMessage = `Opportunity: ${opp.name} available for ₹${opp.cost.toLocaleString()} (Monthly income: ₹${opp.income.toLocaleString()})`;
+      const riskLabel = opp.risk === "low" ? "🟢 Low" : opp.risk === "medium" ? "🟡 Medium" : "🔴 High";
+      logMessage = `Opportunity (${riskLabel} Risk): ${opp.name} for ₹${opp.cost.toLocaleString()}`;
       break;
 
     case "market":

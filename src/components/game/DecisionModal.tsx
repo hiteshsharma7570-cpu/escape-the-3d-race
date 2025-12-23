@@ -68,9 +68,25 @@ export const DecisionModal = ({
             {isOpportunity && pendingDecision.opportunity && (
               <div className="space-y-2">
                 <p>Would you like to invest in this opportunity?</p>
-                <div className="bg-accent p-4 rounded-lg space-y-2">
-                  <p className="text-lg font-semibold text-foreground">
-                    {pendingDecision.opportunity.name}
+                <div className="bg-accent p-4 rounded-lg space-y-3">
+                  <div className="flex items-center justify-between">
+                    <p className="text-lg font-semibold text-foreground">
+                      {pendingDecision.opportunity.name}
+                    </p>
+                    <span
+                      className={`px-2 py-1 rounded text-xs font-bold ${
+                        pendingDecision.opportunity.risk === "low"
+                          ? "bg-green-500/20 text-green-400"
+                          : pendingDecision.opportunity.risk === "medium"
+                          ? "bg-yellow-500/20 text-yellow-400"
+                          : "bg-red-500/20 text-red-400"
+                      }`}
+                    >
+                      {pendingDecision.opportunity.risk.toUpperCase()} RISK
+                    </span>
+                  </div>
+                  <p className="text-sm text-muted-foreground">
+                    {pendingDecision.opportunity.description}
                   </p>
                   <div className="grid grid-cols-2 gap-2 text-sm">
                     <div>
@@ -83,6 +99,12 @@ export const DecisionModal = ({
                       <span className="text-muted-foreground">Monthly Income:</span>
                       <span className="ml-2 font-medium text-success">
                         +₹{pendingDecision.opportunity.income.toLocaleString()}
+                      </span>
+                    </div>
+                    <div className="col-span-2">
+                      <span className="text-muted-foreground">ROI:</span>
+                      <span className="ml-2 font-medium text-info">
+                        {((pendingDecision.opportunity.income * 12 / pendingDecision.opportunity.cost) * 100).toFixed(1)}% per year
                       </span>
                     </div>
                   </div>
