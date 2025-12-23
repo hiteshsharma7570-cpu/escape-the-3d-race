@@ -49,27 +49,18 @@ export const handleTileEffect = (state: GameState, tile: Tile): GameState => {
       break;
 
     case "opportunity":
-      // Random opportunity
+      // Generate opportunity and set as pending decision
       const opportunities = [
         { name: "Stock Investment", cost: 50000, income: 2400, value: 50000 },
         { name: "Rental Property", cost: 500000, income: 14400, value: 500000 },
         { name: "Side Business", cost: 100000, income: 6000, value: 100000 },
       ];
       const opp = opportunities[Math.floor(Math.random() * opportunities.length)];
-      
-      if (newState.cash >= opp.cost) {
-        newState.cash -= opp.cost;
-        newState.assets.push({
-          id: `asset-${Date.now()}`,
-          name: opp.name,
-          value: opp.value,
-          monthlyIncome: opp.income,
-        });
-        newState.passiveIncome += opp.income;
-        logMessage = `Opportunity! Purchased ${opp.name} for ₹${opp.cost.toLocaleString()}. Monthly income: +₹${opp.income.toLocaleString()}`;
-      } else {
-        logMessage = `Opportunity available, but insufficient funds (need ₹${opp.cost.toLocaleString()})`;
-      }
+      newState.pendingDecision = {
+        type: "opportunity",
+        opportunity: opp,
+      };
+      logMessage = `Opportunity: ${opp.name} available for ₹${opp.cost.toLocaleString()} (Monthly income: ₹${opp.income.toLocaleString()})`;
       break;
 
     case "market":
@@ -84,9 +75,12 @@ export const handleTileEffect = (state: GameState, tile: Tile): GameState => {
       break;
 
     case "charity":
-      const donation = 5000;
-      newState.cash -= donation;
-      logMessage = `Charity! Donated ₹${donation.toLocaleString()}`;
+      const charityAmount = 5000;
+      newState.pendingDecision = {
+        type: "charity",
+        charityAmount,
+      };
+      logMessage = `Charity opportunity! You can donate ₹${charityAmount.toLocaleString()}`;
       break;
 
     case "baby":
@@ -126,5 +120,49 @@ export const handleTileEffect = (state: GameState, tile: Tile): GameState => {
     newState.gameLog = ["🎉 You escaped the Rat Race! Passive income covers all expenses!", ...newState.gameLog];
   }
 
+  return newState;
+};
+
+export const applyCharityDecision = (state: GameState, accept: boolean): GameState => {
+  const newState = { ...state, pendingDecision: null };
+  
+  if (accept && state.pendingDecision?.charityAmount) {
+    newState.cash -= state.pendingDecision.charityAmount;
+    newState.gameLog = [`Donated ₹${state.pendingDecision.charityAmount.toLocaleString()} to charity!`, ...newState.gameLog.slice(0, 9)];
+  } else {
+    newState.gameLog = ["Declined charity donation.", ...newState.gameLog.slice(0, 9)];
+  }
+  
+  return newState;
+};
+
+export const applyOpportunityDecision = (state: GameState, accept: boolean): GameState => {
+  const newState = { ...state, pendingDecision: null };
+  const opp = state.pendingDecision?.opportunity;
+  
+  if (accept && opp) {
+    if (newState.cash >= opp.cost) {
+      newState.cash -= opp.cost;
+      newState.assets.push({
+        id: `asset-${Date.now()}`,
+        name: opp.name,
+        value: opp.value,
+        monthlyIncome: opp.income,
+      });
+      newState.passiveIncome += opp.income;
+      newState.gameLog = [`Invested in ${opp.name}! Monthly income: +₹${opp.income.toLocaleString()}`, ...newState.gameLog.slice(0, 9)];
+    } else {
+      newState.gameLog = [`Insufficient funds for ${opp.name} (need ₹${opp.cost.toLocaleString()})`, ...newState.gameLog.slice(0, 9)];
+    }
+  } else {
+    newState.gameLog = ["Passed on investment opportunity.", ...newState.gameLog.slice(0, 9)];
+  }
+  
+  // Check win condition after investment
+  if (newState.passiveIncome >= calculateTotalExpenses(newState) && !newState.hasEscapedRatRace) {
+    newState.hasEscapedRatRace = true;
+    newState.gameLog = ["🎉 You escaped the Rat Race! Passive income covers all expenses!", ...newState.gameLog];
+  }
+  
   return newState;
 };

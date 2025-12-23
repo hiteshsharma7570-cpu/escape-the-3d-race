@@ -29,6 +29,17 @@ export interface Liability {
   monthlyPayment: number;
 }
 
+export interface PendingDecision {
+  type: "charity" | "opportunity";
+  charityAmount?: number;
+  opportunity?: {
+    name: string;
+    cost: number;
+    income: number;
+    value: number;
+  };
+}
+
 export interface GameState {
   playerName: string;
   profession: string;
@@ -43,6 +54,7 @@ export interface GameState {
   gameLog: string[];
   marketCondition: "normal" | "boom" | "crash";
   hasEscapedRatRace: boolean;
+  pendingDecision: PendingDecision | null;
 }
 
 export const INITIAL_GAME_STATE: GameState = {
@@ -59,4 +71,5 @@ export const INITIAL_GAME_STATE: GameState = {
   gameLog: ["Welcome! Roll the dice to begin."],
   marketCondition: "normal",
   hasEscapedRatRace: false,
+  pendingDecision: null,
 };
