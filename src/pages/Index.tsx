@@ -7,9 +7,10 @@ import { SessionLobby } from "@/components/game/SessionLobby";
 import { PlayerSetup } from "@/components/game/PlayerSetup";
 import { Leaderboard } from "@/components/game/Leaderboard";
 import { AchievementsPanel } from "@/components/game/AchievementsPanel";
+import { DecisionModal } from "@/components/game/DecisionModal";
 import { INITIAL_GAME_STATE } from "@/types/game";
 import { GameState } from "@/types/game";
-import { BOARD_TILES, handleTileEffect } from "@/lib/gameLogic";
+import { BOARD_TILES, handleTileEffect, applyCharityDecision, applyOpportunityDecision } from "@/lib/gameLogic";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Trophy, HelpCircle, Music, Volume2, VolumeX, LogOut, Award, Loader2 } from "lucide-react";
@@ -231,6 +232,28 @@ const Index = () => {
     }
   };
 
+  const handleDecisionAccept = () => {
+    if (!gameState.pendingDecision) return;
+    
+    if (gameState.pendingDecision.type === "charity") {
+      playSound("charity");
+      setGameState((prev) => applyCharityDecision(prev, true));
+    } else if (gameState.pendingDecision.type === "opportunity") {
+      playSound("opportunity");
+      setGameState((prev) => applyOpportunityDecision(prev, true));
+    }
+  };
+
+  const handleDecisionDecline = () => {
+    if (!gameState.pendingDecision) return;
+    
+    if (gameState.pendingDecision.type === "charity") {
+      setGameState((prev) => applyCharityDecision(prev, false));
+    } else if (gameState.pendingDecision.type === "opportunity") {
+      setGameState((prev) => applyOpportunityDecision(prev, false));
+    }
+  };
+
   const showInstructions = () => {
     toast.info(
       "Roll the dice to move around the board. Land on different tiles to trigger financial events. Your goal: Build passive income to exceed your expenses and escape the Rat Race!",
@@ -346,6 +369,13 @@ const Index = () => {
           )}
         </div>
       </div>
+
+      <DecisionModal
+        pendingDecision={gameState.pendingDecision}
+        cash={gameState.cash}
+        onAccept={handleDecisionAccept}
+        onDecline={handleDecisionDecline}
+      />
     </div>
   );
 };
