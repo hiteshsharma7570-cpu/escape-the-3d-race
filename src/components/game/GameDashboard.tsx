@@ -139,13 +139,24 @@ export const GameDashboard = ({
             </p>
           </div>
 
-          {gameState.assets.length > 0 && (
+        {gameState.assets.length > 0 && (
             <div>
               <h3 className="text-info font-bold mb-2">Assets</h3>
-              <div className="space-y-1 text-sm">
+              <div className="space-y-2 text-sm">
                 {gameState.assets.map((asset) => (
-                  <div key={asset.id} className="flex justify-between">
-                    <span>{asset.name}:</span>
+                  <div key={asset.id} className="flex justify-between items-center">
+                    <div className="flex items-center gap-2">
+                      <span
+                        className={`w-2 h-2 rounded-full ${
+                          asset.risk === "low"
+                            ? "bg-green-500"
+                            : asset.risk === "medium"
+                            ? "bg-yellow-500"
+                            : "bg-red-500"
+                        }`}
+                      />
+                      <span>{asset.name}</span>
+                    </div>
                     <span className="text-success">
                       ₹{asset.value.toLocaleString()}
                       {asset.monthlyIncome > 0 && (

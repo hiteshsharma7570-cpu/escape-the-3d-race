@@ -78,14 +78,38 @@ export const handleTileEffect = (state: GameState, tile: Tile): GameState => {
       break;
 
     case "market":
-      const change = Math.random() > 0.5 ? 1.1 : 0.9;
-      newState.assets = newState.assets.map(a => ({
-        ...a,
-        value: Math.round(a.value * change),
-      }));
-      logMessage = change > 1 
-        ? "Market Boom! Asset values increased by 10%" 
-        : "Market Dip! Asset values decreased by 10%";
+      // Market events affect investments based on risk level
+      const marketRoll = Math.random();
+      const isBoom = marketRoll > 0.5;
+      
+      // Risk multipliers: high-risk assets are more volatile
+      const riskMultipliers = {
+        low: isBoom ? 1.03 : 0.98,    // ±2-3% for low risk
+        medium: isBoom ? 1.08 : 0.92,  // ±8% for medium risk
+        high: isBoom ? 1.20 : 0.75,    // +20% / -25% for high risk
+      };
+      
+      let totalValueChange = 0;
+      newState.assets = newState.assets.map(a => {
+        const multiplier = riskMultipliers[a.risk] || riskMultipliers.medium;
+        const oldValue = a.value;
+        const newValue = Math.round(a.value * multiplier);
+        totalValueChange += newValue - oldValue;
+        return { ...a, value: newValue };
+      });
+      
+      if (newState.assets.length === 0) {
+        logMessage = isBoom 
+          ? "Market Boom! But you have no investments to benefit." 
+          : "Market Dip! Good thing you have no investments at risk.";
+      } else {
+        const changeText = totalValueChange >= 0 
+          ? `+₹${totalValueChange.toLocaleString()}` 
+          : `-₹${Math.abs(totalValueChange).toLocaleString()}`;
+        logMessage = isBoom 
+          ? `📈 Market Boom! Portfolio ${changeText}. High-risk assets gained 20%!` 
+          : `📉 Market Crash! Portfolio ${changeText}. High-risk assets lost 25%!`;
+      }
       break;
 
     case "charity":
@@ -162,6 +186,7 @@ export const applyOpportunityDecision = (state: GameState, accept: boolean): Gam
         name: opp.name,
         value: opp.value,
         monthlyIncome: opp.income,
+        risk: opp.risk,
       });
       newState.passiveIncome += opp.income;
       newState.gameLog = [`Invested in ${opp.name}! Monthly income: +₹${opp.income.toLocaleString()}`, ...newState.gameLog.slice(0, 9)];

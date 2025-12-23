@@ -20,6 +20,7 @@ export interface Asset {
   name: string;
   value: number;
   monthlyIncome: number;
+  risk: "low" | "medium" | "high";
 }
 
 export interface Liability {
