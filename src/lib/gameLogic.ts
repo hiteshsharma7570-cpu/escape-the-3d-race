@@ -216,3 +216,35 @@ export const applyOpportunityDecision = (state: GameState, accept: boolean): Gam
   
   return newState;
 };
+
+const MARKET_NEWS: MarketHint[] = [
+  { sentiment: "bullish", headline: "📰 Tech sector surges as quarterly earnings beat expectations" },
+  { sentiment: "bullish", headline: "📰 Central bank cuts interest rates — investors cheer" },
+  { sentiment: "bullish", headline: "📰 Real estate demand hits record highs this quarter" },
+  { sentiment: "bullish", headline: "📰 Crypto rally continues as institutional money pours in" },
+  { sentiment: "bearish", headline: "📰 Inflation fears spook markets — sell-off looms" },
+  { sentiment: "bearish", headline: "📰 Geopolitical tensions rattle global investors" },
+  { sentiment: "bearish", headline: "📰 Major bank reports losses — markets jittery" },
+  { sentiment: "bearish", headline: "📰 Crypto regulation crackdown sparks panic selling" },
+  { sentiment: "neutral", headline: "📰 Analysts split on market direction this week" },
+  { sentiment: "neutral", headline: "📰 Mixed signals from economic data leave traders cautious" },
+];
+
+export const generateMarketHint = (): MarketHint => {
+  return MARKET_NEWS[Math.floor(Math.random() * MARKET_NEWS.length)];
+};
+
+export const sellAsset = (state: GameState, assetId: string): GameState => {
+  const asset = state.assets.find(a => a.id === assetId);
+  if (!asset) return state;
+
+  const newState = { ...state };
+  newState.cash += asset.value;
+  newState.passiveIncome = Math.max(0, newState.passiveIncome - asset.monthlyIncome);
+  newState.assets = newState.assets.filter(a => a.id !== assetId);
+  newState.gameLog = [
+    `Sold ${asset.name} for ₹${asset.value.toLocaleString()} (lost ₹${asset.monthlyIncome.toLocaleString()}/mo income)`,
+    ...newState.gameLog.slice(0, 9),
+  ];
+  return newState;
+};
