@@ -139,7 +139,19 @@ const Index = () => {
           isRolling: false,
         };
         
-        return handleTileEffect(updatedState, landedTile);
+        const afterTile = handleTileEffect(updatedState, landedTile);
+        // 40% chance to generate a market news hint for the next roll
+        // (only if not already on a market tile and no pending decision)
+        if (
+          !afterTile.marketHint &&
+          !afterTile.pendingDecision &&
+          landedTile.type !== "market" &&
+          Math.random() < 0.4
+        ) {
+          afterTile.marketHint = generateMarketHint();
+          afterTile.gameLog = [afterTile.marketHint.headline, ...afterTile.gameLog.slice(0, 9)];
+        }
+        return afterTile;
       });
 
       // Play sound based on tile type
