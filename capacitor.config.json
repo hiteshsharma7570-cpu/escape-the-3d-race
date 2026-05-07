@@ -1,0 +1,9 @@
+{
+  "appId": "app.lovable.45d5bb7f756e4c4eb20300ec74271abe",
+  "appName": "escape-the-3d-race",
+  "webDir": "dist",
+  "server": {
+    "url": "https://45d5bb7f-756e-4c4e-b203-00ec74271abe.lovableproject.com?forceHideBadge=true",
+    "cleartext": true
+  }
+}
