@@ -8,6 +8,7 @@ import { PlayerSetup } from "@/components/game/PlayerSetup";
 import { Leaderboard } from "@/components/game/Leaderboard";
 import { AchievementsPanel } from "@/components/game/AchievementsPanel";
 import { DecisionModal } from "@/components/game/DecisionModal";
+import { CashCertificateModal } from "@/components/game/CashCertificateModal";
 import { INITIAL_GAME_STATE } from "@/types/game";
 import { GameState } from "@/types/game";
 import { BOARD_TILES, handleTileEffect, applyCharityDecision, applyOpportunityDecision, generateMarketHint, sellAsset } from "@/lib/gameLogic";
@@ -27,6 +28,8 @@ const Index = () => {
   const [gameState, setGameState] = useState<GameState>(INITIAL_GAME_STATE);
   const [gameMode, setGameMode] = useState<"lobby" | "setup" | "playing">("lobby");
   const [showAchievements, setShowAchievements] = useState(false);
+  const [showCertificate, setShowCertificate] = useState(false);
+  const [certificateAwarded, setCertificateAwarded] = useState(false);
   const { playSound, isMusicEnabled, isSoundEnabled, toggleMusic, toggleSound } = useGameSounds();
   const { sessions, currentSession, isLoading, createSession, joinSession, endSession } = useGameSession();
   const { players, currentPlayerId, createPlayer, updatePlayer } = useGamePlayers(currentSession?.id || null);
@@ -55,6 +58,16 @@ const Index = () => {
     }
   }, [gameState.hasEscapedRatRace]);
 
+  // Award Crorepati certificate the first time cash crosses ₹1 crore
+  useEffect(() => {
+    if (gameMode === "playing" && !certificateAwarded && gameState.cash >= 10000000) {
+      setCertificateAwarded(true);
+      setShowCertificate(true);
+      playSound("payDay");
+      toast.success("🏆 Crorepati! You crossed ₹1 Crore in cash!");
+    }
+  }, [gameState.cash, gameMode, certificateAwarded]);
+
   const handleCreateSession = async (name: string) => {
     const session = await createSession(name);
     if (session) {
@@ -76,6 +89,7 @@ const Index = () => {
 
     const initialState = { ...INITIAL_GAME_STATE, playerName, profession };
     setGameState(initialState);
+    setCertificateAwarded(initialState.cash >= 10000000);
 
     const player = await createPlayer(currentSession.id, playerName, profession, initialState);
     if (player) {
@@ -398,6 +412,13 @@ const Index = () => {
         cash={gameState.cash}
         onAccept={handleDecisionAccept}
         onDecline={handleDecisionDecline}
+      />
+
+      <CashCertificateModal
+        open={showCertificate}
+        onClose={() => setShowCertificate(false)}
+        playerName={gameState.playerName}
+        cash={gameState.cash}
       />
     </div>
   );
