@@ -10,7 +10,7 @@ import { AchievementsPanel } from "@/components/game/AchievementsPanel";
 import { DecisionModal } from "@/components/game/DecisionModal";
 import { INITIAL_GAME_STATE } from "@/types/game";
 import { GameState } from "@/types/game";
-import { BOARD_TILES, handleTileEffect, applyCharityDecision, applyOpportunityDecision } from "@/lib/gameLogic";
+import { BOARD_TILES, handleTileEffect, applyCharityDecision, applyOpportunityDecision, generateMarketHint, sellAsset } from "@/lib/gameLogic";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Trophy, HelpCircle, Music, Volume2, VolumeX, LogOut, Award, Loader2 } from "lucide-react";
@@ -117,7 +117,11 @@ const Index = () => {
     if (gameState.isRolling) return;
 
     playSound("diceRoll");
-    setGameState((prev) => ({ ...prev, isRolling: true }));
+    // Generate a market news hint at the start of each roll (30% chance, only if no active hint)
+    setGameState((prev) => ({
+      ...prev,
+      isRolling: true,
+    }));
 
     const diceValue = Math.floor(Math.random() * 6) + 1;
     
@@ -159,6 +163,12 @@ const Index = () => {
 
       toast.info(`Rolled ${diceValue}! Landed on ${landedTile.label}`);
     }, 500);
+  };
+
+  const handleSellAsset = (assetId: string) => {
+    playSound("earnMoney");
+    setGameState((prev) => sellAsset(prev, assetId));
+    toast.success("Asset sold!");
   };
 
   const takeLoan = () => {
@@ -353,6 +363,7 @@ const Index = () => {
             onTakeLoan={takeLoan}
             onRepayLoan={repayLoan}
             onPayOffDebts={payOffDebts}
+            onSellAsset={handleSellAsset}
           />
         </div>
         <div>
