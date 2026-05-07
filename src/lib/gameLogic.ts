@@ -1,4 +1,4 @@
-import { GameState, Tile, Asset, Liability } from "@/types/game";
+import { GameState, Tile, Asset, Liability, MarketHint } from "@/types/game";
 
 export { type GameState, type Tile, type Asset, type Liability };
 
@@ -79,8 +79,15 @@ export const handleTileEffect = (state: GameState, tile: Tile): GameState => {
 
     case "market":
       // Market events affect investments based on risk level
-      const marketRoll = Math.random();
-      const isBoom = marketRoll > 0.5;
+      // If a hint was generated, bias the outcome toward it
+      let isBoom: boolean;
+      if (state.marketHint?.sentiment === "bullish") {
+        isBoom = Math.random() < 0.8;
+      } else if (state.marketHint?.sentiment === "bearish") {
+        isBoom = Math.random() < 0.2;
+      } else {
+        isBoom = Math.random() > 0.5;
+      }
       
       // Risk multipliers: high-risk assets are more volatile
       const riskMultipliers = {
@@ -110,6 +117,7 @@ export const handleTileEffect = (state: GameState, tile: Tile): GameState => {
           ? `📈 Market Boom! Portfolio ${changeText}. High-risk assets gained 20%!` 
           : `📉 Market Crash! Portfolio ${changeText}. High-risk assets lost 25%!`;
       }
+      newState.marketCondition = isBoom ? "boom" : "crash";
       break;
 
     case "charity":
@@ -151,6 +159,9 @@ export const handleTileEffect = (state: GameState, tile: Tile): GameState => {
   }
 
   newState.gameLog = [logMessage, ...newState.gameLog.slice(0, 9)];
+
+  // Clear any market hint that has now resolved (or stale after any roll)
+  newState.marketHint = null;
   
   // Check win condition
   if (newState.passiveIncome >= calculateTotalExpenses(newState) && !newState.hasEscapedRatRace) {
