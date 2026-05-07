@@ -43,6 +43,11 @@ export interface PendingDecision {
   };
 }
 
+export interface MarketHint {
+  sentiment: "bullish" | "bearish" | "neutral";
+  headline: string;
+}
+
 export interface GameState {
   playerName: string;
   profession: string;
@@ -58,6 +63,7 @@ export interface GameState {
   marketCondition: "normal" | "boom" | "crash";
   hasEscapedRatRace: boolean;
   pendingDecision: PendingDecision | null;
+  marketHint: MarketHint | null;
 }
 
 export const INITIAL_GAME_STATE: GameState = {
@@ -75,4 +81,5 @@ export const INITIAL_GAME_STATE: GameState = {
   marketCondition: "normal",
   hasEscapedRatRace: false,
   pendingDecision: null,
+  marketHint: null,
 };

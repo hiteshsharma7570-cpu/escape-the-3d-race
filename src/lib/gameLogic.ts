@@ -1,4 +1,4 @@
-import { GameState, Tile, Asset, Liability } from "@/types/game";
+import { GameState, Tile, Asset, Liability, MarketHint } from "@/types/game";
 
 export { type GameState, type Tile, type Asset, type Liability };
 
@@ -79,8 +79,15 @@ export const handleTileEffect = (state: GameState, tile: Tile): GameState => {
 
     case "market":
       // Market events affect investments based on risk level
-      const marketRoll = Math.random();
-      const isBoom = marketRoll > 0.5;
+      // If a hint was generated, bias the outcome toward it
+      let isBoom: boolean;
+      if (state.marketHint?.sentiment === "bullish") {
+        isBoom = Math.random() < 0.8;
+      } else if (state.marketHint?.sentiment === "bearish") {
+        isBoom = Math.random() < 0.2;
+      } else {
+        isBoom = Math.random() > 0.5;
+      }
       
       // Risk multipliers: high-risk assets are more volatile
       const riskMultipliers = {
@@ -110,6 +117,7 @@ export const handleTileEffect = (state: GameState, tile: Tile): GameState => {
           ? `📈 Market Boom! Portfolio ${changeText}. High-risk assets gained 20%!` 
           : `📉 Market Crash! Portfolio ${changeText}. High-risk assets lost 25%!`;
       }
+      newState.marketCondition = isBoom ? "boom" : "crash";
       break;
 
     case "charity":
@@ -151,6 +159,9 @@ export const handleTileEffect = (state: GameState, tile: Tile): GameState => {
   }
 
   newState.gameLog = [logMessage, ...newState.gameLog.slice(0, 9)];
+
+  // Clear any market hint that has now resolved (or stale after any roll)
+  newState.marketHint = null;
   
   // Check win condition
   if (newState.passiveIncome >= calculateTotalExpenses(newState) && !newState.hasEscapedRatRace) {
@@ -203,5 +214,37 @@ export const applyOpportunityDecision = (state: GameState, accept: boolean): Gam
     newState.gameLog = ["🎉 You escaped the Rat Race! Passive income covers all expenses!", ...newState.gameLog];
   }
   
+  return newState;
+};
+
+const MARKET_NEWS: MarketHint[] = [
+  { sentiment: "bullish", headline: "📰 Tech sector surges as quarterly earnings beat expectations" },
+  { sentiment: "bullish", headline: "📰 Central bank cuts interest rates — investors cheer" },
+  { sentiment: "bullish", headline: "📰 Real estate demand hits record highs this quarter" },
+  { sentiment: "bullish", headline: "📰 Crypto rally continues as institutional money pours in" },
+  { sentiment: "bearish", headline: "📰 Inflation fears spook markets — sell-off looms" },
+  { sentiment: "bearish", headline: "📰 Geopolitical tensions rattle global investors" },
+  { sentiment: "bearish", headline: "📰 Major bank reports losses — markets jittery" },
+  { sentiment: "bearish", headline: "📰 Crypto regulation crackdown sparks panic selling" },
+  { sentiment: "neutral", headline: "📰 Analysts split on market direction this week" },
+  { sentiment: "neutral", headline: "📰 Mixed signals from economic data leave traders cautious" },
+];
+
+export const generateMarketHint = (): MarketHint => {
+  return MARKET_NEWS[Math.floor(Math.random() * MARKET_NEWS.length)];
+};
+
+export const sellAsset = (state: GameState, assetId: string): GameState => {
+  const asset = state.assets.find(a => a.id === assetId);
+  if (!asset) return state;
+
+  const newState = { ...state };
+  newState.cash += asset.value;
+  newState.passiveIncome = Math.max(0, newState.passiveIncome - asset.monthlyIncome);
+  newState.assets = newState.assets.filter(a => a.id !== assetId);
+  newState.gameLog = [
+    `Sold ${asset.name} for ₹${asset.value.toLocaleString()} (lost ₹${asset.monthlyIncome.toLocaleString()}/mo income)`,
+    ...newState.gameLog.slice(0, 9),
+  ];
   return newState;
 };
