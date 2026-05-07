@@ -10,6 +10,7 @@ interface GameDashboardProps {
   onTakeLoan: () => void;
   onRepayLoan: () => void;
   onPayOffDebts: () => void;
+  onSellAsset: (assetId: string) => void;
 }
 
 export const GameDashboard = ({ 
@@ -17,7 +18,8 @@ export const GameDashboard = ({
   onRollDice, 
   onTakeLoan, 
   onRepayLoan,
-  onPayOffDebts 
+  onPayOffDebts,
+  onSellAsset,
 }: GameDashboardProps) => {
   const monthlyCashFlow = calculateMonthlyCashFlow(gameState);
   const totalExpenses = calculateTotalExpenses(gameState);
@@ -27,6 +29,19 @@ export const GameDashboard = ({
     <div className="space-y-4">
       {/* Header */}
       <Card className="p-6 bg-gradient-to-r from-card to-accent border-border">
+        {gameState.marketHint && (
+          <div
+            className={`mb-4 p-3 rounded-lg border text-sm font-medium ${
+              gameState.marketHint.sentiment === "bullish"
+                ? "bg-green-500/10 border-green-500/40 text-green-700 dark:text-green-300"
+                : gameState.marketHint.sentiment === "bearish"
+                ? "bg-red-500/10 border-red-500/40 text-red-700 dark:text-red-300"
+                : "bg-yellow-500/10 border-yellow-500/40 text-yellow-700 dark:text-yellow-300"
+            }`}
+          >
+            {gameState.marketHint.headline}
+          </div>
+        )}
         <div className="flex justify-between items-center mb-4">
           <h1 className="text-3xl font-bold text-primary">The Rat Race</h1>
           <div className="text-right">
@@ -144,10 +159,10 @@ export const GameDashboard = ({
               <h3 className="text-info font-bold mb-2">Assets</h3>
               <div className="space-y-2 text-sm">
                 {gameState.assets.map((asset) => (
-                  <div key={asset.id} className="flex justify-between items-center">
-                    <div className="flex items-center gap-2">
+                  <div key={asset.id} className="flex justify-between items-center gap-2">
+                    <div className="flex items-center gap-2 min-w-0">
                       <span
-                        className={`w-2 h-2 rounded-full ${
+                        className={`w-2 h-2 rounded-full shrink-0 ${
                           asset.risk === "low"
                             ? "bg-green-500"
                             : asset.risk === "medium"
@@ -155,14 +170,24 @@ export const GameDashboard = ({
                             : "bg-red-500"
                         }`}
                       />
-                      <span>{asset.name}</span>
+                      <span className="truncate">{asset.name}</span>
                     </div>
-                    <span className="text-success">
-                      ₹{asset.value.toLocaleString()}
-                      {asset.monthlyIncome > 0 && (
-                        <span className="text-xs ml-1">+₹{asset.monthlyIncome.toLocaleString()}/mo</span>
-                      )}
-                    </span>
+                    <div className="flex items-center gap-2 shrink-0">
+                      <span className="text-success text-right">
+                        ₹{asset.value.toLocaleString()}
+                        {asset.monthlyIncome > 0 && (
+                          <span className="text-xs ml-1">+₹{asset.monthlyIncome.toLocaleString()}/mo</span>
+                        )}
+                      </span>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="h-7 px-2 text-xs"
+                        onClick={() => onSellAsset(asset.id)}
+                      >
+                        Sell
+                      </Button>
+                    </div>
                   </div>
                 ))}
               </div>
