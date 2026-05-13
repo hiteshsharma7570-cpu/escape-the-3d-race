@@ -30,7 +30,8 @@ export const useAchievements = (playerId: string | null) => {
     fetchAchievements();
     if (playerId) {
       fetchPlayerAchievements();
-      subscribeToAchievements();
+      const cleanup = subscribeToAchievements();
+      return cleanup;
     }
   }, [playerId]);
 
@@ -63,7 +64,7 @@ export const useAchievements = (playerId: string | null) => {
     if (!playerId) return;
 
     const channel = supabase
-      .channel("player_achievements_changes")
+      .channel(`player_achievements_changes_${playerId}`)
       .on(
         "postgres_changes",
         {
