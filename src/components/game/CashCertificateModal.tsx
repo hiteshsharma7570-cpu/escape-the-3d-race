@@ -1,7 +1,7 @@
-import { useRef } from "react";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Award, Download } from "lucide-react";
+import jsPDF from "jspdf";
 
 interface CashCertificateModalProps {
   open: boolean;
@@ -11,39 +11,103 @@ interface CashCertificateModalProps {
 }
 
 export const CashCertificateModal = ({ open, onClose, playerName, cash }: CashCertificateModalProps) => {
-  const certRef = useRef<HTMLDivElement>(null);
-
-  const handleDownload = async () => {
-    if (!certRef.current) return;
-    // Render the certificate as an SVG-based image via canvas
-    const node = certRef.current;
-    const width = node.offsetWidth * 2;
-    const height = node.offsetHeight * 2;
-    const data = `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}">
-      <foreignObject width="100%" height="100%">
-        <div xmlns="http://www.w3.org/1999/xhtml" style="transform: scale(2); transform-origin: top left; width: ${node.offsetWidth}px; height: ${node.offsetHeight}px;">${new XMLSerializer().serializeToString(node)}</div>
-      </foreignObject>
-    </svg>`;
-    const blob = new Blob([data], { type: "image/svg+xml" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `${playerName}-crorepati-certificate.svg`;
-    a.click();
-    URL.revokeObjectURL(url);
-  };
-
   const dateStr = new Date().toLocaleDateString("en-IN", {
     day: "numeric",
     month: "long",
     year: "numeric",
   });
 
+  const handleDownload = () => {
+    const doc = new jsPDF({ orientation: "landscape", unit: "pt", format: "a4" });
+    const pageW = doc.internal.pageSize.getWidth();
+    const pageH = doc.internal.pageSize.getHeight();
+
+    // Background
+    doc.setFillColor(255, 251, 235);
+    doc.rect(0, 0, pageW, pageH, "F");
+
+    // Outer double border
+    doc.setDrawColor(180, 130, 30);
+    doc.setLineWidth(4);
+    doc.rect(20, 20, pageW - 40, pageH - 40);
+    doc.setLineWidth(1);
+    doc.rect(30, 30, pageW - 60, pageH - 60);
+
+    // Corner ornaments
+    doc.setLineWidth(3);
+    const corner = 36;
+    [[40, 40, 1, 1], [pageW - 40, 40, -1, 1], [40, pageH - 40, 1, -1], [pageW - 40, pageH - 40, -1, -1]]
+      .forEach(([x, y, sx, sy]) => {
+        doc.line(x, y, x + corner * sx, y);
+        doc.line(x, y, x, y + corner * sy);
+      });
+
+    // Header label
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(12);
+    doc.setTextColor(146, 64, 14);
+    doc.text("CERTIFICATE OF ACHIEVEMENT", pageW / 2, 110, { align: "center", charSpace: 4 });
+
+    // Title
+    doc.setFont("times", "bold");
+    doc.setFontSize(36);
+    doc.setTextColor(120, 53, 15);
+    doc.text("Crorepati Club", pageW / 2, 155, { align: "center" });
+
+    doc.setFont("times", "italic");
+    doc.setFontSize(14);
+    doc.setTextColor(146, 64, 14);
+    doc.text("The Rat Race - Financial Milestone", pageW / 2, 180, { align: "center" });
+
+    // Body
+    doc.setFont("times", "normal");
+    doc.setFontSize(14);
+    doc.setTextColor(60, 30, 5);
+    doc.text("This certificate is proudly presented to", pageW / 2, 220, { align: "center" });
+
+    doc.setFont("times", "bold");
+    doc.setFontSize(28);
+    doc.text(playerName, pageW / 2, 260, { align: "center" });
+    // underline
+    const nameW = doc.getTextWidth(playerName);
+    doc.setLineWidth(1.5);
+    doc.line(pageW / 2 - nameW / 2, 268, pageW / 2 + nameW / 2, 268);
+
+    doc.setFont("times", "normal");
+    doc.setFontSize(13);
+    const desc = `for reaching the remarkable milestone of Rs. 1 Crore in cash on hand, demonstrating outstanding\nfinancial discipline and investment acumen on the journey to escape the rat race.`;
+    doc.text(desc, pageW / 2, 305, { align: "center" });
+
+    doc.setFont("times", "bold");
+    doc.setFontSize(22);
+    doc.setTextColor(120, 53, 15);
+    doc.text(`Rs. ${cash.toLocaleString("en-IN")}`, pageW / 2, 365, { align: "center" });
+
+    // Footer signatures
+    doc.setLineWidth(1);
+    doc.setDrawColor(120, 53, 15);
+    doc.line(80, pageH - 90, 240, pageH - 90);
+    doc.line(pageW - 240, pageH - 90, pageW - 80, pageH - 90);
+
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(10);
+    doc.setTextColor(146, 64, 14);
+    doc.text("Date", 80, pageH - 75);
+    doc.text("Issued by", pageW - 240, pageH - 75);
+
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(12);
+    doc.setTextColor(60, 30, 5);
+    doc.text(dateStr, 80, pageH - 58);
+    doc.text("The Rat Race Game", pageW - 240, pageH - 58);
+
+    doc.save(`${playerName}-crorepati-certificate.pdf`);
+  };
+
   return (
     <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
       <DialogContent className="max-w-2xl p-0 overflow-hidden bg-transparent border-0 shadow-none">
         <div
-          ref={certRef}
           className="relative bg-gradient-to-br from-amber-50 via-yellow-50 to-amber-100 dark:from-amber-100 dark:via-yellow-100 dark:to-amber-200 p-10 text-center border-8 border-double border-amber-600"
           style={{ fontFamily: "Georgia, serif" }}
         >
