@@ -1,8 +1,9 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { GameState } from "@/types/game";
 import { calculateNetWorth } from "@/lib/gameLogic";
 import { toast } from "sonner";
+import { useRealtimeSubscription } from "./useRealtimeSubscription";
 
 interface Achievement {
   id: string;
@@ -26,16 +27,7 @@ export const useAchievements = (playerId: string | null) => {
   const [unlockedAchievements, setUnlockedAchievements] = useState<PlayerAchievement[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
-  useEffect(() => {
-    fetchAchievements();
-    if (playerId) {
-      fetchPlayerAchievements();
-      const cleanup = subscribeToAchievements();
-      return cleanup;
-    }
-  }, [playerId]);
-
-  const fetchAchievements = async () => {
+  const fetchAchievements = useCallback(async () => {
     const { data, error } = await supabase
       .from("achievements")
       .select("*")
@@ -45,9 +37,9 @@ export const useAchievements = (playerId: string | null) => {
       setAchievements(data);
     }
     setIsLoading(false);
-  };
+  }, []);
 
-  const fetchPlayerAchievements = async () => {
+  const fetchPlayerAchievements = useCallback(async () => {
     if (!playerId) return;
 
     const { data, error } = await supabase
@@ -58,31 +50,22 @@ export const useAchievements = (playerId: string | null) => {
     if (!error && data) {
       setUnlockedAchievements(data);
     }
-  };
+  }, [playerId]);
 
-  const subscribeToAchievements = () => {
-    if (!playerId) return;
+  useEffect(() => {
+    fetchAchievements();
+    if (playerId) {
+      fetchPlayerAchievements();
+    }
+  }, [fetchAchievements, fetchPlayerAchievements, playerId]);
 
-    const channel = supabase
-      .channel(`player_achievements_changes_${playerId}`)
-      .on(
-        "postgres_changes",
-        {
-          event: "INSERT",
-          schema: "public",
-          table: "player_achievements",
-          filter: `player_id=eq.${playerId}`,
-        },
-        (payload) => {
-          fetchPlayerAchievements();
-        }
-      )
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  };
+  useRealtimeSubscription({
+    table: "player_achievements",
+    event: "INSERT",
+    filter: playerId ? `player_id=eq.${playerId}` : undefined,
+    channelName: playerId ? `player_achievements_changes_${playerId}` : undefined,
+    onChange: fetchPlayerAchievements,
+  });
 
   const checkAchievements = async (gameState: GameState, gamesWon: number) => {
     if (!playerId) return;
