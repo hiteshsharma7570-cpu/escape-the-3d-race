@@ -1,5 +1,4 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
 import { GameBoard2D } from "@/components/game/GameBoard2D";
 import { GameDashboard } from "@/components/game/GameDashboard";
 import { Dice } from "@/components/game/Dice";
@@ -14,17 +13,14 @@ import { GameState } from "@/types/game";
 import { BOARD_TILES, handleTileEffect, applyCharityDecision, applyOpportunityDecision, generateMarketHint, sellAsset } from "@/lib/gameLogic";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
-import { Trophy, HelpCircle, Music, Volume2, VolumeX, LogOut, Award, Loader2 } from "lucide-react";
+import { Trophy, HelpCircle, Music, Volume2, VolumeX, LogOut, Award } from "lucide-react";
 import { useGameSounds } from "@/hooks/useGameSounds";
 import { useGameSession } from "@/hooks/useGameSession";
 import { useGamePlayers } from "@/hooks/useGamePlayers";
 import { useAchievements } from "@/hooks/useAchievements";
 import { usePlayerStats } from "@/hooks/usePlayerStats";
-import { useAuth } from "@/hooks/useAuth";
 
 const Index = () => {
-  const navigate = useNavigate();
-  const { user, isLoading: authLoading, signOut } = useAuth();
   const [gameState, setGameState] = useState<GameState>(INITIAL_GAME_STATE);
   const [gameMode, setGameMode] = useState<"lobby" | "setup" | "playing">("lobby");
   const [showAchievements, setShowAchievements] = useState(false);
@@ -35,13 +31,6 @@ const Index = () => {
   const { players, currentPlayerId, createPlayer, updatePlayer } = useGamePlayers(currentSession?.id || null);
   const { achievements, checkAchievements, getProgress, isUnlocked } = useAchievements(currentPlayerId);
   const { stats, incrementGamesWon } = usePlayerStats(currentPlayerId);
-
-  // Redirect to auth if not logged in
-  useEffect(() => {
-    if (!authLoading && !user) {
-      navigate('/auth', { replace: true });
-    }
-  }, [user, authLoading, navigate]);
 
   // Sync game state with database and check achievements when it changes
   useEffect(() => {
@@ -106,26 +95,6 @@ const Index = () => {
       toast.info("Left session");
     }
   };
-
-  const handleSignOut = async () => {
-    await signOut();
-    toast.info("Signed out");
-    navigate('/auth', { replace: true });
-  };
-
-  // Show loading state while checking auth
-  if (authLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-emerald-900 via-green-800 to-teal-900">
-        <Loader2 className="h-8 w-8 animate-spin text-white" />
-      </div>
-    );
-  }
-
-  // If not authenticated, don't render (redirect will happen)
-  if (!user) {
-    return null;
-  }
 
   const rollDice = () => {
     if (gameState.isRolling) return;
@@ -331,14 +300,6 @@ const Index = () => {
           >
             <LogOut className="w-4 h-4" />
             Leave
-          </Button>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={handleSignOut}
-            className="gap-2 text-muted-foreground"
-          >
-            Sign Out
           </Button>
         </div>
         <div className="flex gap-2">
