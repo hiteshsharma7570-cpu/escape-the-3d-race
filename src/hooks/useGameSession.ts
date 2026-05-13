@@ -1,8 +1,9 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import type { Tables } from "@/integrations/supabase/types";
 import { sessionSchema } from "@/lib/validationSchemas";
 import { toast } from "sonner";
+import { useRealtimeSubscription } from "./useRealtimeSubscription";
 
 type GameSession = Tables<"game_sessions">;
 
@@ -11,31 +12,7 @@ export const useGameSession = () => {
   const [currentSession, setCurrentSession] = useState<GameSession | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
-  useEffect(() => {
-    fetchActiveSessions();
-
-    // Subscribe to real-time updates
-    const channel = supabase
-      .channel("game_sessions_changes")
-      .on(
-        "postgres_changes",
-        {
-          event: "*",
-          schema: "public",
-          table: "game_sessions",
-        },
-        () => {
-          fetchActiveSessions();
-        }
-      )
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, []);
-
-  const fetchActiveSessions = async () => {
+  const fetchActiveSessions = useCallback(async () => {
     const { data, error } = await supabase
       .from("game_sessions")
       .select("*")
@@ -45,7 +22,18 @@ export const useGameSession = () => {
     if (!error && data) {
       setSessions(data);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    fetchActiveSessions();
+  }, [fetchActiveSessions]);
+
+  useRealtimeSubscription({
+    table: "game_sessions",
+    event: "*",
+    channelName: "game_sessions_changes",
+    onChange: fetchActiveSessions,
+  });
 
   const createSession = async (name: string) => {
     // Validate input

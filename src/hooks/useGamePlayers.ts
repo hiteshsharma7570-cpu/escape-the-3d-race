@@ -1,10 +1,11 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import type { Tables } from "@/integrations/supabase/types";
 import { GameState } from "@/types/game";
 import { calculateNetWorth } from "@/lib/gameLogic";
 import { playerSchema } from "@/lib/validationSchemas";
 import { toast } from "sonner";
+import { useRealtimeSubscription } from "./useRealtimeSubscription";
 
 type GamePlayer = Tables<"game_players">;
 
@@ -12,34 +13,7 @@ export const useGamePlayers = (sessionId: string | null) => {
   const [players, setPlayers] = useState<GamePlayer[]>([]);
   const [currentPlayerId, setCurrentPlayerId] = useState<string | null>(null);
 
-  useEffect(() => {
-    if (!sessionId) return;
-
-    fetchPlayers();
-
-    // Subscribe to real-time updates
-    const channel = supabase
-      .channel("game_players_changes")
-      .on(
-        "postgres_changes",
-        {
-          event: "*",
-          schema: "public",
-          table: "game_players",
-          filter: `session_id=eq.${sessionId}`,
-        },
-        () => {
-          fetchPlayers();
-        }
-      )
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, [sessionId]);
-
-  const fetchPlayers = async () => {
+  const fetchPlayers = useCallback(async () => {
     if (!sessionId) return;
 
     const { data, error } = await supabase
@@ -51,7 +25,21 @@ export const useGamePlayers = (sessionId: string | null) => {
     if (!error && data) {
       setPlayers(data);
     }
-  };
+  }, [sessionId]);
+
+  useEffect(() => {
+    if (sessionId) {
+      fetchPlayers();
+    }
+  }, [fetchPlayers, sessionId]);
+
+  useRealtimeSubscription({
+    table: "game_players",
+    event: "*",
+    filter: sessionId ? `session_id=eq.${sessionId}` : undefined,
+    channelName: sessionId ? `game_players_changes_${sessionId}` : undefined,
+    onChange: fetchPlayers,
+  });
 
   const createPlayer = async (
     sessionId: string,
