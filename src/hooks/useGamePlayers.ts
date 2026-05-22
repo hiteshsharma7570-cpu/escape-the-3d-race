@@ -110,6 +110,7 @@ export const useGamePlayers = (sessionId: string | null) => {
   return {
     players,
     currentPlayerId,
+    setCurrentPlayerId,
     createPlayer,
     updatePlayer,
     fetchPlayers,
