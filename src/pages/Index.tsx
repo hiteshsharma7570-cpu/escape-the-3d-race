@@ -2,10 +2,7 @@ import { useState, useEffect } from "react";
 import { GameBoard2D } from "@/components/game/GameBoard2D";
 import { GameDashboard } from "@/components/game/GameDashboard";
 import { Dice } from "@/components/game/Dice";
-import { SessionLobby } from "@/components/game/SessionLobby";
 import { PlayerSetup } from "@/components/game/PlayerSetup";
-import { Leaderboard } from "@/components/game/Leaderboard";
-import { AchievementsPanel } from "@/components/game/AchievementsPanel";
 import { DecisionModal } from "@/components/game/DecisionModal";
 import { CashCertificateModal } from "@/components/game/CashCertificateModal";
 import { INITIAL_GAME_STATE } from "@/types/game";
@@ -13,40 +10,43 @@ import { GameState } from "@/types/game";
 import { BOARD_TILES, handleTileEffect, applyCharityDecision, applyOpportunityDecision, generateMarketHint, sellAsset } from "@/lib/gameLogic";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
-import { Trophy, HelpCircle, Music, Volume2, VolumeX, LogOut, Award } from "lucide-react";
+import { HelpCircle, Music, Volume2, VolumeX, RotateCcw } from "lucide-react";
 import { useGameSounds } from "@/hooks/useGameSounds";
-import { useGameSession } from "@/hooks/useGameSession";
-import { useGamePlayers } from "@/hooks/useGamePlayers";
-import { useAchievements } from "@/hooks/useAchievements";
-import { usePlayerStats } from "@/hooks/usePlayerStats";
-import { supabase } from "@/integrations/supabase/client";
+
+const SAVE_KEY = "cashflow_game_save_v1";
 
 const Index = () => {
   const [gameState, setGameState] = useState<GameState>(INITIAL_GAME_STATE);
-  const [gameMode, setGameMode] = useState<"lobby" | "setup" | "playing">("lobby");
-  const [showAchievements, setShowAchievements] = useState(false);
+  const [gameMode, setGameMode] = useState<"setup" | "playing">("setup");
   const [showCertificate, setShowCertificate] = useState(false);
   const [certificateAwarded, setCertificateAwarded] = useState(false);
   const { playSound, isMusicEnabled, isSoundEnabled, toggleMusic, toggleSound } = useGameSounds();
-  const { sessions, currentSession, isLoading, createSession, joinSession, endSession } = useGameSession();
-  const { players, currentPlayerId, createPlayer, updatePlayer, setCurrentPlayerId } = useGamePlayers(currentSession?.id || null);
-  const { achievements, checkAchievements, getProgress, isUnlocked } = useAchievements(currentPlayerId);
-  const { stats, incrementGamesWon } = usePlayerStats(currentPlayerId);
 
-  // Sync game state with database and check achievements when it changes
+  // Load saved game on mount
   useEffect(() => {
-    if (currentPlayerId && gameMode === "playing") {
-      updatePlayer(currentPlayerId, gameState);
-      checkAchievements(gameState, stats.gamesWon);
+    try {
+      const saved = localStorage.getItem(SAVE_KEY);
+      if (saved) {
+        const parsed = JSON.parse(saved) as GameState;
+        setGameState(parsed);
+        setCertificateAwarded(parsed.cash >= 10000000);
+        setGameMode("playing");
+      }
+    } catch (err) {
+      console.error("Failed to load saved game", err);
     }
-  }, [gameState.cash, gameState.position, gameState.passiveIncome, gameState.hasEscapedRatRace, gameState.assets.length]);
+  }, []);
 
-  // Check for rat race escape and update stats
+  // Persist game state to localStorage while playing
   useEffect(() => {
-    if (gameState.hasEscapedRatRace && currentPlayerId) {
-      incrementGamesWon();
+    if (gameMode === "playing") {
+      try {
+        localStorage.setItem(SAVE_KEY, JSON.stringify(gameState));
+      } catch (err) {
+        console.error("Failed to save game", err);
+      }
     }
-  }, [gameState.hasEscapedRatRace]);
+  }, [gameState, gameMode]);
 
   // Award Crorepati certificate the first time cash crosses ₹1 crore
   useEffect(() => {
@@ -58,73 +58,21 @@ const Index = () => {
     }
   }, [gameState.cash, gameMode, certificateAwarded]);
 
-  const handleCreateSession = async (name: string) => {
-    const session = await createSession(name);
-    if (session) {
-      setGameMode("setup");
-      toast.success(`Session "${name}" created!`);
-    }
-  };
-
-  const handleJoinSession = async (sessionId: string) => {
-    const session = await joinSession(sessionId);
-    if (!session) return;
-
-    // Check if this user already has a player in this session — resume their game
-    const { data: { user } } = await supabase.auth.getUser();
-    if (user) {
-      const { data: existing } = await supabase
-        .from("game_players")
-        .select("*")
-        .eq("session_id", sessionId)
-        .eq("user_id", user.id)
-        .maybeSingle();
-
-      if (existing) {
-        setCurrentPlayerId(existing.id);
-        setGameState((prev) => ({
-          ...prev,
-          playerName: existing.player_name,
-          profession: existing.profession,
-          cash: Number(existing.cash),
-          salary: Number(existing.salary),
-          passiveIncome: Number(existing.passive_income),
-          position: existing.position,
-          hasEscapedRatRace: existing.has_escaped_rat_race,
-          gameLog: [`Welcome back, ${existing.player_name}! Continuing your game.`],
-        }));
-        setCertificateAwarded(Number(existing.cash) >= 10000000);
-        setGameMode("playing");
-        toast.success(`Welcome back, ${existing.player_name}!`);
-        return;
-      }
-    }
-
-    setGameMode("setup");
-    toast.success(`Joined session!`);
-  };
-
-  const handlePlayerCreate = async (playerName: string, profession: string) => {
-    if (!currentSession) return;
-
+  const handlePlayerCreate = (playerName: string, profession: string) => {
     const initialState = { ...INITIAL_GAME_STATE, playerName, profession };
     setGameState(initialState);
     setCertificateAwarded(initialState.cash >= 10000000);
-
-    const player = await createPlayer(currentSession.id, playerName, profession, initialState);
-    if (player) {
-      setGameMode("playing");
-      toast.success(`Welcome, ${playerName}!`);
-    }
+    setGameMode("playing");
+    toast.success(`Welcome, ${playerName}!`);
   };
 
-  const handleLeaveSession = async () => {
-    if (currentSession) {
-      await endSession(currentSession.id);
-      setGameMode("lobby");
-      setGameState(INITIAL_GAME_STATE);
-      toast.info("Left session");
-    }
+  const handleNewGame = () => {
+    if (!confirm("Start a new game? Your current progress will be lost.")) return;
+    localStorage.removeItem(SAVE_KEY);
+    setGameState(INITIAL_GAME_STATE);
+    setCertificateAwarded(false);
+    setGameMode("setup");
+    toast.info("Starting a new game");
   };
 
   const rollDice = () => {
@@ -297,21 +245,10 @@ const Index = () => {
     );
   };
 
-  if (gameMode === "lobby") {
-    return (
-      <SessionLobby
-        sessions={sessions}
-        isLoading={isLoading}
-        onCreateSession={handleCreateSession}
-        onJoinSession={handleJoinSession}
-      />
-    );
-  }
-
-  if (gameMode === "setup" && currentSession) {
+  if (gameMode === "setup") {
     return (
       <PlayerSetup
-        sessionName={currentSession.name}
+        sessionName="Cashflow"
         onPlayerCreate={handlePlayerCreate}
       />
     );
@@ -322,15 +259,15 @@ const Index = () => {
       {/* Top Controls */}
       <div className="flex justify-between items-center mb-4 max-w-7xl mx-auto">
         <div className="flex items-center gap-2">
-          <h2 className="text-lg font-semibold">Session: {currentSession?.name}</h2>
+          <h2 className="text-lg font-semibold">{gameState.playerName}'s Game</h2>
           <Button
             variant="outline"
             size="sm"
-            onClick={handleLeaveSession}
+            onClick={handleNewGame}
             className="gap-2"
           >
-            <LogOut className="w-4 h-4" />
-            Leave
+            <RotateCcw className="w-4 h-4" />
+            New Game
           </Button>
         </div>
         <div className="flex gap-2">
@@ -358,18 +295,10 @@ const Index = () => {
           >
             <HelpCircle className="w-4 h-4" />
           </Button>
-          <Button
-            variant="outline"
-            size="icon"
-            className="bg-card"
-            onClick={() => setShowAchievements(!showAchievements)}
-          >
-            <Award className="w-4 h-4" />
-          </Button>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 max-w-7xl mx-auto">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 max-w-6xl mx-auto">
         <div className="lg:col-span-2 space-y-4">
           <GameBoard2D currentPosition={gameState.position} diceValue={gameState.diceValue} />
           <Dice value={gameState.diceValue} isRolling={gameState.isRolling} />
@@ -383,19 +312,6 @@ const Index = () => {
             onPayOffDebts={payOffDebts}
             onSellAsset={handleSellAsset}
           />
-        </div>
-        <div>
-          {showAchievements ? (
-            <AchievementsPanel
-              achievements={achievements}
-              isUnlocked={isUnlocked}
-              getProgress={getProgress}
-              gameState={gameState}
-              gamesWon={stats.gamesWon}
-            />
-          ) : (
-            <Leaderboard players={players} currentPlayerId={currentPlayerId} />
-          )}
         </div>
       </div>
 
