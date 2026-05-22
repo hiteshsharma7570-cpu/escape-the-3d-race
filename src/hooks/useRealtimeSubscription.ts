@@ -1,5 +1,6 @@
 import { useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 interface RealtimeConfig {
   table: string;
@@ -17,27 +18,49 @@ export const useRealtimeSubscription = ({
   onChange,
 }: RealtimeConfig) => {
   useEffect(() => {
-    const uniqueChannelName =
-      channelName || `${table}_changes_${event}${filter ? `_${btoa(filter)}` : ""}`;
+    let channel: ReturnType<typeof supabase.channel> | null = null;
 
-    const channel = supabase
-      .channel(uniqueChannelName)
-      .on(
-        "postgres_changes",
-        {
-          event,
-          schema: "public",
-          table,
-          ...(filter ? { filter } : {}),
-        },
-        () => {
-          onChange();
-        }
-      )
-      .subscribe();
+    try {
+      const uniqueChannelName =
+        channelName || `${table}_changes_${event}${filter ? `_${btoa(filter)}` : ""}`;
+
+      channel = supabase
+        .channel(uniqueChannelName)
+        .on(
+          "postgres_changes",
+          {
+            event,
+            schema: "public",
+            table,
+            ...(filter ? { filter } : {}),
+          },
+          (payload) => {
+            try {
+              onChange();
+            } catch (err) {
+              console.error(`[realtime:${table}] callback error`, err, payload);
+              toast.error("Failed to process realtime update");
+            }
+          }
+        )
+        .subscribe((status, err) => {
+          if (status === "CHANNEL_ERROR" || status === "TIMED_OUT") {
+            console.error(`[realtime:${table}] subscription status: ${status}`, err);
+            toast.error("Realtime connection issue. Live updates may be delayed.");
+          }
+        });
+    } catch (err) {
+      console.error(`[realtime:${table}] failed to setup channel`, err);
+      toast.error("Failed to enable realtime updates");
+    }
 
     return () => {
-      supabase.removeChannel(channel);
+      if (!channel) return;
+      try {
+        supabase.removeChannel(channel);
+      } catch (err) {
+        console.error(`[realtime:${table}] cleanup error`, err);
+      }
     };
   }, [table, event, filter, channelName, onChange]);
 };
