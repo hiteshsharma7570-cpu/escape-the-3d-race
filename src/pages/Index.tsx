@@ -19,6 +19,7 @@ import { useGameSession } from "@/hooks/useGameSession";
 import { useGamePlayers } from "@/hooks/useGamePlayers";
 import { useAchievements } from "@/hooks/useAchievements";
 import { usePlayerStats } from "@/hooks/usePlayerStats";
+import { supabase } from "@/integrations/supabase/client";
 
 const Index = () => {
   const [gameState, setGameState] = useState<GameState>(INITIAL_GAME_STATE);
@@ -28,7 +29,7 @@ const Index = () => {
   const [certificateAwarded, setCertificateAwarded] = useState(false);
   const { playSound, isMusicEnabled, isSoundEnabled, toggleMusic, toggleSound } = useGameSounds();
   const { sessions, currentSession, isLoading, createSession, joinSession, endSession } = useGameSession();
-  const { players, currentPlayerId, createPlayer, updatePlayer } = useGamePlayers(currentSession?.id || null);
+  const { players, currentPlayerId, createPlayer, updatePlayer, setCurrentPlayerId } = useGamePlayers(currentSession?.id || null);
   const { achievements, checkAchievements, getProgress, isUnlocked } = useAchievements(currentPlayerId);
   const { stats, incrementGamesWon } = usePlayerStats(currentPlayerId);
 
@@ -67,10 +68,40 @@ const Index = () => {
 
   const handleJoinSession = async (sessionId: string) => {
     const session = await joinSession(sessionId);
-    if (session) {
-      setGameMode("setup");
-      toast.success(`Joined session!`);
+    if (!session) return;
+
+    // Check if this user already has a player in this session — resume their game
+    const { data: { user } } = await supabase.auth.getUser();
+    if (user) {
+      const { data: existing } = await supabase
+        .from("game_players")
+        .select("*")
+        .eq("session_id", sessionId)
+        .eq("user_id", user.id)
+        .maybeSingle();
+
+      if (existing) {
+        setCurrentPlayerId(existing.id);
+        setGameState((prev) => ({
+          ...prev,
+          playerName: existing.player_name,
+          profession: existing.profession,
+          cash: Number(existing.cash),
+          salary: Number(existing.salary),
+          passiveIncome: Number(existing.passive_income),
+          position: existing.position,
+          hasEscapedRatRace: existing.has_escaped_rat_race,
+          gameLog: [`Welcome back, ${existing.player_name}! Continuing your game.`],
+        }));
+        setCertificateAwarded(Number(existing.cash) >= 10000000);
+        setGameMode("playing");
+        toast.success(`Welcome back, ${existing.player_name}!`);
+        return;
+      }
     }
+
+    setGameMode("setup");
+    toast.success(`Joined session!`);
   };
 
   const handlePlayerCreate = async (playerName: string, profession: string) => {
