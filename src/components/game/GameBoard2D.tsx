@@ -1,5 +1,6 @@
 import { BOARD_TILES } from "@/lib/gameLogic";
 import { motion } from "framer-motion";
+import { useEffect, useState, useRef } from "react";
 
 interface GameBoard2DProps {
   currentPosition: number;
@@ -7,6 +8,26 @@ interface GameBoard2DProps {
 }
 
 export const GameBoard2D = ({ currentPosition, diceValue }: GameBoard2DProps) => {
+  const [displayedPosition, setDisplayedPosition] = useState(currentPosition);
+  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Step the pawn tile-by-tile toward the target position so each dice roll
+  // visibly travels across the board.
+  useEffect(() => {
+    if (displayedPosition === currentPosition) return;
+    if (timerRef.current) clearTimeout(timerRef.current);
+    timerRef.current = setTimeout(() => {
+      setDisplayedPosition((prev) => {
+        if (prev === currentPosition) return prev;
+        // Always step forward (dice only moves forward), wrapping the board.
+        return (prev + 1) % BOARD_TILES.length;
+      });
+    }, 280);
+    return () => {
+      if (timerRef.current) clearTimeout(timerRef.current);
+    };
+  }, [displayedPosition, currentPosition]);
+
   // Create board layout: 4x4 grid path
   const getTilePosition = (index: number) => {
     const positions = [
@@ -29,7 +50,7 @@ export const GameBoard2D = ({ currentPosition, diceValue }: GameBoard2DProps) =>
       <div className="grid grid-cols-4 grid-rows-4 gap-2 h-full">
         {BOARD_TILES.map((tile, index) => {
           const pos = getTilePosition(index);
-          const isCurrentPosition = currentPosition === index;
+          const isCurrentPosition = displayedPosition === index;
           
           return (
             <div
@@ -49,11 +70,16 @@ export const GameBoard2D = ({ currentPosition, diceValue }: GameBoard2DProps) =>
               
               {isCurrentPosition && (
                 <motion.div
-                  initial={{ scale: 0 }}
-                  animate={{ scale: 1 }}
+                  layoutId="player-pawn"
+                  initial={false}
+                  transition={{ type: "spring", stiffness: 380, damping: 28 }}
                   className="absolute inset-0 flex items-center justify-center"
                 >
-                  <div className="w-8 h-8 bg-yellow-500 rounded-full border-4 border-white shadow-lg" />
+                  <motion.div
+                    animate={{ y: [0, -6, 0] }}
+                    transition={{ duration: 0.28, ease: "easeOut" }}
+                    className="w-8 h-8 bg-yellow-500 rounded-full border-4 border-white shadow-lg"
+                  />
                 </motion.div>
               )}
             </div>
