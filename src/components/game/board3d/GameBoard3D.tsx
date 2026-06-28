@@ -191,6 +191,87 @@ function CityCenter() {
           />
         </RoundedBox>
       ))}
+      <FerrisWheel position={[3.6, 0, -2.4]} />
+      <Helicopter />
+    </group>
+  );
+}
+
+function FerrisWheel({ position }: { position: [number, number, number] }) {
+  const ref = useRef<THREE.Group>(null);
+  useFrame((_s, dt) => {
+    if (ref.current) ref.current.rotation.z += dt * 0.35;
+  });
+  const spokes = 10;
+  const radius = 1.5;
+  return (
+    <group position={[position[0], position[1] + radius + 0.2, position[2]]}>
+      {/* Support legs */}
+      <mesh position={[-0.5, -radius * 0.6, 0]} rotation={[0, 0, 0.35]}>
+        <cylinderGeometry args={[0.05, 0.06, radius * 1.6, 8]} />
+        <meshStandardMaterial color="#3a3a4a" metalness={0.9} roughness={0.3} />
+      </mesh>
+      <mesh position={[0.5, -radius * 0.6, 0]} rotation={[0, 0, -0.35]}>
+        <cylinderGeometry args={[0.05, 0.06, radius * 1.6, 8]} />
+        <meshStandardMaterial color="#3a3a4a" metalness={0.9} roughness={0.3} />
+      </mesh>
+      <group ref={ref}>
+        <mesh>
+          <torusGeometry args={[radius, 0.04, 12, 48]} />
+          <meshStandardMaterial color="#ff4fa3" emissive="#ff4fa3" emissiveIntensity={1.4} toneMapped={false} />
+        </mesh>
+        {Array.from({ length: spokes }).map((_, i) => {
+          const a = (i / spokes) * Math.PI * 2;
+          return (
+            <group key={i} rotation={[0, 0, a]}>
+              <mesh>
+                <boxGeometry args={[0.02, radius * 2, 0.02]} />
+                <meshStandardMaterial color="#aaa" emissive="#fff" emissiveIntensity={0.4} />
+              </mesh>
+              <mesh position={[0, radius, 0]}>
+                <sphereGeometry args={[0.12, 12, 12]} />
+                <meshStandardMaterial
+                  color={["#ffd86b", "#4fa3ff", "#2dd4a8", "#ff6b9d"][i % 4]}
+                  emissive={["#ffd86b", "#4fa3ff", "#2dd4a8", "#ff6b9d"][i % 4]}
+                  emissiveIntensity={1.2}
+                  toneMapped={false}
+                />
+              </mesh>
+            </group>
+          );
+        })}
+      </group>
+    </group>
+  );
+}
+
+function Helicopter() {
+  const ref = useRef<THREE.Group>(null);
+  const rotor = useRef<THREE.Mesh>(null);
+  useFrame(({ clock }, dt) => {
+    const t = clock.getElapsedTime() * 0.35;
+    if (ref.current) {
+      const r = 4.6;
+      ref.current.position.set(Math.cos(t) * r, 5.8 + Math.sin(t * 2) * 0.2, Math.sin(t) * r);
+      ref.current.rotation.y = -t + Math.PI / 2;
+    }
+    if (rotor.current) rotor.current.rotation.y += dt * 30;
+  });
+  return (
+    <group ref={ref}>
+      <mesh castShadow>
+        <capsuleGeometry args={[0.18, 0.45, 6, 12]} />
+        <meshStandardMaterial color="#1a1a22" metalness={0.8} roughness={0.3} emissive="#ff4444" emissiveIntensity={0.4} />
+      </mesh>
+      <mesh position={[0.55, 0, 0]}>
+        <boxGeometry args={[0.5, 0.05, 0.05]} />
+        <meshStandardMaterial color="#1a1a22" metalness={0.8} roughness={0.3} />
+      </mesh>
+      <mesh ref={rotor} position={[0, 0.22, 0]}>
+        <boxGeometry args={[1.4, 0.02, 0.06]} />
+        <meshStandardMaterial color="#888" transparent opacity={0.45} />
+      </mesh>
+      <pointLight color="#ff3030" intensity={0.6} distance={2} />
     </group>
   );
 }
