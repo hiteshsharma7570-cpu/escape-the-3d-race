@@ -19,13 +19,6 @@ import {
   applyPeriodicMechanics,
   calculateNetWorth,
 } from "@/lib/gameLogic";
-import { NewspaperFlash } from "@/components/game/NewspaperFlash";
-import { NewsArchive, type ArchiveEntry } from "@/components/game/NewsArchive";
-import {
-  pickNewspaperForRoll,
-  TILE_TYPE_TO_HINTS,
-  type NewspaperHeadline,
-} from "@/data/newspapers";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { HelpCircle, Music, Volume2, VolumeX, RotateCcw, Check, LogOut } from "lucide-react";
@@ -59,10 +52,6 @@ const Index = () => {
   const [winRecorded, setWinRecorded] = useState(false);
   const [unlockedAchIds, setUnlockedAchIds] = useState<string[]>([]);
   const [gamesWon, setGamesWon] = useState(0);
-  const [currentNewspaper, setCurrentNewspaper] = useState<NewspaperHeadline | null>(null);
-  const [newspaperArchive, setNewspaperArchive] = useState<ArchiveEntry[]>([]);
-  const [readLater, setReadLater] = useState<NewspaperHeadline[]>([]);
-  const pendingRollRef = useRef<{ headline: NewspaperHeadline | null } | null>(null);
   const [saveStatus, setSaveStatus] = useState<{ show: boolean; message: string }>({
     show: false,
     message: "Saved just now",
@@ -243,17 +232,6 @@ const Index = () => {
 
   const rollDice = () => {
     if (gameState.isRolling) return;
-    if (currentNewspaper) return; // newspaper still on screen
-
-    // Pick a newspaper and flash it before the roll
-    const tileTypes = BOARD_TILES.map((t) => t.type as string);
-    const headline = pickNewspaperForRoll(gameState.position, BOARD_TILES.length, tileTypes);
-    pendingRollRef.current = { headline };
-    setCurrentNewspaper(headline);
-    setGameState((prev) => ({ ...prev, isRolling: true, activeHint: headline.hint }));
-  };
-
-  const executeRoll = (headline: NewspaperHeadline | null) => {
     playSound("diceRoll");
     const diceValue = Math.floor(Math.random() * 6) + 1;
     setGameState((prev) => {
@@ -283,15 +261,6 @@ const Index = () => {
           ...updated.gameLog.slice(0, 19),
         ];
       }
-      // Record archive entry: did the newspaper hint match the landed tile?
-      if (headline) {
-        const tileHints = TILE_TYPE_TO_HINTS[landedTile.type as string] || [];
-        const matched = tileHints.includes(headline.hint);
-        setNewspaperArchive((prevArc) => [
-          { turn: updated.turnCount, headline, matched },
-          ...prevArc,
-        ].slice(0, 50));
-      }
       // Tile sound based on type
       setTimeout(() => {
         if (landedTile.type === "payday") playSound("payDay");
@@ -306,20 +275,6 @@ const Index = () => {
       return updated;
     });
     toast.info(`Rolled ${diceValue}!`);
-  };
-
-  const handleNewspaperDismiss = () => {
-    const pending = pendingRollRef.current;
-    pendingRollRef.current = null;
-    setCurrentNewspaper(null);
-    if (pending) {
-      executeRoll(pending.headline);
-    }
-  };
-
-  const handleReadLater = (h: NewspaperHeadline) => {
-    setReadLater((prev) => (prev.find((p) => p.id === h.id) ? prev : [h, ...prev]));
-    toast.success("Saved to Read Later");
   };
 
   const handleSellAsset = (assetId: string) => {
