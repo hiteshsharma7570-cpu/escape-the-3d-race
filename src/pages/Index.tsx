@@ -24,8 +24,7 @@ import { Button } from "@/components/ui/button";
 import { HelpCircle, Music, Volume2, VolumeX, RotateCcw, Check, LogOut } from "lucide-react";
 import { useGameSounds } from "@/hooks/useGameSounds";
 import { WinScreen } from "@/components/game/WinScreen";
-import { AchievementsPanel } from "@/components/game/AchievementsPanel";
-import { ACHIEVEMENTS, meetsThreshold, getProgress as getAchProgress } from "@/lib/achievements";
+import { ACHIEVEMENTS, meetsThreshold } from "@/lib/achievements";
 import {
   Tooltip,
   TooltipContent,
@@ -523,13 +522,6 @@ const Index = () => {
         </div>
         <div className="space-y-4">
           <LocalLeaderboard currentPlayerName={gameState.playerName} limit={5} />
-          <AchievementsPanel
-            achievements={ACHIEVEMENTS}
-            isUnlocked={(id) => unlockedAchIds.includes(id)}
-            getProgress={getAchProgress}
-            gameState={gameState}
-            gamesWon={gamesWon}
-          />
           <GameDashboard
             gameState={gameState}
             onRollDice={rollDice}
