@@ -3,6 +3,22 @@ import { Button } from "@/components/ui/button";
 import { GameState, calculateMonthlyCashFlow, calculateTotalExpenses, calculateNetWorth } from "@/lib/gameLogic";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { Info } from "lucide-react";
+
+const InfoLabel = ({ label, tip }: { label: string; tip: string }) => (
+  <TooltipProvider delayDuration={150}>
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <span className="inline-flex items-center gap-1 cursor-help">
+          {label}
+          <Info className="w-3 h-3 text-muted-foreground" />
+        </span>
+      </TooltipTrigger>
+      <TooltipContent className="max-w-xs">{tip}</TooltipContent>
+    </Tooltip>
+  </TooltipProvider>
+);
 
 interface GameDashboardProps {
   gameState: GameState;
@@ -24,6 +40,12 @@ export const GameDashboard = ({
   const monthlyCashFlow = calculateMonthlyCashFlow(gameState);
   const totalExpenses = calculateTotalExpenses(gameState);
   const netWorth = calculateNetWorth(gameState);
+  const escapePct = totalExpenses > 0
+    ? Math.min((gameState.passiveIncome / totalExpenses) * 100, 100)
+    : 0;
+  const escapeColor =
+    escapePct >= 100 ? "bg-success" : escapePct >= 50 ? "bg-yellow-500" : "bg-destructive";
+  const milestones = [25, 50, 75, 100];
 
   return (
     <div className="space-y-4">
@@ -55,6 +77,46 @@ export const GameDashboard = ({
           <p className="text-5xl font-bold text-success tracking-wider">
             ₹{gameState.cash.toLocaleString()}
           </p>
+        </div>
+
+        {/* Escape Progress */}
+        <div className="mb-6 bg-accent/40 p-3 rounded-lg">
+          <div className="flex items-center justify-between mb-2">
+            <p className="text-sm font-semibold">Escape Progress</p>
+            <p className="text-xs text-muted-foreground">{escapePct.toFixed(0)}%</p>
+          </div>
+          {totalExpenses === 0 ? (
+            <p className="text-xs text-muted-foreground italic">
+              Add investments and take on liabilities to begin
+            </p>
+          ) : (
+            <>
+              <p className="text-xs text-muted-foreground mb-2">
+                Passive ₹{gameState.passiveIncome.toLocaleString()} / Expenses ₹
+                {totalExpenses.toLocaleString()}
+              </p>
+              <div className="relative h-3 rounded-full bg-background overflow-hidden">
+                <div
+                  className={`h-full transition-all ${escapeColor}`}
+                  style={{ width: `${escapePct}%` }}
+                />
+                {milestones.map((m) => (
+                  <div
+                    key={m}
+                    className="absolute top-0 bottom-0 w-px bg-foreground/30"
+                    style={{ left: `${m}%` }}
+                  />
+                ))}
+              </div>
+              <div className="flex justify-between mt-1 text-[10px] text-muted-foreground">
+                {milestones.map((m) => (
+                  <span key={m} className={escapePct >= m ? "text-success font-semibold" : ""}>
+                    {m}%
+                  </span>
+                ))}
+              </div>
+            </>
+          )}
         </div>
 
         {gameState.diceValue && (
@@ -107,7 +169,10 @@ export const GameDashboard = ({
         <div className="space-y-4">
           <div>
             <p className="text-sm text-muted-foreground">
-              {gameState.profession} <span className="text-success">(120% Eff.)</span>
+              {gameState.profession} · Starting salary ₹{gameState.salary.toLocaleString()}
+            </p>
+            <p className="text-xs text-muted-foreground mt-1">
+              Loans taken: <span className="font-semibold">{gameState.loansTaken}</span>
             </p>
           </div>
 
@@ -119,7 +184,7 @@ export const GameDashboard = ({
                 <span>₹{gameState.salary.toLocaleString()}</span>
               </div>
               <div className="flex justify-between">
-                <span>Passive Income:</span>
+                <span><InfoLabel label="Passive Income" tip="Money you earn without actively working — rent, dividends, business profits. The goal is to make this exceed your expenses." /></span>
                 <span>₹{gameState.passiveIncome.toLocaleString()}</span>
               </div>
               <Separator className="my-2" />
@@ -131,7 +196,9 @@ export const GameDashboard = ({
           </div>
 
           <div>
-            <h3 className="text-destructive font-bold mb-2">Expenses</h3>
+            <h3 className="text-destructive font-bold mb-2">
+              <InfoLabel label="Expenses" tip="Total of all monthly liability payments — what you must pay every month." />
+            </h3>
             <div className="space-y-1 text-sm">
               {gameState.liabilities.map((liability) => (
                 <div key={liability.id} className="flex justify-between">
@@ -148,7 +215,9 @@ export const GameDashboard = ({
           </div>
 
           <div className="bg-accent p-3 rounded-lg">
-            <h3 className="font-bold mb-2">Monthly Cash Flow:</h3>
+            <h3 className="font-bold mb-2">
+              <InfoLabel label="Monthly Cash Flow" tip="Salary + passive income minus all monthly liability payments. Negative means you're going backwards." />
+            </h3>
             <p className={`text-2xl font-bold ${monthlyCashFlow >= 0 ? 'text-success' : 'text-destructive'}`}>
               ₹{monthlyCashFlow.toLocaleString()}
             </p>
@@ -156,7 +225,9 @@ export const GameDashboard = ({
 
         {gameState.assets.length > 0 && (
             <div>
-              <h3 className="text-info font-bold mb-2">Assets</h3>
+              <h3 className="text-info font-bold mb-2">
+                <InfoLabel label="Assets" tip="Things you own that generate income or hold value." />
+              </h3>
               <div className="space-y-2 text-sm">
                 {gameState.assets.map((asset) => (
                   <div key={asset.id} className="flex justify-between items-center gap-2">
@@ -196,7 +267,9 @@ export const GameDashboard = ({
 
           {gameState.liabilities.length > 0 && (
             <div>
-              <h3 className="text-destructive font-bold mb-2">Liabilities</h3>
+              <h3 className="text-destructive font-bold mb-2">
+                <InfoLabel label="Liabilities" tip="Debts that cost you money every month — loans, mortgages, credit cards." />
+              </h3>
               <div className="space-y-1 text-sm">
                 {gameState.liabilities.map((liability) => (
                   <div key={liability.id} className="flex justify-between">
@@ -212,7 +285,9 @@ export const GameDashboard = ({
 
           <div className="bg-primary/10 p-3 rounded-lg border border-primary">
             <div className="flex justify-between items-center">
-              <span className="font-bold">Net Worth:</span>
+              <span className="font-bold">
+                <InfoLabel label="Net Worth" tip="Total assets minus total liabilities. Positive means you own more than you owe." />
+              </span>
               <span className={`text-xl font-bold ${netWorth >= 0 ? 'text-success' : 'text-destructive'}`}>
                 ₹{netWorth.toLocaleString()}
               </span>
@@ -227,7 +302,10 @@ export const GameDashboard = ({
         <ScrollArea className="h-[200px]">
           <div className="space-y-2">
             {gameState.gameLog.map((log, index) => (
-              <p key={index} className="text-sm">
+              <p
+                key={index}
+                className={`text-sm ${log.includes("💡") ? "text-muted-foreground italic" : ""}`}
+              >
                 <span className="text-primary font-bold">→</span> {log}
               </p>
             ))}

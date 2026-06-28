@@ -6,22 +6,38 @@ import { PlayerSetup } from "@/components/game/PlayerSetup";
 import { LocalLeaderboard, LEADERBOARD_UPDATE_EVENT } from "@/components/game/LocalLeaderboard";
 import { DecisionModal } from "@/components/game/DecisionModal";
 import { CashCertificateModal } from "@/components/game/CashCertificateModal";
-import { INITIAL_GAME_STATE } from "@/types/game";
-import { GameState } from "@/types/game";
+import { createInitialGameState, GameState } from "@/types/game";
 import { BOARD_TILES, handleTileEffect, applyCharityDecision, applyOpportunityDecision, generateMarketHint, sellAsset } from "@/lib/gameLogic";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
-import { HelpCircle, Music, Volume2, VolumeX, RotateCcw, Check } from "lucide-react";
+import { HelpCircle, Music, Volume2, VolumeX, RotateCcw, Check, LogOut } from "lucide-react";
 import { useGameSounds } from "@/hooks/useGameSounds";
+import { WinScreen } from "@/components/game/WinScreen";
+import { AchievementsPanel } from "@/components/game/AchievementsPanel";
+import { ACHIEVEMENTS, meetsThreshold, getProgress as getAchProgress } from "@/lib/achievements";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 const SAVE_KEY_PREFIX = "cashflow_game_save_v1:";
 const saveKeyFor = (name: string) => `${SAVE_KEY_PREFIX}${name.trim().toLowerCase()}`;
+const ACH_KEY_PREFIX = "cashflow_achievements_v1:";
+const achKeyFor = (name: string) => `${ACH_KEY_PREFIX}${name.trim().toLowerCase()}`;
+const GAMES_WON_KEY_PREFIX = "cashflow_games_won_v1:";
+const gamesWonKeyFor = (name: string) => `${GAMES_WON_KEY_PREFIX}${name.trim().toLowerCase()}`;
 
 const Index = () => {
-  const [gameState, setGameState] = useState<GameState>(INITIAL_GAME_STATE);
+  const [gameState, setGameState] = useState<GameState>(() => createInitialGameState());
   const [gameMode, setGameMode] = useState<"setup" | "playing">("setup");
   const [showCertificate, setShowCertificate] = useState(false);
   const [certificateAwarded, setCertificateAwarded] = useState(false);
+  const [showWinScreen, setShowWinScreen] = useState(false);
+  const [winRecorded, setWinRecorded] = useState(false);
+  const [unlockedAchIds, setUnlockedAchIds] = useState<string[]>([]);
+  const [gamesWon, setGamesWon] = useState(0);
   const [saveStatus, setSaveStatus] = useState<{ show: boolean; message: string }>({
     show: false,
     message: "Saved just now",
@@ -37,10 +53,10 @@ const Index = () => {
     }, 2000);
   };
 
-
-  // Persist game state to localStorage while playing (per-player) and flash indicator
+  // Debounced persist game state to localStorage while playing (per-player)
   useEffect(() => {
-    if (gameMode === "playing" && gameState.playerName) {
+    if (gameMode !== "playing" || !gameState.playerName) return;
+    const timer = setTimeout(() => {
       try {
         localStorage.setItem(saveKeyFor(gameState.playerName), JSON.stringify(gameState));
         flashSaved();
@@ -48,7 +64,8 @@ const Index = () => {
       } catch (err) {
         console.error("Failed to save game", err);
       }
-    }
+    }, 400);
+    return () => clearTimeout(timer);
   }, [gameState, gameMode]);
 
   // Autosave on page unload so progress is never lost mid-session
@@ -80,14 +97,68 @@ const Index = () => {
     }
   }, [gameState.cash, gameMode, certificateAwarded]);
 
+  // Show win screen on rat-race escape (once) and bump games_won
+  useEffect(() => {
+    if (gameMode !== "playing") return;
+    if (gameState.hasEscapedRatRace && !winRecorded) {
+      setWinRecorded(true);
+      setShowWinScreen(true);
+      try {
+        const next = gamesWon + 1;
+        localStorage.setItem(gamesWonKeyFor(gameState.playerName), String(next));
+        setGamesWon(next);
+      } catch {}
+    }
+  }, [gameState.hasEscapedRatRace, gameMode, winRecorded, gamesWon, gameState.playerName]);
+
+  // Check achievements whenever game state or gamesWon changes
+  useEffect(() => {
+    if (gameMode !== "playing" || !gameState.playerName) return;
+    const newlyUnlocked: string[] = [];
+    for (const ach of ACHIEVEMENTS) {
+      if (unlockedAchIds.includes(ach.id)) continue;
+      if (meetsThreshold(ach, gameState, gamesWon)) newlyUnlocked.push(ach.id);
+    }
+    if (newlyUnlocked.length > 0) {
+      const updated = [...unlockedAchIds, ...newlyUnlocked];
+      setUnlockedAchIds(updated);
+      try {
+        localStorage.setItem(achKeyFor(gameState.playerName), JSON.stringify(updated));
+      } catch {}
+      newlyUnlocked.forEach((id) => {
+        const ach = ACHIEVEMENTS.find((a) => a.id === id);
+        if (ach) {
+          toast.success(`🏆 Achievement Unlocked: ${ach.name}!`, {
+            description: ach.description,
+            duration: 4000,
+          });
+        }
+      });
+    }
+  }, [gameState, gamesWon, gameMode, unlockedAchIds]);
+
   const handlePlayerCreate = (playerName: string, profession: string) => {
+    // Load achievements + games won for this player
+    try {
+      const a = localStorage.getItem(achKeyFor(playerName));
+      setUnlockedAchIds(a ? (JSON.parse(a) as string[]) : []);
+    } catch { setUnlockedAchIds([]); }
+    try {
+      const w = localStorage.getItem(gamesWonKeyFor(playerName));
+      setGamesWon(w ? parseInt(w, 10) || 0 : 0);
+    } catch { setGamesWon(0); }
+
     // If this player has a saved game, resume it. Otherwise start fresh.
     try {
       const saved = localStorage.getItem(saveKeyFor(playerName));
       if (saved) {
         const parsed = JSON.parse(saved) as GameState;
+        // Backward compat: ensure new fields exist
+        if (parsed.turnCount === undefined) parsed.turnCount = 0;
+        if (parsed.loansTaken === undefined) parsed.loansTaken = 0;
         setGameState(parsed);
         setCertificateAwarded(parsed.cash >= 10000000);
+        setWinRecorded(parsed.hasEscapedRatRace);
         setGameMode("playing");
         toast.success(`Welcome back, ${playerName}! Resuming your game.`);
         return;
@@ -96,99 +167,82 @@ const Index = () => {
       console.error("Failed to load saved game", err);
     }
 
-    const initialState = { ...INITIAL_GAME_STATE, playerName, profession };
+    const initialState = createInitialGameState(playerName, profession);
     setGameState(initialState);
     setCertificateAwarded(initialState.cash >= 10000000);
+    setWinRecorded(false);
     setGameMode("playing");
-    toast.success(`Welcome, ${playerName}!`);
+    toast.success(`Welcome, ${playerName}! Starting a fresh game as a ${profession}.`);
   };
 
-  const handleNewGame = () => {
-    if (!confirm("Start a new game? Your current progress will be lost.")) return;
-    if (gameState.playerName) {
-      localStorage.removeItem(saveKeyFor(gameState.playerName));
-    }
-    setGameState(INITIAL_GAME_STATE);
+  // "Change Player": go back to setup screen (keeps saved game).
+  const handleChangePlayer = () => {
+    if (!confirm("Switch to a different player? Your current game is already saved.")) return;
+    setGameState(createInitialGameState());
     setCertificateAwarded(false);
+    setWinRecorded(false);
+    setShowWinScreen(false);
     setGameMode("setup");
-    toast.info("Starting a new game");
+    toast.info("Pick a player to continue");
   };
 
+  // "Restart": reset state but keep same player and profession.
   const handleResetMyGame = () => {
     if (!confirm("Reset your saved progress and restart from the beginning?")) return;
     const { playerName, profession } = gameState;
     if (playerName) {
       localStorage.removeItem(saveKeyFor(playerName));
     }
-    const fresh = { ...INITIAL_GAME_STATE, playerName, profession };
+    const fresh = createInitialGameState(playerName, profession);
     setGameState(fresh);
     setCertificateAwarded(false);
+    setWinRecorded(false);
+    setShowWinScreen(false);
     setGameMode("playing");
     toast.info(`${playerName}, your game has been reset to the starting point.`);
   };
 
   const rollDice = () => {
     if (gameState.isRolling) return;
-
     playSound("diceRoll");
-    // Generate a market news hint at the start of each roll (30% chance, only if no active hint)
-    setGameState((prev) => ({
-      ...prev,
-      isRolling: true,
-    }));
-
     const diceValue = Math.floor(Math.random() * 6) + 1;
-    
-    setTimeout(() => {
-      const newPosition = (gameState.position + diceValue) % BOARD_TILES.length;
+    setGameState((prev) => {
+      const newPosition = (prev.position + diceValue) % BOARD_TILES.length;
       const landedTile = BOARD_TILES[newPosition];
-      
-      let updatedState: GameState;
-      
-      setGameState((prev) => {
-        updatedState = {
-          ...prev,
-          diceValue,
-          position: newPosition,
-          isRolling: false,
-        };
-        
-        const afterTile = handleTileEffect(updatedState, landedTile);
-        // 40% chance to generate a market news hint for the next roll
-        // (only if not already on a market tile and no pending decision)
-        if (
-          !afterTile.marketHint &&
-          !afterTile.pendingDecision &&
-          landedTile.type !== "market" &&
-          Math.random() < 0.4
-        ) {
-          afterTile.marketHint = generateMarketHint();
-          afterTile.gameLog = [afterTile.marketHint.headline, ...afterTile.gameLog.slice(0, 9)];
-        }
-        return afterTile;
-      });
-
-      // Play sound based on tile type
+      let updated: GameState = {
+        ...prev,
+        diceValue,
+        position: newPosition,
+        isRolling: false,
+        turnCount: prev.turnCount + 1,
+      };
+      updated = handleTileEffect(updated, landedTile);
+      if (
+        !updated.marketHint &&
+        !updated.pendingDecision &&
+        landedTile.type !== "market" &&
+        Math.random() < 0.4
+      ) {
+        updated.marketHint = generateMarketHint();
+        updated.gameLog = [
+          `[Turn ${updated.turnCount}] ${updated.marketHint.headline}`,
+          ...updated.gameLog.slice(0, 19),
+        ];
+      }
+      // Tile sound based on type
       setTimeout(() => {
-        if (landedTile.type === "payday") {
-          playSound("payDay");
-        } else if (landedTile.type === "opportunity") {
-          playSound("opportunity");
-        } else if (landedTile.type === "market") {
-          playSound("market");
-        } else if (landedTile.type === "charity") {
-          playSound("charity");
-        } else if (landedTile.type === "baby") {
-          playSound("baby");
-        } else if (landedTile.type === "downsized") {
-          playSound("downsized");
-        } else if (landedTile.type === "dinner" || landedTile.type === "vacation") {
+        if (landedTile.type === "payday") playSound("payDay");
+        else if (landedTile.type === "opportunity") playSound("opportunity");
+        else if (landedTile.type === "market") playSound("market");
+        else if (landedTile.type === "charity") playSound("charity");
+        else if (landedTile.type === "baby") playSound("baby");
+        else if (landedTile.type === "downsized") playSound("downsized");
+        else if (landedTile.type === "dinner" || landedTile.type === "vacation")
           playSound("loseMoney");
-        }
       }, 100);
-
-      toast.info(`Rolled ${diceValue}! Landed on ${landedTile.label}`);
-    }, 500);
+      return updated;
+    });
+    toast.info(`Rolled ${diceValue}!`);
   };
 
   const handleSellAsset = (assetId: string) => {
@@ -198,6 +252,11 @@ const Index = () => {
   };
 
   const takeLoan = () => {
+    const activeBankLoans = gameState.liabilities.filter((l) => l.name === "Bank Loan").length;
+    if (activeBankLoans >= 3) {
+      toast.error("You already have 3 active bank loans. Repay one before taking another.");
+      return;
+    }
     const loanAmount = 100000;
     const monthlyPayment = 5000;
     
@@ -205,6 +264,7 @@ const Index = () => {
     setGameState((prev) => ({
       ...prev,
       cash: prev.cash + loanAmount,
+      loansTaken: prev.loansTaken + 1,
       liabilities: [
         ...prev.liabilities,
         {
@@ -214,15 +274,21 @@ const Index = () => {
           monthlyPayment,
         },
       ],
-      gameLog: [`Took a loan of ₹${loanAmount.toLocaleString()}. Monthly payment: ₹${monthlyPayment.toLocaleString()}`, ...prev.gameLog.slice(0, 9)],
+      gameLog: [
+        `[Turn ${prev.turnCount}] Took a loan of ₹${loanAmount.toLocaleString()}. Monthly payment: ₹${monthlyPayment.toLocaleString()}`,
+        ...prev.gameLog.slice(0, 19),
+      ],
     }));
     
     toast.success(`Loan approved! ₹${loanAmount.toLocaleString()} added to cash`);
   };
 
   const repayLoan = () => {
-    const loanIndex = gameState.liabilities.findIndex(l => l.name === "Bank Loan");
-    
+    // Repay the most recently taken Bank Loan
+    let loanIndex = -1;
+    for (let i = gameState.liabilities.length - 1; i >= 0; i--) {
+      if (gameState.liabilities[i].name === "Bank Loan") { loanIndex = i; break; }
+    }
     if (loanIndex === -1) {
       toast.error("No active loan to repay");
       return;
@@ -236,7 +302,10 @@ const Index = () => {
         ...prev,
         cash: prev.cash - loan.amount,
         liabilities: prev.liabilities.filter((_, i) => i !== loanIndex),
-        gameLog: [`Repaid loan of ₹${loan.amount.toLocaleString()}`, ...prev.gameLog.slice(0, 9)],
+        gameLog: [
+          `[Turn ${prev.turnCount}] Repaid loan of ₹${loan.amount.toLocaleString()}`,
+          ...prev.gameLog.slice(0, 19),
+        ],
       }));
       toast.success("Loan fully repaid!");
     } else {
@@ -250,16 +319,20 @@ const Index = () => {
       toast.error("No debts to pay off");
       return;
     }
-
     const totalDebt = gameState.liabilities.reduce((sum, l) => sum + l.amount, 0);
-    
+    if (!confirm(`Pay off ALL liabilities totaling ₹${totalDebt.toLocaleString()}? This cannot be undone.`)) {
+      return;
+    }
     if (gameState.cash >= totalDebt) {
       playSound("earnMoney");
       setGameState((prev) => ({
         ...prev,
         cash: prev.cash - totalDebt,
         liabilities: [],
-        gameLog: [`Paid off all debts totaling ₹${totalDebt.toLocaleString()}`, ...prev.gameLog.slice(0, 9)],
+        gameLog: [
+          `[Turn ${prev.turnCount}] Paid off all debts totaling ₹${totalDebt.toLocaleString()}`,
+          ...prev.gameLog.slice(0, 19),
+        ],
       }));
       toast.success("All debts cleared!");
     } else {
@@ -307,29 +380,30 @@ const Index = () => {
   }
 
   return (
+    <TooltipProvider delayDuration={150}>
     <div className="min-h-screen bg-gradient-to-br from-background to-accent/20 p-4">
       {/* Top Controls */}
       <div className="flex justify-between items-center mb-4 max-w-7xl mx-auto">
         <div className="flex items-center gap-2">
           <h2 className="text-lg font-semibold">{gameState.playerName}'s Game</h2>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handleNewGame}
-            className="gap-2"
-          >
-            <RotateCcw className="w-4 h-4" />
-            New Game
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handleResetMyGame}
-            className="gap-2"
-          >
-            <RotateCcw className="w-4 h-4" />
-            Reset My Game
-          </Button>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button variant="outline" size="sm" onClick={handleChangePlayer} className="gap-2">
+                <LogOut className="w-4 h-4" />
+                Change Player
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>Switch to a different player (your save stays).</TooltipContent>
+          </Tooltip>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button variant="outline" size="sm" onClick={handleResetMyGame} className="gap-2">
+                <RotateCcw className="w-4 h-4" />
+                Restart
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>Reset state, keep your player and profession.</TooltipContent>
+          </Tooltip>
           {saveStatus.show && (
             <span className="inline-flex items-center gap-1 text-xs text-muted-foreground">
               <Check className="w-3 h-3 text-success" />
@@ -372,6 +446,13 @@ const Index = () => {
         </div>
         <div className="space-y-4">
           <LocalLeaderboard currentPlayerName={gameState.playerName} limit={5} />
+          <AchievementsPanel
+            achievements={ACHIEVEMENTS}
+            isUnlocked={(id) => unlockedAchIds.includes(id)}
+            getProgress={getAchProgress}
+            gameState={gameState}
+            gamesWon={gamesWon}
+          />
           <GameDashboard
             gameState={gameState}
             onRollDice={rollDice}
@@ -396,7 +477,20 @@ const Index = () => {
         playerName={gameState.playerName}
         cash={gameState.cash}
       />
+
+      <WinScreen
+        open={showWinScreen}
+        gameState={gameState}
+        onPlayAgain={() => {
+          setShowWinScreen(false);
+          setGameState(createInitialGameState());
+          setCertificateAwarded(false);
+          setWinRecorded(false);
+          setGameMode("setup");
+        }}
+      />
     </div>
+    </TooltipProvider>
   );
 };
 

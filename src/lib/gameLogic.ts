@@ -2,6 +2,29 @@ import { GameState, Tile, Asset, Liability, MarketHint } from "@/types/game";
 
 export { type GameState, type Tile, type Asset, type Liability };
 
+const LOG_LIMIT = 19;
+const prefix = (state: GameState, msg: string) => `[Turn ${state.turnCount}] ${msg}`;
+const pushLog = (state: GameState, msg: string) => {
+  state.gameLog = [prefix(state, msg), ...state.gameLog.slice(0, LOG_LIMIT)];
+};
+
+export const INVESTMENT_OPPORTUNITIES = [
+  // Low Risk
+  { name: "Fixed Deposit", cost: 25000, income: 600, value: 25000, risk: "low" as const, description: "Safe bank deposit with guaranteed returns" },
+  { name: "Government Bonds", cost: 50000, income: 1200, value: 50000, risk: "low" as const, description: "Secure government-backed bonds" },
+  { name: "Dividend Stocks", cost: 75000, income: 2000, value: 75000, risk: "low" as const, description: "Blue-chip stocks with steady dividends" },
+  // Medium Risk
+  { name: "Rental Property", cost: 500000, income: 14400, value: 500000, risk: "medium" as const, description: "Residential property for rental income" },
+  { name: "Side Business", cost: 100000, income: 6000, value: 100000, risk: "medium" as const, description: "Part-time business venture" },
+  { name: "REITs", cost: 150000, income: 5400, value: 150000, risk: "medium" as const, description: "Real Estate Investment Trust" },
+  { name: "Mutual Funds", cost: 200000, income: 6000, value: 200000, risk: "medium" as const, description: "Diversified portfolio managed by experts" },
+  // High Risk
+  { name: "Startup Investment", cost: 250000, income: 15000, value: 250000, risk: "high" as const, description: "Equity in an early-stage company" },
+  { name: "Crypto Portfolio", cost: 100000, income: 8000, value: 100000, risk: "high" as const, description: "Diversified cryptocurrency holdings" },
+  { name: "Commercial Property", cost: 1000000, income: 40000, value: 1000000, risk: "high" as const, description: "Office/retail space for lease" },
+  { name: "Franchise Business", cost: 750000, income: 30000, value: 750000, risk: "high" as const, description: "Branded franchise operation" },
+];
+
 export const BOARD_TILES: Tile[] = [
   { id: 0, type: "payday", label: "Pay Day", color: "#10b981" },
   { id: 1, type: "opportunity", label: "Opportunity", color: "#3b82f6" },
@@ -40,6 +63,7 @@ export const calculateNetWorth = (state: GameState): number => {
 export const handleTileEffect = (state: GameState, tile: Tile): GameState => {
   const newState = { ...state };
   let logMessage = "";
+  let lessonMessage: string | null = null;
 
   switch (tile.type) {
     case "payday":
@@ -49,26 +73,7 @@ export const handleTileEffect = (state: GameState, tile: Tile): GameState => {
       break;
 
     case "opportunity":
-      // Generate opportunity with risk levels
-      const opportunities = [
-        // Low Risk - Stable, modest returns
-        { name: "Fixed Deposit", cost: 25000, income: 600, value: 25000, risk: "low" as const, description: "Safe bank deposit with guaranteed returns" },
-        { name: "Government Bonds", cost: 50000, income: 1200, value: 50000, risk: "low" as const, description: "Secure government-backed bonds" },
-        { name: "Dividend Stocks", cost: 75000, income: 2000, value: 75000, risk: "low" as const, description: "Blue-chip stocks with steady dividends" },
-        
-        // Medium Risk - Balanced risk/reward
-        { name: "Rental Property", cost: 500000, income: 14400, value: 500000, risk: "medium" as const, description: "Residential property for rental income" },
-        { name: "Side Business", cost: 100000, income: 6000, value: 100000, risk: "medium" as const, description: "Part-time business venture" },
-        { name: "REITs", cost: 150000, income: 5400, value: 150000, risk: "medium" as const, description: "Real Estate Investment Trust" },
-        { name: "Mutual Funds", cost: 200000, income: 6000, value: 200000, risk: "medium" as const, description: "Diversified portfolio managed by experts" },
-        
-        // High Risk - High potential returns
-        { name: "Startup Investment", cost: 250000, income: 15000, value: 250000, risk: "high" as const, description: "Equity in an early-stage company" },
-        { name: "Crypto Portfolio", cost: 100000, income: 8000, value: 100000, risk: "high" as const, description: "Diversified cryptocurrency holdings" },
-        { name: "Commercial Property", cost: 1000000, income: 40000, value: 1000000, risk: "high" as const, description: "Office/retail space for lease" },
-        { name: "Franchise Business", cost: 750000, income: 30000, value: 750000, risk: "high" as const, description: "Branded franchise operation" },
-      ];
-      const opp = opportunities[Math.floor(Math.random() * opportunities.length)];
+      const opp = INVESTMENT_OPPORTUNITIES[Math.floor(Math.random() * INVESTMENT_OPPORTUNITIES.length)];
       newState.pendingDecision = {
         type: "opportunity",
         opportunity: opp,
@@ -118,6 +123,7 @@ export const handleTileEffect = (state: GameState, tile: Tile): GameState => {
           : `📉 Market Crash! Portfolio ${changeText}. High-risk assets lost 25%!`;
       }
       newState.marketCondition = isBoom ? "boom" : "crash";
+      lessonMessage = "💡 High-risk assets are more volatile — they gain more in booms but lose more in crashes.";
       break;
 
     case "charity":
@@ -158,15 +164,20 @@ export const handleTileEffect = (state: GameState, tile: Tile): GameState => {
       break;
   }
 
-  newState.gameLog = [logMessage, ...newState.gameLog.slice(0, 9)];
+  pushLog(newState, logMessage);
+  if (lessonMessage) pushLog(newState, lessonMessage);
 
   // Clear any market hint that has now resolved (or stale after any roll)
   newState.marketHint = null;
-  
-  // Check win condition
-  if (newState.passiveIncome >= calculateTotalExpenses(newState) && !newState.hasEscapedRatRace) {
+
+  // Check win condition — only valid after at least one investment
+  if (
+    newState.assets.length > 0 &&
+    newState.passiveIncome >= calculateTotalExpenses(newState) &&
+    !newState.hasEscapedRatRace
+  ) {
     newState.hasEscapedRatRace = true;
-    newState.gameLog = ["🎉 You escaped the Rat Race! Passive income covers all expenses!", ...newState.gameLog];
+    pushLog(newState, "🎉 You escaped the Rat Race! Passive income covers all expenses!");
   }
 
   return newState;
@@ -177,9 +188,9 @@ export const applyCharityDecision = (state: GameState, accept: boolean): GameSta
   
   if (accept && state.pendingDecision?.charityAmount) {
     newState.cash -= state.pendingDecision.charityAmount;
-    newState.gameLog = [`Donated ₹${state.pendingDecision.charityAmount.toLocaleString()} to charity!`, ...newState.gameLog.slice(0, 9)];
+    pushLog(newState, `Donated ₹${state.pendingDecision.charityAmount.toLocaleString()} to charity!`);
   } else {
-    newState.gameLog = ["Declined charity donation.", ...newState.gameLog.slice(0, 9)];
+    pushLog(newState, "Declined charity donation.");
   }
   
   return newState;
@@ -200,18 +211,22 @@ export const applyOpportunityDecision = (state: GameState, accept: boolean): Gam
         risk: opp.risk,
       });
       newState.passiveIncome += opp.income;
-      newState.gameLog = [`Invested in ${opp.name}! Monthly income: +₹${opp.income.toLocaleString()}`, ...newState.gameLog.slice(0, 9)];
+      pushLog(newState, `Invested in ${opp.name}! Monthly income: +₹${opp.income.toLocaleString()}`);
     } else {
-      newState.gameLog = [`Insufficient funds for ${opp.name} (need ₹${opp.cost.toLocaleString()})`, ...newState.gameLog.slice(0, 9)];
+      pushLog(newState, `Insufficient funds for ${opp.name} (need ₹${opp.cost.toLocaleString()})`);
     }
   } else {
-    newState.gameLog = ["Passed on investment opportunity.", ...newState.gameLog.slice(0, 9)];
+    pushLog(newState, "Passed on investment opportunity.");
   }
   
-  // Check win condition after investment
-  if (newState.passiveIncome >= calculateTotalExpenses(newState) && !newState.hasEscapedRatRace) {
+  // Check win condition after investment (only after at least one asset exists)
+  if (
+    newState.assets.length > 0 &&
+    newState.passiveIncome >= calculateTotalExpenses(newState) &&
+    !newState.hasEscapedRatRace
+  ) {
     newState.hasEscapedRatRace = true;
-    newState.gameLog = ["🎉 You escaped the Rat Race! Passive income covers all expenses!", ...newState.gameLog];
+    pushLog(newState, "🎉 You escaped the Rat Race! Passive income covers all expenses!");
   }
   
   return newState;
@@ -242,9 +257,6 @@ export const sellAsset = (state: GameState, assetId: string): GameState => {
   newState.cash += asset.value;
   newState.passiveIncome = Math.max(0, newState.passiveIncome - asset.monthlyIncome);
   newState.assets = newState.assets.filter(a => a.id !== assetId);
-  newState.gameLog = [
-    `Sold ${asset.name} for ₹${asset.value.toLocaleString()} (lost ₹${asset.monthlyIncome.toLocaleString()}/mo income)`,
-    ...newState.gameLog.slice(0, 9),
-  ];
+  pushLog(newState, `Sold ${asset.name} for ₹${asset.value.toLocaleString()} (lost ₹${asset.monthlyIncome.toLocaleString()}/mo income)`);
   return newState;
 };
