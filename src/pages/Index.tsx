@@ -508,7 +508,7 @@ const Index = () => {
               <div className="text-xs text-muted-foreground">{BOARD_TILES.length} tiles</div>
             </div>
             <div className="p-3">
-              <GameBoard2D currentPosition={gameState.position} diceValue={gameState.diceValue} />
+              <GameBoard3D currentPosition={gameState.position} diceValue={gameState.diceValue} />
             </div>
             <div className="border-t border-border p-3">
               <Dice value={gameState.diceValue} isRolling={gameState.isRolling} />
