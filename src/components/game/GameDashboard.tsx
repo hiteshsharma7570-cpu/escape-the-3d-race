@@ -3,7 +3,6 @@ import { Button } from "@/components/ui/button";
 import { GameState, calculateMonthlyCashFlow, calculateTotalExpenses, calculateNetWorth } from "@/lib/gameLogic";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
-import { Progress } from "@/components/ui/progress";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Info } from "lucide-react";
 
