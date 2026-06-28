@@ -458,7 +458,6 @@ const Index = () => {
           )}
         </div>
         <div className="flex gap-2">
-          <NewsArchive entries={newspaperArchive} readLater={readLater} />
           <Button
             variant="outline"
             size="icon"
@@ -575,13 +574,6 @@ const Index = () => {
           setWinRecorded(false);
           setGameMode("setup");
         }}
-      />
-
-      <NewspaperFlash
-        headline={currentNewspaper}
-        onDismiss={handleNewspaperDismiss}
-        onReadLater={handleReadLater}
-        isSavedForLater={!!currentNewspaper && readLater.some((r) => r.id === currentNewspaper.id)}
       />
     </div>
     </TooltipProvider>
