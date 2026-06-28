@@ -431,3 +431,40 @@ export const sellAsset = (state: GameState, assetId: string): GameState => {
   pushLog(newState, `Sold ${asset.name} for ₹${asset.value.toLocaleString()} (lost ₹${asset.monthlyIncome.toLocaleString()}/mo income)`);
   return newState;
 };
+
+// Apply periodic mechanics based on turn number. Mutates a copy.
+export const applyPeriodicMechanics = (
+  state: GameState
+): { state: GameState; events: string[] } => {
+  const events: string[] = [];
+  let next = { ...state, liabilities: [...state.liabilities], assets: [...state.assets] };
+
+  // Inflation every 5 turns: liability monthlyPayment +3%
+  if (next.turnCount > 0 && next.turnCount % 5 === 0) {
+    next.liabilities = next.liabilities.map(l => ({
+      ...l,
+      monthlyPayment: Math.round(l.monthlyPayment * 1.03),
+    }));
+    events.push("📈 Inflation! Your monthly costs just went up.");
+    pushLog(next, "📈 Inflation hit — all monthly payments +3%.");
+  }
+
+  // Salary review every 8 turns: +5–15%
+  if (next.turnCount > 0 && next.turnCount % 8 === 0) {
+    const pct = 5 + Math.floor(Math.random() * 11);
+    const oldSalary = next.salary;
+    next.salary = Math.round(next.salary * (1 + pct / 100));
+    events.push(`🎉 Salary review! +${pct}% (₹${oldSalary.toLocaleString()} → ₹${next.salary.toLocaleString()})`);
+    pushLog(next, `🎉 Salary review: +${pct}% raise to ₹${next.salary.toLocaleString()}.`);
+  }
+
+  // Depreciation every 10 turns: non-real-estate assets -2% value
+  if (next.turnCount > 0 && next.turnCount % 10 === 0) {
+    const reRegex = /(real estate|property|rental|reit|commercial|plot)/i;
+    next.assets = next.assets.map(a =>
+      reRegex.test(a.name) ? a : { ...a, value: Math.round(a.value * 0.98) }
+    );
+  }
+
+  return { state: next, events };
+};
