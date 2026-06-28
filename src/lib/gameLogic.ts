@@ -93,41 +93,29 @@ export const handleTileEffect = (state: GameState, tile: Tile): GameState => {
   const newState = { ...state };
   let logMessage = "";
   let lessonMessage: string | null = null;
-  const hint = newState.activeHint;
 
   switch (tile.type) {
     case "payday":
       const cashFlow = calculateMonthlyCashFlow(state);
-      const paydayMult = hint === "salary_up" ? 1.2 : 1;
-      const payout = Math.round(cashFlow * paydayMult);
-      newState.cash += payout;
-      logMessage = paydayMult > 1
-        ? `Pay Day! Received ₹${payout.toLocaleString()} (boosted +20% by news hint)`
-        : `Pay Day! Received ₹${payout.toLocaleString()} (Monthly Cash Flow)`;
+      newState.cash += cashFlow;
+      logMessage = `Pay Day! Received ₹${cashFlow.toLocaleString()} (Monthly Cash Flow)`;
       break;
 
     case "opportunity":
       const opp = INVESTMENT_OPPORTUNITIES[Math.floor(Math.random() * INVESTMENT_OPPORTUNITIES.length)];
-      const oppBoosted = hint === "opportunity_high"
-        ? { ...opp, income: Math.round(opp.income * 1.1) }
-        : opp;
       newState.pendingDecision = {
         type: "opportunity",
-        opportunity: oppBoosted,
+        opportunity: opp,
       };
       const riskLabel = opp.risk === "low" ? "🟢 Low" : opp.risk === "medium" ? "🟡 Medium" : "🔴 High";
-      logMessage = `Opportunity (${riskLabel} Risk): ${oppBoosted.name} for ₹${oppBoosted.cost.toLocaleString()}${hint === "opportunity_high" ? " (+10% income hint)" : ""}`;
+      logMessage = `Opportunity (${riskLabel} Risk): ${opp.name} for ₹${opp.cost.toLocaleString()}`;
       break;
 
     case "market":
       // Market events affect investments based on risk level
       // If a hint was generated, bias the outcome toward it
       let isBoom: boolean;
-      if (hint === "market_boom") {
-        isBoom = Math.random() < 0.85;
-      } else if (hint === "market_crash") {
-        isBoom = Math.random() < 0.15;
-      } else if (state.marketHint?.sentiment === "bullish") {
+      if (state.marketHint?.sentiment === "bullish") {
         isBoom = Math.random() < 0.8;
       } else if (state.marketHint?.sentiment === "bearish") {
         isBoom = Math.random() < 0.2;
@@ -188,13 +176,13 @@ export const handleTileEffect = (state: GameState, tile: Tile): GameState => {
       break;
 
     case "vacation":
-      const vacationCost = Math.round(30000 * (hint === "expense_incoming" ? 1.25 : 1));
+      const vacationCost = 30000;
       newState.cash -= vacationCost;
       logMessage = `Vacation! Spent ₹${vacationCost.toLocaleString()}`;
       break;
 
     case "dinner":
-      const dinnerCost = Math.round(5000 * (hint === "expense_incoming" ? 1.25 : 1));
+      const dinnerCost = 5000;
       newState.cash -= dinnerCost;
       logMessage = `Dinner Out! Spent ₹${dinnerCost.toLocaleString()}`;
       break;
@@ -213,9 +201,8 @@ export const handleTileEffect = (state: GameState, tile: Tile): GameState => {
       } else {
         penalty = Math.floor(Math.random() * 130000) + 20000;
       }
-      if (hint === "tax_incoming") penalty = Math.round(penalty * 1.2);
       newState.cash -= penalty;
-      logMessage = `🔍 Tax Audit! The IT department reviewed your finances — penalty ₹${penalty.toLocaleString()}${hint === "tax_incoming" ? " (newspaper warned you!)" : ""}`;
+      logMessage = `🔍 Tax Audit! The IT department reviewed your finances — penalty ₹${penalty.toLocaleString()}`;
       break;
     }
 
@@ -223,7 +210,6 @@ export const handleTileEffect = (state: GameState, tile: Tile): GameState => {
       let cost = Math.floor(Math.random() * 250000) + 50000;
       const hasInsurance = newState.assets.some(a => /insurance/i.test(a.name));
       if (hasInsurance) cost = Math.round(cost * 0.4);
-      if (hint === "expense_incoming") cost = Math.round(cost * 1.25);
       if (newState.cash >= cost) {
         newState.cash -= cost;
         logMessage = `🏥 Medical Emergency! Paid ₹${cost.toLocaleString()} in full.`;
@@ -241,8 +227,7 @@ export const handleTileEffect = (state: GameState, tile: Tile): GameState => {
     }
 
     case "side_hustle": {
-      let earn = Math.floor(Math.random() * 60000) + 15000;
-      if (hint === "windfall") earn = Math.round(earn * 1.3);
+      const earn = Math.floor(Math.random() * 60000) + 15000;
       newState.cash += earn;
       if (Math.random() < 0.3) {
         newState.assets.push({
