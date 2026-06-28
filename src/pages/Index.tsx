@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { GameBoard3D } from "@/components/game/board3d/GameBoard3D";
 import { GameDashboard } from "@/components/game/GameDashboard";
-import { Dice } from "@/components/game/Dice";
+// Dice now rendered inside the 3D scene (board3d/DiceMesh).
 import { PlayerSetup } from "@/components/game/PlayerSetup";
 import { LocalLeaderboard, LEADERBOARD_UPDATE_EVENT } from "@/components/game/LocalLeaderboard";
 import { DecisionModal } from "@/components/game/DecisionModal";
@@ -58,6 +58,9 @@ const Index = () => {
   });
   const saveStatusTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const { playSound, isMusicEnabled, isSoundEnabled, toggleMusic, toggleSound } = useGameSounds();
+  // UI-only counter — increments each Roll click so the dice + camera cinematic
+  // can replay even when the rolled value repeats.
+  const [rollSeq, setRollSeq] = useState(0);
 
   const flashSaved = () => {
     setSaveStatus({ show: true, message: "Saved just now" });
@@ -232,6 +235,7 @@ const Index = () => {
   const rollDice = () => {
     if (gameState.isRolling) return;
     playSound("diceRoll");
+    setRollSeq((n) => n + 1);
     const diceValue = Math.floor(Math.random() * 6) + 1;
     setGameState((prev) => {
       const newPosition = (prev.position + diceValue) % BOARD_TILES.length;
@@ -508,10 +512,12 @@ const Index = () => {
               <div className="text-xs text-muted-foreground">{BOARD_TILES.length} tiles</div>
             </div>
             <div className="p-3">
-              <GameBoard3D currentPosition={gameState.position} diceValue={gameState.diceValue} />
-            </div>
-            <div className="border-t border-border p-3">
-              <Dice value={gameState.diceValue} isRolling={gameState.isRolling} />
+              <GameBoard3D
+                currentPosition={gameState.position}
+                diceValue={gameState.diceValue}
+                rollSeq={rollSeq}
+                isVictory={gameState.hasReachedTenCrore}
+              />
             </div>
           </div>
         </div>
