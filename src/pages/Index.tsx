@@ -37,11 +37,12 @@ const Index = () => {
   };
 
 
-  // Persist game state to localStorage while playing (per-player)
+  // Persist game state to localStorage while playing (per-player) and flash indicator
   useEffect(() => {
     if (gameMode === "playing" && gameState.playerName) {
       try {
         localStorage.setItem(saveKeyFor(gameState.playerName), JSON.stringify(gameState));
+        flashSaved();
       } catch (err) {
         console.error("Failed to save game", err);
       }
