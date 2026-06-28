@@ -1,0 +1,1 @@
+ALTER TABLE public.session_players ADD COLUMN IF NOT EXISTS is_ready boolean NOT NULL DEFAULT false;
