@@ -227,6 +227,7 @@ export type Database = {
           id: string
           is_active: boolean
           is_host: boolean
+          is_ready: boolean
           joined_at: string
           last_updated: string
           net_worth: number
@@ -243,6 +244,7 @@ export type Database = {
           id?: string
           is_active?: boolean
           is_host?: boolean
+          is_ready?: boolean
           joined_at?: string
           last_updated?: string
           net_worth?: number
@@ -259,6 +261,7 @@ export type Database = {
           id?: string
           is_active?: boolean
           is_host?: boolean
+          is_ready?: boolean
           joined_at?: string
           last_updated?: string
           net_worth?: number

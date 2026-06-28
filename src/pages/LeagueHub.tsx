@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
+import { FriendsRoomDialog } from "@/components/game/FriendsRoomDialogs";
 
 interface DailyRow {
   player_name: string;
@@ -44,6 +45,7 @@ export default function LeagueHub() {
   const [weeklyTop, setWeeklyTop] = useState<WeeklyRow[]>([]);
   const [queueCount, setQueueCount] = useState<number>(0);
   const [loading, setLoading] = useState(true);
+  const [dialogMode, setDialogMode] = useState<"create" | "join" | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -112,15 +114,19 @@ export default function LeagueHub() {
             description="Create a private room. Share the 6-digit code. Up to 4 players, same board, real-time competition."
           >
             <div className="flex gap-2">
-              <Button className="flex-1" disabled>
+              <Button className="flex-1" onClick={() => setDialogMode("create")}>
                 Create Room
               </Button>
-              <Button variant="outline" className="flex-1" disabled>
+              <Button
+                variant="outline"
+                className="flex-1"
+                onClick={() => setDialogMode("join")}
+              >
                 Join Room
               </Button>
             </div>
             <p className="text-[11px] text-muted-foreground mt-2 italic">
-              Coming in the next phase.
+              Up to 4 players · share a 6-character code.
             </p>
           </ModeCard>
 
@@ -202,6 +208,11 @@ export default function LeagueHub() {
           Backend is live. Gameplay wiring for each mode lands in upcoming phases.
         </p>
       </div>
+      <FriendsRoomDialog
+        open={dialogMode !== null}
+        onOpenChange={(open) => !open && setDialogMode(null)}
+        mode={dialogMode ?? "create"}
+      />
     </div>
   );
 }
