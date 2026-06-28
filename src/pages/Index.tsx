@@ -328,6 +328,12 @@ const Index = () => {
             <RotateCcw className="w-4 h-4" />
             Reset My Game
           </Button>
+          {saveStatus.show && (
+            <span className="inline-flex items-center gap-1 text-xs text-muted-foreground">
+              <Check className="w-3 h-3 text-success" />
+              {saveStatus.message}
+            </span>
+          )}
         </div>
         <div className="flex gap-2">
           <Button
