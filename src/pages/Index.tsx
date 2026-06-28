@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { GameBoard3D } from "@/components/game/board3d/GameBoard3D";
+import { GameBoard2D } from "@/components/game/GameBoard2D";
 import { GameDashboard } from "@/components/game/GameDashboard";
 // Dice now rendered inside the 3D scene (board3d/DiceMesh).
 import { PlayerSetup } from "@/components/game/PlayerSetup";
@@ -511,11 +511,10 @@ const Index = () => {
               <div className="text-xs text-muted-foreground">{BOARD_TILES.length} tiles</div>
             </div>
             <div className="p-3">
-              <GameBoard3D
+              <GameBoard2D
                 currentPosition={gameState.position}
                 diceValue={gameState.diceValue}
-                rollSeq={rollSeq}
-                isVictory={gameState.hasReachedTenCrore}
+                gameState={gameState}
               />
             </div>
           </div>
