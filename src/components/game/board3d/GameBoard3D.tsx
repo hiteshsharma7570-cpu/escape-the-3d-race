@@ -362,16 +362,6 @@ function Lighting() {
   );
 }
 
-function CameraRig() {
-  const { camera } = useThree();
-  useEffect(() => {
-    camera.position.set(18, 20, 22);
-    camera.lookAt(0, 0, 0);
-    camera.updateProjectionMatrix();
-  }, [camera]);
-  return null;
-}
-
 // ---------------------------------------------------------------------------
 // CINEMATIC CAMERA RIG
 // ---------------------------------------------------------------------------
