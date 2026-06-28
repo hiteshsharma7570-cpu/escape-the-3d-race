@@ -1,3 +1,6 @@
+import type { TileHint } from "@/data/newspapers";
+export type { TileHint };
+
 export type TileType = 
   | "payday" 
   | "opportunity" 
@@ -75,6 +78,7 @@ export interface GameState {
   marketHint: MarketHint | null;
   turnCount: number;
   loansTaken: number;
+  activeHint: TileHint | null;
 }
 
 export interface ProfessionProfile {
@@ -162,6 +166,7 @@ export const createInitialGameState = (
     marketHint: null,
     turnCount: 0,
     loansTaken: 0,
+    activeHint: null,
   };
 };
 
