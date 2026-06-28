@@ -11,6 +11,7 @@ import {
 import * as THREE from "three";
 import { BOARD_TILES } from "@/lib/gameLogic";
 import type { Tile } from "@/types/game";
+import { DiceMesh } from "./DiceMesh";
 
 // ============================================================================
 // LAYOUT MATH
@@ -24,6 +25,9 @@ const BOARD_HALF = 9;          // world units from center to outer edge
 const TILE_SIZE = 2.6;         // outer face width/depth
 const TILE_HEIGHT = 0.55;
 const RING_INSET = 0.35;       // gap between tile and outer edge
+
+// World-space position of the dice well (slightly above the central plaza).
+const DICE_POS: [number, number, number] = [0, 1.4, 6.2];
 
 function tilesPerSide(total: number) {
   // 4 corners + edges. We treat all tiles equally on a ring.
@@ -368,6 +372,100 @@ function CameraRig() {
   return null;
 }
 
+// ---------------------------------------------------------------------------
+// CINEMATIC CAMERA RIG
+// ---------------------------------------------------------------------------
+
+export type CameraMode = "default" | "rolling" | "moving" | "victory";
+
+interface CinematicRigProps {
+  mode: CameraMode;
+  pawnPos: [number, number, number];
+}
+
+const DEFAULT_CAM = new THREE.Vector3(18, 20, 22);
+const DEFAULT_TGT = new THREE.Vector3(0, 0, 0);
+
+function CinematicCameraRig({ mode, pawnPos }: CinematicRigProps) {
+  const { camera } = useThree();
+  const desiredPos = useRef(new THREE.Vector3().copy(DEFAULT_CAM));
+  const desiredTgt = useRef(new THREE.Vector3().copy(DEFAULT_TGT));
+  const currentTgt = useRef(new THREE.Vector3().copy(DEFAULT_TGT));
+  const tmp = useRef(new THREE.Vector3());
+
+  // Initial placement
+  useEffect(() => {
+    camera.position.copy(DEFAULT_CAM);
+    camera.lookAt(DEFAULT_TGT);
+    camera.updateProjectionMatrix();
+  }, [camera]);
+
+  useFrame(({ clock }, dt) => {
+    const t = clock.getElapsedTime();
+
+    // Compute desired pose per mode
+    switch (mode) {
+      case "rolling": {
+        // Zoom in close to the dice well, slight downward tilt
+        desiredPos.current.set(DICE_POS[0] + 2.8, DICE_POS[1] + 4.5, DICE_POS[2] + 5.8);
+        desiredTgt.current.set(DICE_POS[0], DICE_POS[1] - 0.2, DICE_POS[2]);
+        break;
+      }
+      case "moving": {
+        // Trail the pawn from behind-right
+        const [px, py, pz] = pawnPos;
+        // Offset depending on which side of the board the pawn is on so the
+        // camera always sees the city behind it.
+        const dirX = px === 0 ? 0 : Math.sign(px);
+        const dirZ = pz === 0 ? 0 : Math.sign(pz);
+        const offX = dirX === 0 ? 6 : dirX * 8;
+        const offZ = dirZ === 0 ? 6 : dirZ * 8;
+        desiredPos.current.set(px + offX, py + 9, pz + offZ);
+        desiredTgt.current.set(px, py + 0.5, pz);
+        break;
+      }
+      case "victory": {
+        // Slow orbit around the pawn
+        const radius = 9;
+        const speed = 0.4;
+        desiredPos.current.set(
+          pawnPos[0] + Math.cos(t * speed) * radius,
+          pawnPos[1] + 7,
+          pawnPos[2] + Math.sin(t * speed) * radius,
+        );
+        desiredTgt.current.set(pawnPos[0], pawnPos[1] + 0.6, pawnPos[2]);
+        break;
+      }
+      case "default":
+      default: {
+        desiredPos.current.copy(DEFAULT_CAM);
+        desiredTgt.current.copy(DEFAULT_TGT);
+        break;
+      }
+    }
+
+    // Smoothly approach desired pose
+    const posLerp = mode === "rolling" ? 0.12 : mode === "moving" ? 0.1 : 0.06;
+    const tgtLerp = posLerp;
+    camera.position.lerp(desiredPos.current, posLerp);
+    currentTgt.current.lerp(desiredTgt.current, tgtLerp);
+    camera.lookAt(currentTgt.current);
+
+    // Subtle handheld micro-shake during rolling for cinematic energy
+    if (mode === "rolling") {
+      tmp.current.set(
+        (Math.random() - 0.5) * 0.05,
+        (Math.random() - 0.5) * 0.05,
+        (Math.random() - 0.5) * 0.05,
+      );
+      camera.position.add(tmp.current);
+    }
+    void dt;
+  });
+
+  return null;
+}
+
 // ============================================================================
 // MAIN COMPONENT
 // ============================================================================
@@ -375,9 +473,19 @@ function CameraRig() {
 interface GameBoard3DProps {
   currentPosition: number;
   diceValue: number | null;
+  /** Increments by 1 each time the user clicks Roll. Used to retrigger the
+   *  dice tumble + cinematic even when the value repeats. */
+  rollSeq?: number;
+  /** Game-won flag — triggers the victory orbit camera. */
+  isVictory?: boolean;
 }
 
-export function GameBoard3D({ currentPosition, diceValue }: GameBoard3DProps) {
+export function GameBoard3D({
+  currentPosition,
+  diceValue,
+  rollSeq = 0,
+  isVictory = false,
+}: GameBoard3DProps) {
   // Step-by-step pawn animation: walk through each tile rather than teleport.
   const [displayedPosition, setDisplayedPosition] = useState(currentPosition);
   const [visited, setVisited] = useState<Set<number>>(new Set([currentPosition]));
@@ -402,6 +510,53 @@ export function GameBoard3D({ currentPosition, diceValue }: GameBoard3DProps) {
   const total = BOARD_TILES.length;
   const currentTile = BOARD_TILES[displayedPosition];
 
+  // ---- Cinematic state machine ----
+  // rolling: dice is tumbling   (1.5s after a fresh rollSeq)
+  // moving:  pawn is walking    (until displayedPosition reaches currentPosition)
+  // victory: win condition reached
+  // default: idle isometric
+  const [cinematic, setCinematic] = useState<CameraMode>("default");
+  const lastRollSeqRef = useRef(rollSeq);
+  const rollingTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    if (rollSeq === lastRollSeqRef.current) return;
+    lastRollSeqRef.current = rollSeq;
+    setCinematic("rolling");
+    if (rollingTimerRef.current) clearTimeout(rollingTimerRef.current);
+    rollingTimerRef.current = setTimeout(() => {
+      // After dice settles, follow the pawn
+      setCinematic("moving");
+    }, 1500);
+    return () => {
+      if (rollingTimerRef.current) clearTimeout(rollingTimerRef.current);
+    };
+  }, [rollSeq]);
+
+  // When the pawn finishes its walk, drop back to default (or victory)
+  useEffect(() => {
+    if (cinematic !== "moving") return;
+    if (displayedPosition === currentPosition) {
+      const id = setTimeout(() => {
+        setCinematic(isVictory ? "victory" : "default");
+      }, 600);
+      return () => clearTimeout(id);
+    }
+  }, [cinematic, displayedPosition, currentPosition, isVictory]);
+
+  // Force victory orbit once the win flag flips
+  useEffect(() => {
+    if (isVictory) setCinematic("victory");
+    else if (cinematic === "victory") setCinematic("default");
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isVictory]);
+
+  // Compute pawn world position for camera targeting
+  const pawnWorld = useMemo<[number, number, number]>(() => {
+    const { pos } = getTilePosition(displayedPosition, total);
+    return [pos[0], pos[1] + 0.9, pos[2]];
+  }, [displayedPosition, total]);
+
   return (
     <div className="relative w-full mx-auto rounded-2xl overflow-hidden ring-1 ring-amber-500/30 shadow-2xl"
          style={{ aspectRatio: "1 / 1", maxWidth: 720, background: "radial-gradient(ellipse at top, #0a1a3a 0%, #050a18 70%)" }}>
@@ -412,7 +567,7 @@ export function GameBoard3D({ currentPosition, diceValue }: GameBoard3DProps) {
         camera={{ position: [18, 20, 22], fov: 38, near: 0.1, far: 200 }}
         gl={{ antialias: true, alpha: true, powerPreference: "high-performance" }}
       >
-        <CameraRig />
+        <CinematicCameraRig mode={cinematic} pawnPos={pawnWorld} />
         <color attach="background" args={["#040814"]} />
         <fog attach="fog" args={["#040814", 35, 80]} />
         <Suspense fallback={null}>
@@ -435,6 +590,11 @@ export function GameBoard3D({ currentPosition, diceValue }: GameBoard3DProps) {
                 />
               ))}
               <PlayerPawn position={displayedPosition} total={total} />
+              <DiceMesh
+                value={diceValue}
+                rollSeq={rollSeq}
+                position={DICE_POS}
+              />
             </group>
           </Float>
 
