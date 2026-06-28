@@ -93,13 +93,54 @@ export const GameBoard2D = ({ currentPosition, diceValue, gameState }: GameBoard
               className="relative"
               style={{ gridRow: row + 1, gridColumn: col + 1 }}
             >
-              <div
-                className="relative w-full h-full rounded-md flex flex-col items-center justify-center text-center overflow-hidden transition-all"
+              {/* Outer pulsing halo on the active tile */}
+              {isCurrent && (
+                <>
+                  <motion.div
+                    aria-hidden
+                    className="absolute -inset-2 rounded-lg pointer-events-none"
+                    style={{
+                      background: `radial-gradient(circle, ${tile.color}66 0%, transparent 70%)`,
+                      filter: "blur(6px)",
+                    }}
+                    animate={{ opacity: [0.55, 1, 0.55], scale: [0.95, 1.08, 0.95] }}
+                    transition={{ duration: 1.6, repeat: Infinity, ease: "easeInOut" }}
+                  />
+                  <motion.div
+                    aria-hidden
+                    className="absolute -inset-1 rounded-md pointer-events-none border-2"
+                    style={{ borderColor: tile.color }}
+                    animate={{ opacity: [0.4, 1, 0.4] }}
+                    transition={{ duration: 1.1, repeat: Infinity, ease: "easeInOut" }}
+                  />
+                </>
+              )}
+              <motion.div
+                key={isCurrent ? `active-${index}` : `idle-${index}`}
+                className="relative w-full h-full rounded-md flex flex-col items-center justify-center text-center overflow-hidden"
+                initial={isCurrent ? { scale: 0.92 } : false}
+                animate={
+                  isCurrent
+                    ? {
+                        scale: [0.92, 1.12, 1.04],
+                        boxShadow: [
+                          `0 0 0 2px ${tile.color}, 0 0 14px 3px ${tile.color}aa, inset 0 0 12px rgba(255,255,255,0.18)`,
+                          `0 0 0 3px #fff, 0 0 36px 10px ${tile.color}, inset 0 0 22px rgba(255,255,255,0.45)`,
+                          `0 0 0 2px ${tile.color}, 0 0 26px 6px ${tile.color}cc, inset 0 0 16px rgba(255,255,255,0.22)`,
+                        ],
+                      }
+                    : {
+                        scale: 1,
+                        boxShadow: `0 0 0 1.5px ${tile.color}, 0 0 10px ${tile.color}80, inset 0 0 8px rgba(0,0,0,0.4)`,
+                      }
+                }
+                transition={
+                  isCurrent
+                    ? { duration: 0.9, times: [0, 0.45, 1], ease: "easeOut" }
+                    : { duration: 0.3 }
+                }
                 style={{
                   background: tile.gradient || tile.color,
-                  boxShadow: isCurrent
-                    ? `0 0 0 2px ${tile.color}, 0 0 22px 4px ${tile.color}cc, inset 0 0 14px rgba(255,255,255,0.18)`
-                    : `0 0 0 1.5px ${tile.color}, 0 0 10px ${tile.color}80, inset 0 0 8px rgba(0,0,0,0.4)`,
                   opacity: wasVisited || isCurrent ? 1 : 0.92,
                 }}
               >
@@ -111,9 +152,37 @@ export const GameBoard2D = ({ currentPosition, diceValue, gameState }: GameBoard
                       "linear-gradient(to bottom, rgba(255,255,255,0.22), rgba(255,255,255,0))",
                   }}
                 />
-                <div className="relative text-lg sm:text-xl leading-none drop-shadow-md">
+                {/* Sweeping shine across active tile */}
+                {isCurrent && (
+                  <motion.div
+                    aria-hidden
+                    className="absolute inset-0 pointer-events-none"
+                    style={{
+                      background:
+                        "linear-gradient(110deg, transparent 30%, rgba(255,255,255,0.55) 50%, transparent 70%)",
+                      mixBlendMode: "screen",
+                    }}
+                    initial={{ x: "-120%" }}
+                    animate={{ x: ["-120%", "120%"] }}
+                    transition={{
+                      duration: 1.4,
+                      repeat: Infinity,
+                      repeatDelay: 1.2,
+                      ease: "easeInOut",
+                    }}
+                  />
+                )}
+                <motion.div
+                  className="relative text-lg sm:text-xl leading-none drop-shadow-md"
+                  animate={
+                    isCurrent
+                      ? { scale: [1, 1.25, 1], rotate: [0, -6, 6, 0] }
+                      : { scale: 1, rotate: 0 }
+                  }
+                  transition={{ duration: 0.7, ease: "easeOut" }}
+                >
                   {tile.icon}
-                </div>
+                </motion.div>
                 <div
                   className="relative font-extrabold text-white px-1 leading-tight mt-0.5 tracking-wide"
                   style={{
@@ -123,7 +192,7 @@ export const GameBoard2D = ({ currentPosition, diceValue, gameState }: GameBoard
                 >
                   {tile.label.toUpperCase()}
                 </div>
-              </div>
+              </motion.div>
 
               {isCurrent && (
                 <motion.div
