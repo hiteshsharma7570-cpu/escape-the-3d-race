@@ -3,6 +3,7 @@ import { GameBoard2D } from "@/components/game/GameBoard2D";
 import { GameDashboard } from "@/components/game/GameDashboard";
 import { Dice } from "@/components/game/Dice";
 import { PlayerSetup } from "@/components/game/PlayerSetup";
+import { LocalLeaderboard, LEADERBOARD_UPDATE_EVENT } from "@/components/game/LocalLeaderboard";
 import { DecisionModal } from "@/components/game/DecisionModal";
 import { CashCertificateModal } from "@/components/game/CashCertificateModal";
 import { INITIAL_GAME_STATE } from "@/types/game";
@@ -43,6 +44,7 @@ const Index = () => {
       try {
         localStorage.setItem(saveKeyFor(gameState.playerName), JSON.stringify(gameState));
         flashSaved();
+        window.dispatchEvent(new Event(LEADERBOARD_UPDATE_EVENT));
       } catch (err) {
         console.error("Failed to save game", err);
       }
@@ -368,7 +370,8 @@ const Index = () => {
           <GameBoard2D currentPosition={gameState.position} diceValue={gameState.diceValue} />
           <Dice value={gameState.diceValue} isRolling={gameState.isRolling} />
         </div>
-        <div>
+        <div className="space-y-4">
+          <LocalLeaderboard currentPlayerName={gameState.playerName} limit={5} />
           <GameDashboard
             gameState={gameState}
             onRollDice={rollDice}
