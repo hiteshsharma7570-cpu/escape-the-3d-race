@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { GameBoard3D } from "@/components/game/board3d/GameBoard3D";
 import { GameDashboard } from "@/components/game/GameDashboard";
-import { Dice } from "@/components/game/Dice";
+// Dice now rendered inside the 3D scene (board3d/DiceMesh).
 import { PlayerSetup } from "@/components/game/PlayerSetup";
 import { LocalLeaderboard, LEADERBOARD_UPDATE_EVENT } from "@/components/game/LocalLeaderboard";
 import { DecisionModal } from "@/components/game/DecisionModal";
@@ -232,6 +232,7 @@ const Index = () => {
   const rollDice = () => {
     if (gameState.isRolling) return;
     playSound("diceRoll");
+    setRollSeq((n) => n + 1);
     const diceValue = Math.floor(Math.random() * 6) + 1;
     setGameState((prev) => {
       const newPosition = (prev.position + diceValue) % BOARD_TILES.length;
