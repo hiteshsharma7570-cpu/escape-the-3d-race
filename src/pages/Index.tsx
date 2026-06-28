@@ -6,8 +6,19 @@ import { PlayerSetup } from "@/components/game/PlayerSetup";
 import { LocalLeaderboard, LEADERBOARD_UPDATE_EVENT } from "@/components/game/LocalLeaderboard";
 import { DecisionModal } from "@/components/game/DecisionModal";
 import { CashCertificateModal } from "@/components/game/CashCertificateModal";
+import { TenCroreCertificate } from "@/components/game/TenCroreCertificate";
+import { WelcomeModal } from "@/components/game/WelcomeModal";
 import { createInitialGameState, GameState } from "@/types/game";
-import { BOARD_TILES, handleTileEffect, applyCharityDecision, applyOpportunityDecision, generateMarketHint, sellAsset } from "@/lib/gameLogic";
+import {
+  BOARD_TILES,
+  handleTileEffect,
+  applyCharityDecision,
+  applyOpportunityDecision,
+  generateMarketHint,
+  sellAsset,
+  applyPeriodicMechanics,
+  calculateNetWorth,
+} from "@/lib/gameLogic";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { HelpCircle, Music, Volume2, VolumeX, RotateCcw, Check, LogOut } from "lucide-react";
@@ -34,6 +45,9 @@ const Index = () => {
   const [gameMode, setGameMode] = useState<"setup" | "playing">("setup");
   const [showCertificate, setShowCertificate] = useState(false);
   const [certificateAwarded, setCertificateAwarded] = useState(false);
+  const [showTenCrore, setShowTenCrore] = useState(false);
+  const [tenCroreAwarded, setTenCroreAwarded] = useState(false);
+  const [showWelcome, setShowWelcome] = useState(false);
   const [showWinScreen, setShowWinScreen] = useState(false);
   const [winRecorded, setWinRecorded] = useState(false);
   const [unlockedAchIds, setUnlockedAchIds] = useState<string[]>([]);
@@ -97,6 +111,16 @@ const Index = () => {
     }
   }, [gameState.cash, gameMode, certificateAwarded]);
 
+  // Primary win: ₹10 Crore in cash
+  useEffect(() => {
+    if (gameMode === "playing" && !tenCroreAwarded && gameState.cash >= 100000000) {
+      setTenCroreAwarded(true);
+      setShowTenCrore(true);
+      playSound("payDay");
+      toast.success("🏆 You reached ₹10 Crore! You've escaped the Rat Race!");
+    }
+  }, [gameState.cash, gameMode, tenCroreAwarded]);
+
   // Show win screen on rat-race escape (once) and bump games_won
   useEffect(() => {
     if (gameMode !== "playing") return;
@@ -156,8 +180,10 @@ const Index = () => {
         // Backward compat: ensure new fields exist
         if (parsed.turnCount === undefined) parsed.turnCount = 0;
         if (parsed.loansTaken === undefined) parsed.loansTaken = 0;
+        if ((parsed as any).hasReachedTenCrore === undefined) (parsed as any).hasReachedTenCrore = parsed.cash >= 100000000;
         setGameState(parsed);
         setCertificateAwarded(parsed.cash >= 10000000);
+        setTenCroreAwarded(parsed.cash >= 100000000);
         setWinRecorded(parsed.hasEscapedRatRace);
         setGameMode("playing");
         toast.success(`Welcome back, ${playerName}! Resuming your game.`);
@@ -170,8 +196,9 @@ const Index = () => {
     const initialState = createInitialGameState(playerName, profession);
     setGameState(initialState);
     setCertificateAwarded(initialState.cash >= 10000000);
+    setTenCroreAwarded(false);
     setWinRecorded(false);
-    setGameMode("playing");
+    setShowWelcome(true);
     toast.success(`Welcome, ${playerName}! Starting a fresh game as a ${profession}.`);
   };
 
@@ -217,6 +244,10 @@ const Index = () => {
         turnCount: prev.turnCount + 1,
       };
       updated = handleTileEffect(updated, landedTile);
+      // Apply periodic mechanics (inflation, salary review, depreciation)
+      const periodic = applyPeriodicMechanics(updated);
+      updated = periodic.state;
+      periodic.events.forEach((e) => setTimeout(() => toast.info(e), 200));
       if (
         !updated.marketHint &&
         !updated.pendingDecision &&
@@ -372,13 +403,27 @@ const Index = () => {
 
   if (gameMode === "setup") {
     return (
-      <PlayerSetup
-        sessionName="Cashflow"
-        onPlayerCreate={handlePlayerCreate}
-      />
+      <>
+        <PlayerSetup
+          sessionName="Cashflow"
+          onPlayerCreate={handlePlayerCreate}
+        />
+        <WelcomeModal
+          open={showWelcome}
+          playerName={gameState.playerName}
+          profession={gameState.profession}
+          onStart={() => {
+            setShowWelcome(false);
+            setGameMode("playing");
+          }}
+          onChangeProfession={() => setShowWelcome(false)}
+        />
+      </>
     );
   }
 
+  const netWorth = calculateNetWorth(gameState);
+  const currentTile = BOARD_TILES[gameState.position];
   return (
     <TooltipProvider delayDuration={150}>
     <div className="min-h-screen bg-gradient-to-br from-background to-accent/20 p-4">
@@ -439,10 +484,36 @@ const Index = () => {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 max-w-6xl mx-auto">
-        <div className="lg:col-span-2 space-y-4">
-          <GameBoard2D currentPosition={gameState.position} diceValue={gameState.diceValue} />
-          <Dice value={gameState.diceValue} isRolling={gameState.isRolling} />
+      {/* HUD bar */}
+      <div className="max-w-7xl mx-auto mb-3 grid grid-cols-2 md:grid-cols-5 gap-2 p-2 rounded-lg border border-border bg-card/60 text-xs">
+        <div><span className="text-muted-foreground">Cash:</span> <span className="font-bold text-success">₹{gameState.cash.toLocaleString()}</span></div>
+        <div><span className="text-muted-foreground">Passive:</span> <span className="font-bold">₹{gameState.passiveIncome.toLocaleString()}</span></div>
+        <div><span className="text-muted-foreground">Net Worth:</span> <span className={`font-bold ${netWorth>=0?"text-success":"text-destructive"}`}>₹{netWorth.toLocaleString()}</span></div>
+        <div><span className="text-muted-foreground">Turn:</span> <span className="font-bold">{gameState.turnCount}</span></div>
+        <div className="flex items-center gap-1">
+          <span className="text-muted-foreground">Market:</span>
+          <span className="font-bold capitalize">
+            {gameState.marketCondition === "boom" ? "🐂 Bull" : gameState.marketCondition === "crash" ? "🐻 Bear" : "➖ Neutral"}
+          </span>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 max-w-7xl mx-auto">
+        <div className="lg:col-span-2 space-y-2">
+          <div className="rounded-xl border border-border bg-card overflow-hidden">
+            <div className="px-4 py-2 flex items-center justify-between bg-card/80 border-b border-border">
+              <div className="text-sm font-semibold">
+                Turn {gameState.turnCount} · {currentTile?.icon} {currentTile?.label}
+              </div>
+              <div className="text-xs text-muted-foreground">{BOARD_TILES.length} tiles</div>
+            </div>
+            <div className="p-3">
+              <GameBoard2D currentPosition={gameState.position} diceValue={gameState.diceValue} />
+            </div>
+            <div className="border-t border-border p-3">
+              <Dice value={gameState.diceValue} isRolling={gameState.isRolling} />
+            </div>
+          </div>
         </div>
         <div className="space-y-4">
           <LocalLeaderboard currentPlayerName={gameState.playerName} limit={5} />
@@ -476,6 +547,20 @@ const Index = () => {
         onClose={() => setShowCertificate(false)}
         playerName={gameState.playerName}
         cash={gameState.cash}
+      />
+
+      <TenCroreCertificate
+        open={showTenCrore}
+        playerName={gameState.playerName}
+        onClose={() => setShowTenCrore(false)}
+        onPlayAgain={() => {
+          setShowTenCrore(false);
+          setGameState(createInitialGameState());
+          setCertificateAwarded(false);
+          setTenCroreAwarded(false);
+          setWinRecorded(false);
+          setGameMode("setup");
+        }}
       />
 
       <WinScreen

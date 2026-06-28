@@ -25,23 +25,52 @@ export const INVESTMENT_OPPORTUNITIES = [
   { name: "Franchise Business", cost: 750000, income: 30000, value: 750000, risk: "high" as const, description: "Branded franchise operation" },
 ];
 
+const G = {
+  payday:               { color: "#f7971e", gradient: "linear-gradient(135deg,#f7971e,#ffd200)", icon: "💰" },
+  opportunity:          { color: "#4776E6", gradient: "linear-gradient(135deg,#4776E6,#8E54E9)", icon: "💡" },
+  market:               { color: "#f46b45", gradient: "linear-gradient(135deg,#f46b45,#eea849)", icon: "📊" },
+  charity:              { color: "#a18cd1", gradient: "linear-gradient(135deg,#a18cd1,#fbc2eb)", icon: "❤️" },
+  baby:                 { color: "#f953c6", gradient: "linear-gradient(135deg,#f953c6,#b91d73)", icon: "👶" },
+  vacation:             { color: "#43b89c", gradient: "linear-gradient(135deg,#43b89c,#0f3443)", icon: "🏝️" },
+  dinner:               { color: "#cb2d3e", gradient: "linear-gradient(135deg,#cb2d3e,#ef473a)", icon: "🍽️" },
+  downsized:            { color: "#373b44", gradient: "linear-gradient(135deg,#373b44,#4286f4)", icon: "📉" },
+  tax_audit:            { color: "#eb3349", gradient: "linear-gradient(135deg,#eb3349,#f45c43)", icon: "🔍" },
+  medical_emergency:    { color: "#c0392b", gradient: "linear-gradient(135deg,#c0392b,#8e44ad)", icon: "🏥" },
+  side_hustle:          { color: "#56ab2f", gradient: "linear-gradient(135deg,#56ab2f,#a8e063)", icon: "💼" },
+  inheritance:          { color: "#11998e", gradient: "linear-gradient(135deg,#11998e,#38ef7d)", icon: "🎁" },
+  real_estate_boom:     { color: "#134e5e", gradient: "linear-gradient(135deg,#134e5e,#71b280)", icon: "🏠" },
+  stock_market_crash:   { color: "#1a1a2e", gradient: "linear-gradient(135deg,#1a1a2e,#e94560)", icon: "📉" },
+} as const;
+
+const t = (id: number, type: keyof typeof G, label: string): Tile => ({
+  id, type: type as Tile["type"], label, color: G[type].color, gradient: G[type].gradient, icon: G[type].icon,
+});
+
 export const BOARD_TILES: Tile[] = [
-  { id: 0, type: "payday", label: "Pay Day", color: "#10b981" },
-  { id: 1, type: "opportunity", label: "Opportunity", color: "#3b82f6" },
-  { id: 2, type: "market", label: "Market", color: "#f59e0b" },
-  { id: 3, type: "charity", label: "Charity", color: "#8b5cf6" },
-  { id: 4, type: "payday", label: "Pay Day", color: "#10b981" },
-  { id: 5, type: "baby", label: "Baby!", color: "#ec4899" },
-  { id: 6, type: "opportunity", label: "Opportunity", color: "#3b82f6" },
-  { id: 7, type: "payday", label: "Pay Day", color: "#10b981" },
-  { id: 8, type: "market", label: "Market", color: "#f59e0b" },
-  { id: 9, type: "opportunity", label: "Opportunity", color: "#3b82f6" },
-  { id: 10, type: "dinner", label: "Dinner Out", color: "#ef4444" },
-  { id: 11, type: "downsized", label: "Downsized!", color: "#64748b" },
-  { id: 12, type: "opportunity", label: "Opportunity", color: "#3b82f6" },
-  { id: 13, type: "market", label: "Market", color: "#f59e0b" },
-  { id: 14, type: "vacation", label: "Vacation", color: "#ef4444" },
-  { id: 15, type: "payday", label: "Pay Day", color: "#10b981" },
+  t(0,  "payday",             "Pay Day"),
+  t(1,  "opportunity",        "Opportunity"),
+  t(2,  "market",             "Market"),
+  t(3,  "tax_audit",          "Tax Audit"),
+  t(4,  "payday",             "Pay Day"),
+  t(5,  "baby",               "Baby!"),
+  t(6,  "medical_emergency",  "Medical"),
+  t(7,  "opportunity",        "Opportunity"),
+  t(8,  "side_hustle",        "Side Hustle"),
+  t(9,  "market",             "Market"),
+  t(10, "dinner",             "Dinner Out"),
+  t(11, "downsized",          "Downsized!"),
+  t(12, "inheritance",        "Inheritance"),
+  t(13, "payday",             "Pay Day"),
+  t(14, "real_estate_boom",   "RE Boom"),
+  t(15, "opportunity",        "Opportunity"),
+  t(16, "stock_market_crash", "Crash"),
+  t(17, "vacation",           "Vacation"),
+  t(18, "payday",             "Pay Day"),
+  t(19, "charity",            "Charity"),
+  t(20, "opportunity",        "Opportunity"),
+  t(21, "tax_audit",          "Tax Audit"),
+  t(22, "market",             "Market"),
+  t(23, "side_hustle",        "Side Hustle"),
 ];
 
 export const calculateMonthlyCashFlow = (state: GameState): number => {
@@ -162,6 +191,142 @@ export const handleTileEffect = (state: GameState, tile: Tile): GameState => {
       newState.salary = Math.round(newState.salary * 0.8);
       logMessage = `Downsized! Salary reduced to ₹${newState.salary.toLocaleString()}`;
       break;
+
+    case "tax_audit": {
+      let penalty: number;
+      if (newState.cash > 500000) {
+        penalty = Math.round(newState.cash * 0.08);
+      } else if (newState.cash > 0) {
+        penalty = 20000;
+      } else {
+        penalty = Math.floor(Math.random() * 130000) + 20000;
+      }
+      newState.cash -= penalty;
+      logMessage = `🔍 Tax Audit! The IT department reviewed your finances — penalty ₹${penalty.toLocaleString()}`;
+      break;
+    }
+
+    case "medical_emergency": {
+      let cost = Math.floor(Math.random() * 250000) + 50000;
+      const hasInsurance = newState.assets.some(a => /insurance/i.test(a.name));
+      if (hasInsurance) cost = Math.round(cost * 0.4);
+      if (newState.cash >= cost) {
+        newState.cash -= cost;
+        logMessage = `🏥 Medical Emergency! Paid ₹${cost.toLocaleString()} in full.`;
+      } else {
+        newState.cash = Math.max(0, newState.cash);
+        newState.liabilities.push({
+          id: `med-${Date.now()}`,
+          name: "Medical Debt",
+          amount: cost,
+          monthlyPayment: 8000,
+        });
+        logMessage = `🏥 Medical Emergency! ₹${cost.toLocaleString()} added as Medical Debt (₹8,000/mo).`;
+      }
+      break;
+    }
+
+    case "side_hustle": {
+      const earn = Math.floor(Math.random() * 60000) + 15000;
+      newState.cash += earn;
+      if (Math.random() < 0.3) {
+        newState.assets.push({
+          id: `side-${Date.now()}`,
+          name: "Side Business",
+          value: 50000,
+          monthlyIncome: 5000,
+          risk: "medium",
+        });
+        newState.passiveIncome += 5000;
+        logMessage = `💼 Side Hustle pays off! Earned ₹${earn.toLocaleString()} + became a Side Business (+₹5,000/mo).`;
+      } else {
+        logMessage = `💼 Side Hustle pays off! Earned ₹${earn.toLocaleString()}.`;
+      }
+      break;
+    }
+
+    case "inheritance": {
+      const amt = Math.floor(Math.random() * 800000) + 200000;
+      newState.cash += amt;
+      // 50% auto-invest into FD
+      if (Math.random() < 0.5 && newState.cash >= amt) {
+        const invest = Math.round(amt / 2);
+        newState.cash -= invest;
+        newState.assets.push({
+          id: `inh-${Date.now()}`,
+          name: "Fixed Deposit (Inheritance)",
+          value: invest,
+          monthlyIncome: Math.round(invest * 0.006),
+          risk: "low",
+        });
+        newState.passiveIncome += Math.round(invest * 0.006);
+        logMessage = `🎁 Inheritance! Received ₹${amt.toLocaleString()} — half invested in FD.`;
+      } else {
+        logMessage = `🎁 Inheritance received! ₹${amt.toLocaleString()} added to cash.`;
+      }
+      break;
+    }
+
+    case "real_estate_boom": {
+      const realEstateNames = /(real estate|property|rental|reit|commercial|plot)/i;
+      const re = newState.assets.filter(a => realEstateNames.test(a.name));
+      if (re.length > 0) {
+        let gain = 0;
+        let incomeGain = 0;
+        newState.assets = newState.assets.map(a => {
+          if (realEstateNames.test(a.name)) {
+            const newVal = Math.round(a.value * 1.25);
+            const newInc = Math.round(a.monthlyIncome * 1.10);
+            gain += newVal - a.value;
+            incomeGain += newInc - a.monthlyIncome;
+            return { ...a, value: newVal, monthlyIncome: newInc };
+          }
+          return a;
+        });
+        newState.passiveIncome += incomeGain;
+        logMessage = `🏠 Real Estate Boom! Property values +₹${gain.toLocaleString()}, passive income +₹${incomeGain.toLocaleString()}/mo.`;
+      } else {
+        // Offer small plot via opportunity decision
+        newState.pendingDecision = {
+          type: "opportunity",
+          opportunity: {
+            name: "Small Plot of Land",
+            cost: 300000,
+            income: 8000,
+            value: 300000,
+            risk: "medium",
+            description: "Buy a small plot riding the real estate boom — ₹8,000/mo rent.",
+          },
+        };
+        logMessage = `🏠 Real Estate Boom! A small plot is on offer for ₹3,00,000.`;
+      }
+      break;
+    }
+
+    case "stock_market_crash": {
+      const highRiskRegex = /(startup|crypto|franchise)/i;
+      const high = newState.assets.filter(a => a.risk === "high" || highRiskRegex.test(a.name));
+      if (high.length === 0) {
+        logMessage = `📉 Stock Market Crash! You were safe from the crash.`;
+      } else {
+        let lost = 0;
+        let incLost = 0;
+        newState.assets = newState.assets.map(a => {
+          if (a.risk === "high" || highRiskRegex.test(a.name)) {
+            const newVal = Math.round(a.value * 0.6);
+            const newInc = Math.round(a.monthlyIncome * 0.7);
+            lost += a.value - newVal;
+            incLost += a.monthlyIncome - newInc;
+            return { ...a, value: newVal, monthlyIncome: newInc };
+          }
+          return a;
+        });
+        newState.passiveIncome = Math.max(0, newState.passiveIncome - incLost);
+        newState.marketCondition = "crash";
+        logMessage = `📉 Stock Market Crash! High-risk assets lost ₹${lost.toLocaleString()} in value, -₹${incLost.toLocaleString()}/mo.`;
+      }
+      break;
+    }
   }
 
   pushLog(newState, logMessage);
@@ -178,6 +343,12 @@ export const handleTileEffect = (state: GameState, tile: Tile): GameState => {
   ) {
     newState.hasEscapedRatRace = true;
     pushLog(newState, "🎉 You escaped the Rat Race! Passive income covers all expenses!");
+  }
+
+  // Primary win: ₹10 Crore in cash
+  if (newState.cash >= 100000000 && !newState.hasReachedTenCrore) {
+    newState.hasReachedTenCrore = true;
+    pushLog(newState, "🏆 You reached ₹10 Crore in cash!");
   }
 
   return newState;
@@ -259,4 +430,41 @@ export const sellAsset = (state: GameState, assetId: string): GameState => {
   newState.assets = newState.assets.filter(a => a.id !== assetId);
   pushLog(newState, `Sold ${asset.name} for ₹${asset.value.toLocaleString()} (lost ₹${asset.monthlyIncome.toLocaleString()}/mo income)`);
   return newState;
+};
+
+// Apply periodic mechanics based on turn number. Mutates a copy.
+export const applyPeriodicMechanics = (
+  state: GameState
+): { state: GameState; events: string[] } => {
+  const events: string[] = [];
+  let next = { ...state, liabilities: [...state.liabilities], assets: [...state.assets] };
+
+  // Inflation every 5 turns: liability monthlyPayment +3%
+  if (next.turnCount > 0 && next.turnCount % 5 === 0) {
+    next.liabilities = next.liabilities.map(l => ({
+      ...l,
+      monthlyPayment: Math.round(l.monthlyPayment * 1.03),
+    }));
+    events.push("📈 Inflation! Your monthly costs just went up.");
+    pushLog(next, "📈 Inflation hit — all monthly payments +3%.");
+  }
+
+  // Salary review every 8 turns: +5–15%
+  if (next.turnCount > 0 && next.turnCount % 8 === 0) {
+    const pct = 5 + Math.floor(Math.random() * 11);
+    const oldSalary = next.salary;
+    next.salary = Math.round(next.salary * (1 + pct / 100));
+    events.push(`🎉 Salary review! +${pct}% (₹${oldSalary.toLocaleString()} → ₹${next.salary.toLocaleString()})`);
+    pushLog(next, `🎉 Salary review: +${pct}% raise to ₹${next.salary.toLocaleString()}.`);
+  }
+
+  // Depreciation every 10 turns: non-real-estate assets -2% value
+  if (next.turnCount > 0 && next.turnCount % 10 === 0) {
+    const reRegex = /(real estate|property|rental|reit|commercial|plot)/i;
+    next.assets = next.assets.map(a =>
+      reRegex.test(a.name) ? a : { ...a, value: Math.round(a.value * 0.98) }
+    );
+  }
+
+  return { state: next, events };
 };

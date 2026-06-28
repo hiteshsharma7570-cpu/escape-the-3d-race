@@ -40,12 +40,15 @@ export const GameDashboard = ({
   const monthlyCashFlow = calculateMonthlyCashFlow(gameState);
   const totalExpenses = calculateTotalExpenses(gameState);
   const netWorth = calculateNetWorth(gameState);
-  const escapePct = totalExpenses > 0
-    ? Math.min((gameState.passiveIncome / totalExpenses) * 100, 100)
-    : 0;
-  const escapeColor =
-    escapePct >= 100 ? "bg-success" : escapePct >= 50 ? "bg-yellow-500" : "bg-destructive";
-  const milestones = [25, 50, 75, 100];
+  const TEN_CR = 100000000;
+  const tenCrPct = Math.min((gameState.cash / TEN_CR) * 100, 100);
+  // Milestones on bar: 25L (2.5%), 1Cr (10%), 5Cr (50%), 10Cr (100%)
+  const milestones = [
+    { label: "₹25L", pct: 2.5 },
+    { label: "₹1Cr", pct: 10 },
+    { label: "₹5Cr", pct: 50 },
+    { label: "₹10Cr", pct: 100 },
+  ];
 
   return (
     <div className="space-y-4">
@@ -79,44 +82,39 @@ export const GameDashboard = ({
           </p>
         </div>
 
-        {/* Escape Progress */}
+        {/* Journey to ₹10 Crore */}
         <div className="mb-6 bg-accent/40 p-3 rounded-lg">
           <div className="flex items-center justify-between mb-2">
-            <p className="text-sm font-semibold">Escape Progress</p>
-            <p className="text-xs text-muted-foreground">{escapePct.toFixed(0)}%</p>
+            <p className="text-sm font-semibold">Journey to ₹10 Crore</p>
+            <p className="text-xs text-muted-foreground">{tenCrPct.toFixed(1)}%</p>
           </div>
-          {totalExpenses === 0 ? (
-            <p className="text-xs text-muted-foreground italic">
-              Add investments and take on liabilities to begin
-            </p>
-          ) : (
-            <>
-              <p className="text-xs text-muted-foreground mb-2">
-                Passive ₹{gameState.passiveIncome.toLocaleString()} / Expenses ₹
-                {totalExpenses.toLocaleString()}
-              </p>
-              <div className="relative h-3 rounded-full bg-background overflow-hidden">
-                <div
-                  className={`h-full transition-all ${escapeColor}`}
-                  style={{ width: `${escapePct}%` }}
-                />
-                {milestones.map((m) => (
-                  <div
-                    key={m}
-                    className="absolute top-0 bottom-0 w-px bg-foreground/30"
-                    style={{ left: `${m}%` }}
-                  />
-                ))}
-              </div>
-              <div className="flex justify-between mt-1 text-[10px] text-muted-foreground">
-                {milestones.map((m) => (
-                  <span key={m} className={escapePct >= m ? "text-success font-semibold" : ""}>
-                    {m}%
-                  </span>
-                ))}
-              </div>
-            </>
-          )}
+          <div className="relative h-4 rounded-full bg-background overflow-hidden border border-yellow-600/30">
+            <div
+              className="h-full transition-all duration-700"
+              style={{
+                width: `${tenCrPct}%`,
+                background: "linear-gradient(90deg,#f7971e,#ffd700)",
+              }}
+            />
+            {milestones.map((m) => (
+              <div
+                key={m.label}
+                className="absolute top-0 bottom-0 w-px bg-foreground/40"
+                style={{ left: `${m.pct}%` }}
+                title={m.label}
+              />
+            ))}
+          </div>
+          <div className="flex justify-between mt-1 text-[10px] text-muted-foreground">
+            {milestones.map((m) => (
+              <span key={m.label} className={tenCrPct >= m.pct ? "text-yellow-500 font-semibold" : ""}>
+                {m.label}
+              </span>
+            ))}
+          </div>
+          <p className="text-xs mt-2 text-yellow-700 dark:text-yellow-400">
+            You're {tenCrPct.toFixed(0)}% of the way there!
+          </p>
         </div>
 
         {gameState.diceValue && (

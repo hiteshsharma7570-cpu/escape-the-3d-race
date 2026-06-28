@@ -6,13 +6,21 @@ export type TileType =
   | "baby" 
   | "vacation" 
   | "dinner" 
-  | "downsized";
+  | "downsized"
+  | "tax_audit"
+  | "medical_emergency"
+  | "side_hustle"
+  | "inheritance"
+  | "real_estate_boom"
+  | "stock_market_crash";
 
 export interface Tile {
   id: number;
   type: TileType;
   label: string;
   color: string;
+  gradient?: string;
+  icon?: string;
 }
 
 export interface Asset {
@@ -62,6 +70,7 @@ export interface GameState {
   gameLog: string[];
   marketCondition: "normal" | "boom" | "crash";
   hasEscapedRatRace: boolean;
+  hasReachedTenCrore: boolean;
   pendingDecision: PendingDecision | null;
   marketHint: MarketHint | null;
   turnCount: number;
@@ -78,36 +87,51 @@ export const PROFESSION_PROFILES: Record<string, ProfessionProfile> = {
   Teacher: {
     salary: 45000,
     cash: 50000,
-    liabilities: [{ name: "Car Loan", amount: 800000, monthlyPayment: 4000 }],
+    liabilities: [
+      { name: "Home Rent", amount: 0, monthlyPayment: 12000 },
+      { name: "Two-Wheeler Loan", amount: 120000, monthlyPayment: 3500 },
+      { name: "Mobile EMI", amount: 0, monthlyPayment: 1500 },
+    ],
   },
   Engineer: {
     salary: 90000,
     cash: 80000,
     liabilities: [
-      { name: "Car Loan", amount: 1000000, monthlyPayment: 5000 },
-      { name: "Student Loan", amount: 500000, monthlyPayment: 3000 },
+      { name: "Car Loan", amount: 600000, monthlyPayment: 12000 },
+      { name: "Student Loan", amount: 400000, monthlyPayment: 8000 },
+      { name: "Credit Card Debt", amount: 50000, monthlyPayment: 5000 },
+      { name: "Home Rent", amount: 0, monthlyPayment: 18000 },
     ],
   },
   Doctor: {
     salary: 150000,
     cash: 100000,
     liabilities: [
-      { name: "Medical Education Loan", amount: 2000000, monthlyPayment: 12000 },
-      { name: "Car Loan", amount: 1500000, monthlyPayment: 8000 },
+      { name: "Medical Education Loan", amount: 2000000, monthlyPayment: 25000 },
+      { name: "Car Loan", amount: 1200000, monthlyPayment: 18000 },
+      { name: "Clinic Equipment Loan", amount: 800000, monthlyPayment: 10000 },
+      { name: "Home Rent", amount: 0, monthlyPayment: 25000 },
     ],
   },
   Lawyer: {
     salary: 120000,
     cash: 90000,
     liabilities: [
-      { name: "Education Loan", amount: 1200000, monthlyPayment: 7000 },
-      { name: "Car Loan", amount: 1000000, monthlyPayment: 5000 },
+      { name: "Education Loan", amount: 1000000, monthlyPayment: 12000 },
+      { name: "Car Loan", amount: 800000, monthlyPayment: 14000 },
+      { name: "Office Rent", amount: 0, monthlyPayment: 20000 },
+      { name: "Credit Card Debt", amount: 80000, monthlyPayment: 6000 },
     ],
   },
   "Business Owner": {
     salary: 60000,
     cash: 150000,
-    liabilities: [{ name: "Business Loan", amount: 2500000, monthlyPayment: 15000 }],
+    liabilities: [
+      { name: "Business Loan", amount: 2500000, monthlyPayment: 30000 },
+      { name: "Office Rent", amount: 0, monthlyPayment: 35000 },
+      { name: "Inventory Credit", amount: 500000, monthlyPayment: 8000 },
+      { name: "GST Liability", amount: 0, monthlyPayment: 5000 },
+    ],
   },
 };
 
@@ -133,6 +157,7 @@ export const createInitialGameState = (
     gameLog: [`[Turn 0] Welcome, ${playerName}! Roll the dice to begin.`],
     marketCondition: "normal",
     hasEscapedRatRace: false,
+    hasReachedTenCrore: false,
     pendingDecision: null,
     marketHint: null,
     turnCount: 0,
