@@ -240,17 +240,36 @@ function TileMesh({ tile, index, total, isCurrent, wasVisited }: TileMeshProps) 
           ref={matRef}
           color={tile.color}
           emissive={tile.color}
-          emissiveIntensity={0.35}
-          metalness={0.6}
-          roughness={0.3}
+          emissiveIntensity={0.85}
+          metalness={0.5}
+          roughness={0.28}
         />
       </RoundedBox>
 
-      {/* Neon top edge */}
-      <mesh position={[0, TILE_HEIGHT / 2 + 0.005, 0]} rotation={[-Math.PI / 2, 0, 0]}>
-        <ringGeometry args={[TILE_SIZE * 0.42, TILE_SIZE * 0.48, 4]} />
-        <meshBasicMaterial color="#ffffff" transparent opacity={0.35} side={THREE.DoubleSide} />
-      </mesh>
+      {/* Neon outline around tile top — vivid like the reference board */}
+      {(["+x", "-x", "+z", "-z"] as const).map((edge) => {
+        const len = TILE_SIZE * 0.96;
+        const thick = 0.07;
+        const offset = TILE_SIZE / 2 - thick / 2;
+        const positions: Record<string, [number, number, number]> = {
+          "+x": [offset, TILE_HEIGHT / 2 + 0.02, 0],
+          "-x": [-offset, TILE_HEIGHT / 2 + 0.02, 0],
+          "+z": [0, TILE_HEIGHT / 2 + 0.02, offset],
+          "-z": [0, TILE_HEIGHT / 2 + 0.02, -offset],
+        };
+        const sizes: Record<string, [number, number, number]> = {
+          "+x": [thick, 0.05, len],
+          "-x": [thick, 0.05, len],
+          "+z": [len, 0.05, thick],
+          "-z": [len, 0.05, thick],
+        };
+        return (
+          <mesh key={edge} position={positions[edge]}>
+            <boxGeometry args={sizes[edge]} />
+            <meshBasicMaterial color={tile.color} toneMapped={false} />
+          </mesh>
+        );
+      })}
 
       {/* HTML overlay: icon + label */}
       <Html
