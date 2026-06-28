@@ -246,8 +246,7 @@ export const handleTileEffect = (state: GameState, tile: Tile): GameState => {
     }
 
     case "inheritance": {
-      let amt = Math.floor(Math.random() * 800000) + 200000;
-      if (hint === "windfall") amt = Math.round(amt * 1.3);
+      const amt = Math.floor(Math.random() * 800000) + 200000;
       newState.cash += amt;
       // 50% auto-invest into FD
       if (Math.random() < 0.5 && newState.cash >= amt) {
@@ -335,8 +334,6 @@ export const handleTileEffect = (state: GameState, tile: Tile): GameState => {
 
   // Clear any market hint that has now resolved (or stale after any roll)
   newState.marketHint = null;
-  // Newspaper hint is consumed once per tile resolution.
-  newState.activeHint = null;
 
   // Check win condition — only valid after at least one investment
   if (
