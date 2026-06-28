@@ -47,6 +47,36 @@ export type Database = {
         }
         Relationships: []
       }
+      daily_results: {
+        Row: {
+          achieved_at: string
+          challenge_date: string
+          final_cash: number
+          id: string
+          player_name: string
+          profession: string
+          turns_taken: number
+        }
+        Insert: {
+          achieved_at?: string
+          challenge_date: string
+          final_cash: number
+          id?: string
+          player_name: string
+          profession: string
+          turns_taken: number
+        }
+        Update: {
+          achieved_at?: string
+          challenge_date?: string
+          final_cash?: number
+          id?: string
+          player_name?: string
+          profession?: string
+          turns_taken?: number
+        }
+        Relationships: []
+      }
       game_players: {
         Row: {
           cash: number
@@ -106,23 +136,50 @@ export type Database = {
       game_sessions: {
         Row: {
           created_at: string
+          ended_at: string | null
+          host_name: string | null
           id: string
           is_active: boolean
+          max_players: number | null
+          mode: string | null
           name: string
+          room_code: string | null
+          seed: number | null
+          started_at: string | null
+          status: string | null
+          turn_limit: number | null
           user_id: string | null
         }
         Insert: {
           created_at?: string
+          ended_at?: string | null
+          host_name?: string | null
           id?: string
           is_active?: boolean
+          max_players?: number | null
+          mode?: string | null
           name: string
+          room_code?: string | null
+          seed?: number | null
+          started_at?: string | null
+          status?: string | null
+          turn_limit?: number | null
           user_id?: string | null
         }
         Update: {
           created_at?: string
+          ended_at?: string | null
+          host_name?: string | null
           id?: string
           is_active?: boolean
+          max_players?: number | null
+          mode?: string | null
           name?: string
+          room_code?: string | null
+          seed?: number | null
+          started_at?: string | null
+          status?: string | null
+          turn_limit?: number | null
           user_id?: string | null
         }
         Relationships: []
@@ -162,6 +219,133 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      session_players: {
+        Row: {
+          cash: number
+          has_won: boolean
+          id: string
+          is_active: boolean
+          is_host: boolean
+          joined_at: string
+          last_updated: string
+          net_worth: number
+          passive_income: number
+          player_name: string
+          position: number
+          profession: string
+          session_id: string
+          turn_count: number
+        }
+        Insert: {
+          cash?: number
+          has_won?: boolean
+          id?: string
+          is_active?: boolean
+          is_host?: boolean
+          joined_at?: string
+          last_updated?: string
+          net_worth?: number
+          passive_income?: number
+          player_name: string
+          position?: number
+          profession: string
+          session_id: string
+          turn_count?: number
+        }
+        Update: {
+          cash?: number
+          has_won?: boolean
+          id?: string
+          is_active?: boolean
+          is_host?: boolean
+          joined_at?: string
+          last_updated?: string
+          net_worth?: number
+          passive_income?: number
+          player_name?: string
+          position?: number
+          profession?: string
+          session_id?: string
+          turn_count?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "session_players_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "game_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      tournament_queue: {
+        Row: {
+          bracket_session_id: string | null
+          id: string
+          joined_at: string
+          player_name: string
+          profession: string
+          status: string
+        }
+        Insert: {
+          bracket_session_id?: string | null
+          id?: string
+          joined_at?: string
+          player_name: string
+          profession: string
+          status?: string
+        }
+        Update: {
+          bracket_session_id?: string | null
+          id?: string
+          joined_at?: string
+          player_name?: string
+          profession?: string
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tournament_queue_bracket_session_id_fkey"
+            columns: ["bracket_session_id"]
+            isOneToOne: false
+            referencedRelation: "game_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      weekly_leaderboard: {
+        Row: {
+          achieved_at: string
+          final_cash: number
+          id: string
+          net_worth: number
+          player_name: string
+          profession: string
+          turns_taken: number
+          week_start: string
+        }
+        Insert: {
+          achieved_at?: string
+          final_cash: number
+          id?: string
+          net_worth: number
+          player_name: string
+          profession: string
+          turns_taken: number
+          week_start: string
+        }
+        Update: {
+          achieved_at?: string
+          final_cash?: number
+          id?: string
+          net_worth?: number
+          player_name?: string
+          profession?: string
+          turns_taken?: number
+          week_start?: string
+        }
+        Relationships: []
       }
     }
     Views: {
