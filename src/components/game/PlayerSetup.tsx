@@ -3,7 +3,8 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { UserCircle } from "lucide-react";
+import { UserCircle, Users } from "lucide-react";
+import { Link } from "react-router-dom";
 import { playerSchema } from "@/lib/validationSchemas";
 
 interface PlayerSetupProps {
@@ -97,6 +98,18 @@ export const PlayerSetup = ({ sessionName, onPlayerCreate }: PlayerSetupProps) =
           >
             Start Playing
           </Button>
+
+          <Link to="/leagues" className="block">
+            <Button
+              type="button"
+              variant="outline"
+              size="lg"
+              className="w-full gap-2"
+            >
+              <Users className="w-5 h-5" />
+              Multiplayer Leagues
+            </Button>
+          </Link>
         </div>
       </Card>
     </div>
