@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { GameBoard2D } from "@/components/game/GameBoard2D";
+import { GameBoard3D } from "@/components/game/board3d/GameBoard3D";
 import { GameDashboard } from "@/components/game/GameDashboard";
 import { Dice } from "@/components/game/Dice";
 import { PlayerSetup } from "@/components/game/PlayerSetup";
@@ -508,7 +508,7 @@ const Index = () => {
               <div className="text-xs text-muted-foreground">{BOARD_TILES.length} tiles</div>
             </div>
             <div className="p-3">
-              <GameBoard2D currentPosition={gameState.position} diceValue={gameState.diceValue} />
+              <GameBoard3D currentPosition={gameState.position} diceValue={gameState.diceValue} />
             </div>
             <div className="border-t border-border p-3">
               <Dice value={gameState.diceValue} isRolling={gameState.isRolling} />
