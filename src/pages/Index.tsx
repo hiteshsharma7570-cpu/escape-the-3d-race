@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { GameBoard2D } from "@/components/game/GameBoard2D";
 import { GameDashboard } from "@/components/game/GameDashboard";
 import { Dice } from "@/components/game/Dice";
@@ -10,7 +10,7 @@ import { GameState } from "@/types/game";
 import { BOARD_TILES, handleTileEffect, applyCharityDecision, applyOpportunityDecision, generateMarketHint, sellAsset } from "@/lib/gameLogic";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
-import { HelpCircle, Music, Volume2, VolumeX, RotateCcw } from "lucide-react";
+import { HelpCircle, Music, Volume2, VolumeX, RotateCcw, Check } from "lucide-react";
 import { useGameSounds } from "@/hooks/useGameSounds";
 
 const SAVE_KEY_PREFIX = "cashflow_game_save_v1:";
@@ -21,7 +21,21 @@ const Index = () => {
   const [gameMode, setGameMode] = useState<"setup" | "playing">("setup");
   const [showCertificate, setShowCertificate] = useState(false);
   const [certificateAwarded, setCertificateAwarded] = useState(false);
+  const [saveStatus, setSaveStatus] = useState<{ show: boolean; message: string }>({
+    show: false,
+    message: "Saved just now",
+  });
+  const saveStatusTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const { playSound, isMusicEnabled, isSoundEnabled, toggleMusic, toggleSound } = useGameSounds();
+
+  const flashSaved = () => {
+    setSaveStatus({ show: true, message: "Saved just now" });
+    if (saveStatusTimer.current) clearTimeout(saveStatusTimer.current);
+    saveStatusTimer.current = setTimeout(() => {
+      setSaveStatus((prev) => ({ ...prev, show: false }));
+    }, 2000);
+  };
+
 
   // Persist game state to localStorage while playing (per-player)
   useEffect(() => {
