@@ -483,7 +483,10 @@ const Index = () => {
         gameState={gameState}
         onPlayAgain={() => {
           setShowWinScreen(false);
-          handleChangePlayer();
+          setGameState(createInitialGameState());
+          setCertificateAwarded(false);
+          setWinRecorded(false);
+          setGameMode("setup");
         }}
       />
     </div>
