@@ -34,6 +34,25 @@ const Index = () => {
     }
   }, [gameState, gameMode]);
 
+  // Autosave on page unload so progress is never lost mid-session
+  useEffect(() => {
+    const handleBeforeUnload = () => {
+      if (gameMode === "playing" && gameState.playerName) {
+        try {
+          localStorage.setItem(saveKeyFor(gameState.playerName), JSON.stringify(gameState));
+        } catch (err) {
+          console.error("Failed to save on unload", err);
+        }
+      }
+    };
+    window.addEventListener("beforeunload", handleBeforeUnload);
+    window.addEventListener("pagehide", handleBeforeUnload);
+    return () => {
+      window.removeEventListener("beforeunload", handleBeforeUnload);
+      window.removeEventListener("pagehide", handleBeforeUnload);
+    };
+  }, [gameState, gameMode]);
+
   // Award Crorepati certificate the first time cash crosses ₹1 crore
   useEffect(() => {
     if (gameMode === "playing" && !certificateAwarded && gameState.cash >= 10000000) {
@@ -76,6 +95,19 @@ const Index = () => {
     setCertificateAwarded(false);
     setGameMode("setup");
     toast.info("Starting a new game");
+  };
+
+  const handleResetMyGame = () => {
+    if (!confirm("Reset your saved progress and restart from the beginning?")) return;
+    const { playerName, profession } = gameState;
+    if (playerName) {
+      localStorage.removeItem(saveKeyFor(playerName));
+    }
+    const fresh = { ...INITIAL_GAME_STATE, playerName, profession };
+    setGameState(fresh);
+    setCertificateAwarded(false);
+    setGameMode("playing");
+    toast.info(`${playerName}, your game has been reset to the starting point.`);
   };
 
   const rollDice = () => {
@@ -271,6 +303,15 @@ const Index = () => {
           >
             <RotateCcw className="w-4 h-4" />
             New Game
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleResetMyGame}
+            className="gap-2"
+          >
+            <RotateCcw className="w-4 h-4" />
+            Reset My Game
           </Button>
         </div>
         <div className="flex gap-2">
