@@ -191,6 +191,87 @@ function CityCenter() {
           />
         </RoundedBox>
       ))}
+      <FerrisWheel position={[3.6, 0, -2.4]} />
+      <Helicopter />
+    </group>
+  );
+}
+
+function FerrisWheel({ position }: { position: [number, number, number] }) {
+  const ref = useRef<THREE.Group>(null);
+  useFrame((_s, dt) => {
+    if (ref.current) ref.current.rotation.z += dt * 0.35;
+  });
+  const spokes = 10;
+  const radius = 1.5;
+  return (
+    <group position={[position[0], position[1] + radius + 0.2, position[2]]}>
+      {/* Support legs */}
+      <mesh position={[-0.5, -radius * 0.6, 0]} rotation={[0, 0, 0.35]}>
+        <cylinderGeometry args={[0.05, 0.06, radius * 1.6, 8]} />
+        <meshStandardMaterial color="#3a3a4a" metalness={0.9} roughness={0.3} />
+      </mesh>
+      <mesh position={[0.5, -radius * 0.6, 0]} rotation={[0, 0, -0.35]}>
+        <cylinderGeometry args={[0.05, 0.06, radius * 1.6, 8]} />
+        <meshStandardMaterial color="#3a3a4a" metalness={0.9} roughness={0.3} />
+      </mesh>
+      <group ref={ref}>
+        <mesh>
+          <torusGeometry args={[radius, 0.04, 12, 48]} />
+          <meshStandardMaterial color="#ff4fa3" emissive="#ff4fa3" emissiveIntensity={1.4} toneMapped={false} />
+        </mesh>
+        {Array.from({ length: spokes }).map((_, i) => {
+          const a = (i / spokes) * Math.PI * 2;
+          return (
+            <group key={i} rotation={[0, 0, a]}>
+              <mesh>
+                <boxGeometry args={[0.02, radius * 2, 0.02]} />
+                <meshStandardMaterial color="#aaa" emissive="#fff" emissiveIntensity={0.4} />
+              </mesh>
+              <mesh position={[0, radius, 0]}>
+                <sphereGeometry args={[0.12, 12, 12]} />
+                <meshStandardMaterial
+                  color={["#ffd86b", "#4fa3ff", "#2dd4a8", "#ff6b9d"][i % 4]}
+                  emissive={["#ffd86b", "#4fa3ff", "#2dd4a8", "#ff6b9d"][i % 4]}
+                  emissiveIntensity={1.2}
+                  toneMapped={false}
+                />
+              </mesh>
+            </group>
+          );
+        })}
+      </group>
+    </group>
+  );
+}
+
+function Helicopter() {
+  const ref = useRef<THREE.Group>(null);
+  const rotor = useRef<THREE.Mesh>(null);
+  useFrame(({ clock }, dt) => {
+    const t = clock.getElapsedTime() * 0.35;
+    if (ref.current) {
+      const r = 4.6;
+      ref.current.position.set(Math.cos(t) * r, 5.8 + Math.sin(t * 2) * 0.2, Math.sin(t) * r);
+      ref.current.rotation.y = -t + Math.PI / 2;
+    }
+    if (rotor.current) rotor.current.rotation.y += dt * 30;
+  });
+  return (
+    <group ref={ref}>
+      <mesh castShadow>
+        <capsuleGeometry args={[0.18, 0.45, 6, 12]} />
+        <meshStandardMaterial color="#1a1a22" metalness={0.8} roughness={0.3} emissive="#ff4444" emissiveIntensity={0.4} />
+      </mesh>
+      <mesh position={[0.55, 0, 0]}>
+        <boxGeometry args={[0.5, 0.05, 0.05]} />
+        <meshStandardMaterial color="#1a1a22" metalness={0.8} roughness={0.3} />
+      </mesh>
+      <mesh ref={rotor} position={[0, 0.22, 0]}>
+        <boxGeometry args={[1.4, 0.02, 0.06]} />
+        <meshStandardMaterial color="#888" transparent opacity={0.45} />
+      </mesh>
+      <pointLight color="#ff3030" intensity={0.6} distance={2} />
     </group>
   );
 }
@@ -240,17 +321,36 @@ function TileMesh({ tile, index, total, isCurrent, wasVisited }: TileMeshProps) 
           ref={matRef}
           color={tile.color}
           emissive={tile.color}
-          emissiveIntensity={0.35}
-          metalness={0.6}
-          roughness={0.3}
+          emissiveIntensity={0.85}
+          metalness={0.5}
+          roughness={0.28}
         />
       </RoundedBox>
 
-      {/* Neon top edge */}
-      <mesh position={[0, TILE_HEIGHT / 2 + 0.005, 0]} rotation={[-Math.PI / 2, 0, 0]}>
-        <ringGeometry args={[TILE_SIZE * 0.42, TILE_SIZE * 0.48, 4]} />
-        <meshBasicMaterial color="#ffffff" transparent opacity={0.35} side={THREE.DoubleSide} />
-      </mesh>
+      {/* Neon outline around tile top — vivid like the reference board */}
+      {(["+x", "-x", "+z", "-z"] as const).map((edge) => {
+        const len = TILE_SIZE * 0.96;
+        const thick = 0.07;
+        const offset = TILE_SIZE / 2 - thick / 2;
+        const positions: Record<string, [number, number, number]> = {
+          "+x": [offset, TILE_HEIGHT / 2 + 0.02, 0],
+          "-x": [-offset, TILE_HEIGHT / 2 + 0.02, 0],
+          "+z": [0, TILE_HEIGHT / 2 + 0.02, offset],
+          "-z": [0, TILE_HEIGHT / 2 + 0.02, -offset],
+        };
+        const sizes: Record<string, [number, number, number]> = {
+          "+x": [thick, 0.05, len],
+          "-x": [thick, 0.05, len],
+          "+z": [len, 0.05, thick],
+          "-z": [len, 0.05, thick],
+        };
+        return (
+          <mesh key={edge} position={positions[edge]}>
+            <boxGeometry args={sizes[edge]} />
+            <meshBasicMaterial color={tile.color} toneMapped={false} />
+          </mesh>
+        );
+      })}
 
       {/* HTML overlay: icon + label */}
       <Html
