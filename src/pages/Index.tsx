@@ -13,7 +13,8 @@ import { Button } from "@/components/ui/button";
 import { HelpCircle, Music, Volume2, VolumeX, RotateCcw } from "lucide-react";
 import { useGameSounds } from "@/hooks/useGameSounds";
 
-const SAVE_KEY = "cashflow_game_save_v1";
+const SAVE_KEY_PREFIX = "cashflow_game_save_v1:";
+const saveKeyFor = (name: string) => `${SAVE_KEY_PREFIX}${name.trim().toLowerCase()}`;
 
 const Index = () => {
   const [gameState, setGameState] = useState<GameState>(INITIAL_GAME_STATE);
@@ -22,26 +23,11 @@ const Index = () => {
   const [certificateAwarded, setCertificateAwarded] = useState(false);
   const { playSound, isMusicEnabled, isSoundEnabled, toggleMusic, toggleSound } = useGameSounds();
 
-  // Load saved game on mount
+  // Persist game state to localStorage while playing (per-player)
   useEffect(() => {
-    try {
-      const saved = localStorage.getItem(SAVE_KEY);
-      if (saved) {
-        const parsed = JSON.parse(saved) as GameState;
-        setGameState(parsed);
-        setCertificateAwarded(parsed.cash >= 10000000);
-        setGameMode("playing");
-      }
-    } catch (err) {
-      console.error("Failed to load saved game", err);
-    }
-  }, []);
-
-  // Persist game state to localStorage while playing
-  useEffect(() => {
-    if (gameMode === "playing") {
+    if (gameMode === "playing" && gameState.playerName) {
       try {
-        localStorage.setItem(SAVE_KEY, JSON.stringify(gameState));
+        localStorage.setItem(saveKeyFor(gameState.playerName), JSON.stringify(gameState));
       } catch (err) {
         console.error("Failed to save game", err);
       }
@@ -59,6 +45,21 @@ const Index = () => {
   }, [gameState.cash, gameMode, certificateAwarded]);
 
   const handlePlayerCreate = (playerName: string, profession: string) => {
+    // If this player has a saved game, resume it. Otherwise start fresh.
+    try {
+      const saved = localStorage.getItem(saveKeyFor(playerName));
+      if (saved) {
+        const parsed = JSON.parse(saved) as GameState;
+        setGameState(parsed);
+        setCertificateAwarded(parsed.cash >= 10000000);
+        setGameMode("playing");
+        toast.success(`Welcome back, ${playerName}! Resuming your game.`);
+        return;
+      }
+    } catch (err) {
+      console.error("Failed to load saved game", err);
+    }
+
     const initialState = { ...INITIAL_GAME_STATE, playerName, profession };
     setGameState(initialState);
     setCertificateAwarded(initialState.cash >= 10000000);
@@ -68,7 +69,9 @@ const Index = () => {
 
   const handleNewGame = () => {
     if (!confirm("Start a new game? Your current progress will be lost.")) return;
-    localStorage.removeItem(SAVE_KEY);
+    if (gameState.playerName) {
+      localStorage.removeItem(saveKeyFor(gameState.playerName));
+    }
     setGameState(INITIAL_GAME_STATE);
     setCertificateAwarded(false);
     setGameMode("setup");
