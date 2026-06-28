@@ -191,6 +191,7 @@ const Index = () => {
         // Backward compat: ensure new fields exist
         if (parsed.turnCount === undefined) parsed.turnCount = 0;
         if (parsed.loansTaken === undefined) parsed.loansTaken = 0;
+        if ((parsed as any).activeHint === undefined) (parsed as any).activeHint = null;
         if ((parsed as any).hasReachedTenCrore === undefined) (parsed as any).hasReachedTenCrore = parsed.cash >= 100000000;
         setGameState(parsed);
         setCertificateAwarded(parsed.cash >= 10000000);
