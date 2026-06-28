@@ -1,9 +1,7 @@
 import { Suspense, useMemo, useRef, useState, useEffect } from "react";
-import { Canvas, useFrame } from "@react-three/fiber";
+import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import {
-  PerspectiveCamera,
   ContactShadows,
-  Environment,
   Float,
   Html,
   Sparkles,
@@ -360,6 +358,16 @@ function Lighting() {
   );
 }
 
+function CameraRig() {
+  const { camera } = useThree();
+  useEffect(() => {
+    camera.position.set(18, 20, 22);
+    camera.lookAt(0, 0, 0);
+    camera.updateProjectionMatrix();
+  }, [camera]);
+  return null;
+}
+
 // ============================================================================
 // MAIN COMPONENT
 // ============================================================================
@@ -401,13 +409,15 @@ export function GameBoard3D({ currentPosition, diceValue }: GameBoard3DProps) {
       <Canvas
         shadows
         dpr={[1, 2]}
+        camera={{ position: [18, 20, 22], fov: 38, near: 0.1, far: 200 }}
         gl={{ antialias: true, alpha: true, powerPreference: "high-performance" }}
       >
-        <PerspectiveCamera makeDefault fov={32} position={[15, 17, 18]} />
+        <CameraRig />
+        <color attach="background" args={["#040814"]} />
+        <fog attach="fog" args={["#040814", 35, 80]} />
         <Suspense fallback={null}>
           <Lighting />
           <Stars radius={80} depth={50} count={1200} factor={4} fade speed={0.6} />
-          <Environment preset="night" />
 
           <Float speed={1.1} rotationIntensity={0} floatIntensity={0.08}>
             <group>
