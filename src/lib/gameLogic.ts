@@ -25,7 +25,6 @@ export const INVESTMENT_OPPORTUNITIES = [
   { name: "Franchise Business", cost: 750000, income: 30000, value: 750000, risk: "high" as const, description: "Branded franchise operation" },
 ];
 
-export const BOARD_TILES: Tile[] = [
 const G = {
   payday:               { color: "#f7971e", gradient: "linear-gradient(135deg,#f7971e,#ffd200)", icon: "💰" },
   opportunity:          { color: "#4776E6", gradient: "linear-gradient(135deg,#4776E6,#8E54E9)", icon: "💡" },
