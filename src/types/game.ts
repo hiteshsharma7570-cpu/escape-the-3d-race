@@ -64,22 +64,80 @@ export interface GameState {
   hasEscapedRatRace: boolean;
   pendingDecision: PendingDecision | null;
   marketHint: MarketHint | null;
+  turnCount: number;
+  loansTaken: number;
 }
 
-export const INITIAL_GAME_STATE: GameState = {
-  playerName: "Player",
-  profession: "Teacher",
-  cash: 2480690,
-  salary: 96000,
-  passiveIncome: 80400,
-  assets: [],
-  liabilities: [],
-  position: 0,
-  diceValue: null,
-  isRolling: false,
-  gameLog: ["Welcome! Roll the dice to begin."],
-  marketCondition: "normal",
-  hasEscapedRatRace: false,
-  pendingDecision: null,
-  marketHint: null,
+export interface ProfessionProfile {
+  salary: number;
+  cash: number;
+  liabilities: Omit<Liability, "id">[];
+}
+
+export const PROFESSION_PROFILES: Record<string, ProfessionProfile> = {
+  Teacher: {
+    salary: 45000,
+    cash: 50000,
+    liabilities: [{ name: "Car Loan", amount: 800000, monthlyPayment: 4000 }],
+  },
+  Engineer: {
+    salary: 90000,
+    cash: 80000,
+    liabilities: [
+      { name: "Car Loan", amount: 1000000, monthlyPayment: 5000 },
+      { name: "Student Loan", amount: 500000, monthlyPayment: 3000 },
+    ],
+  },
+  Doctor: {
+    salary: 150000,
+    cash: 100000,
+    liabilities: [
+      { name: "Medical Education Loan", amount: 2000000, monthlyPayment: 12000 },
+      { name: "Car Loan", amount: 1500000, monthlyPayment: 8000 },
+    ],
+  },
+  Lawyer: {
+    salary: 120000,
+    cash: 90000,
+    liabilities: [
+      { name: "Education Loan", amount: 1200000, monthlyPayment: 7000 },
+      { name: "Car Loan", amount: 1000000, monthlyPayment: 5000 },
+    ],
+  },
+  "Business Owner": {
+    salary: 60000,
+    cash: 150000,
+    liabilities: [{ name: "Business Loan", amount: 2500000, monthlyPayment: 15000 }],
+  },
 };
+
+export const createInitialGameState = (
+  playerName = "Player",
+  profession = "Teacher",
+): GameState => {
+  const profile = PROFESSION_PROFILES[profession] ?? PROFESSION_PROFILES.Teacher;
+  return {
+    playerName,
+    profession,
+    cash: profile.cash,
+    salary: profile.salary,
+    passiveIncome: 0,
+    assets: [],
+    liabilities: profile.liabilities.map((l, i) => ({
+      ...l,
+      id: `start-liability-${i}-${Date.now()}`,
+    })),
+    position: 0,
+    diceValue: null,
+    isRolling: false,
+    gameLog: [`[Turn 0] Welcome, ${playerName}! Roll the dice to begin.`],
+    marketCondition: "normal",
+    hasEscapedRatRace: false,
+    pendingDecision: null,
+    marketHint: null,
+    turnCount: 0,
+    loansTaken: 0,
+  };
+};
+
+export const INITIAL_GAME_STATE: GameState = createInitialGameState();
