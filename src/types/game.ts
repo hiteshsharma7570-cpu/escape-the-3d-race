@@ -12,7 +12,19 @@ export type TileType =
   | "side_hustle"
   | "inheritance"
   | "real_estate_boom"
-  | "stock_market_crash";
+  | "stock_market_crash"
+  | "emi_hike"
+  | "insurance_premium"
+  | "home_repair"
+  | "traffic_fine"
+  | "credit_card_bill"
+  | "school_fees"
+  | "festival_expense"
+  | "electricity_bill"
+  | "rent_hike"
+  | "vehicle_breakdown"
+  | "loan_interest_spike"
+  | "society_maintenance";
 
 export interface Tile {
   id: number;
@@ -91,6 +103,9 @@ export const PROFESSION_PROFILES: Record<string, ProfessionProfile> = {
       { name: "Home Rent", amount: 0, monthlyPayment: 12000 },
       { name: "Two-Wheeler Loan", amount: 120000, monthlyPayment: 3500 },
       { name: "Mobile EMI", amount: 0, monthlyPayment: 1500 },
+      { name: "Society Maintenance", amount: 0, monthlyPayment: 2500 },
+      { name: "Insurance Premium", amount: 0, monthlyPayment: 3000 },
+      { name: "Electricity Bill", amount: 0, monthlyPayment: 2000 },
     ],
   },
   Engineer: {
@@ -101,6 +116,10 @@ export const PROFESSION_PROFILES: Record<string, ProfessionProfile> = {
       { name: "Student Loan", amount: 400000, monthlyPayment: 8000 },
       { name: "Credit Card Debt", amount: 50000, monthlyPayment: 5000 },
       { name: "Home Rent", amount: 0, monthlyPayment: 18000 },
+      { name: "Insurance Premium", amount: 0, monthlyPayment: 5000 },
+      { name: "Society Maintenance", amount: 0, monthlyPayment: 4000 },
+      { name: "Electricity Bill", amount: 0, monthlyPayment: 3500 },
+      { name: "Subscriptions & Misc", amount: 0, monthlyPayment: 3000 },
     ],
   },
   Doctor: {
@@ -111,6 +130,10 @@ export const PROFESSION_PROFILES: Record<string, ProfessionProfile> = {
       { name: "Car Loan", amount: 1200000, monthlyPayment: 18000 },
       { name: "Clinic Equipment Loan", amount: 800000, monthlyPayment: 10000 },
       { name: "Home Rent", amount: 0, monthlyPayment: 25000 },
+      { name: "Medical Insurance", amount: 0, monthlyPayment: 8000 },
+      { name: "Society Maintenance", amount: 0, monthlyPayment: 6000 },
+      { name: "Electricity Bill", amount: 0, monthlyPayment: 5000 },
+      { name: "Staff Salary", amount: 0, monthlyPayment: 20000 },
     ],
   },
   Lawyer: {
@@ -121,6 +144,10 @@ export const PROFESSION_PROFILES: Record<string, ProfessionProfile> = {
       { name: "Car Loan", amount: 800000, monthlyPayment: 14000 },
       { name: "Office Rent", amount: 0, monthlyPayment: 20000 },
       { name: "Credit Card Debt", amount: 80000, monthlyPayment: 6000 },
+      { name: "Bar Council Fees", amount: 0, monthlyPayment: 3000 },
+      { name: "Insurance Premium", amount: 0, monthlyPayment: 5000 },
+      { name: "Society Maintenance", amount: 0, monthlyPayment: 4500 },
+      { name: "Electricity Bill", amount: 0, monthlyPayment: 4000 },
     ],
   },
   "Business Owner": {
@@ -131,6 +158,11 @@ export const PROFESSION_PROFILES: Record<string, ProfessionProfile> = {
       { name: "Office Rent", amount: 0, monthlyPayment: 35000 },
       { name: "Inventory Credit", amount: 500000, monthlyPayment: 8000 },
       { name: "GST Liability", amount: 0, monthlyPayment: 5000 },
+      { name: "Staff Salaries", amount: 0, monthlyPayment: 50000 },
+      { name: "Utilities & Electricity", amount: 0, monthlyPayment: 12000 },
+      { name: "Insurance Premium", amount: 0, monthlyPayment: 10000 },
+      { name: "Society / Maintenance", amount: 0, monthlyPayment: 8000 },
+      { name: "Accountant Fees", amount: 0, monthlyPayment: 5000 },
     ],
   },
 };
