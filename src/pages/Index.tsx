@@ -182,6 +182,11 @@ const Index = () => {
         if (parsed.turnCount === undefined) parsed.turnCount = 0;
         if (parsed.loansTaken === undefined) parsed.loansTaken = 0;
         if (parsed.hasReachedFiveCrore === undefined) parsed.hasReachedFiveCrore = false;
+        // Backfill new array fields (older saves may pre-date the expense/liability split).
+        if (!Array.isArray(parsed.assets)) parsed.assets = [];
+        if (!Array.isArray(parsed.liabilities)) parsed.liabilities = [];
+        if (!Array.isArray(parsed.expenses)) parsed.expenses = [];
+        if (!Array.isArray(parsed.gameLog)) parsed.gameLog = [];
         setGameState(parsed);
         // Suppress the milestone modals on resume — they fire once per achievement, not per session.
         setCertificateAwarded(true);
