@@ -1,8 +1,8 @@
-import { BOARD_TILES } from "@/lib/gameLogic";
+import { BOARD_TILES, calculateNetWorth, calculateTotalExpenses } from "@/lib/gameLogic";
 import { motion } from "framer-motion";
-import { useEffect, useState, useRef, useMemo } from "react";
-import { calculateNetWorth, calculateTotalExpenses } from "@/lib/gameLogic";
+import { useEffect, useMemo, useRef, useState } from "react";
 import type { GameState } from "@/types/game";
+import { getTileMeta } from "@/lib/tileMeta";
 
 interface GameBoard2DProps {
   currentPosition: number;
@@ -10,14 +10,13 @@ interface GameBoard2DProps {
   gameState?: GameState;
 }
 
-// Map BOARD_TILES indices to (row, col) on a 7x7 perimeter ring.
-// 7+6+6+5 = 24 cells. Order goes clockwise starting top-left.
+// 7x7 perimeter ring (24 cells), clockwise from top-left.
 function buildPerimeter(): Array<[number, number]> {
   const cells: Array<[number, number]> = [];
-  for (let c = 0; c < 7; c++) cells.push([0, c]);          // top row L→R
-  for (let r = 1; r < 7; r++) cells.push([r, 6]);           // right col T→B
-  for (let c = 5; c >= 0; c--) cells.push([6, c]);          // bottom row R→L
-  for (let r = 5; r > 0; r--) cells.push([r, 0]);           // left col B→T
+  for (let c = 0; c < 7; c++) cells.push([0, c]);
+  for (let r = 1; r < 7; r++) cells.push([r, 6]);
+  for (let c = 5; c >= 0; c--) cells.push([6, c]);
+  for (let r = 5; r > 0; r--) cells.push([r, 0]);
   return cells;
 }
 
@@ -36,56 +35,66 @@ export const GameBoard2D = ({ currentPosition, diceValue, gameState }: GameBoard
         setVisited((v) => new Set(v).add(next));
         return next;
       });
-    }, 240);
-    return () => {
-      if (timerRef.current) clearTimeout(timerRef.current);
-    };
+    }, 220);
+    return () => { if (timerRef.current) clearTimeout(timerRef.current); };
   }, [displayedPosition, currentPosition]);
 
   const cells = useMemo(buildPerimeter, []);
   const currentTile = BOARD_TILES[displayedPosition];
+  const currentMeta = getTileMeta(currentTile.type);
   const netWorth = gameState ? calculateNetWorth(gameState) : 0;
   const totalExpenses = gameState ? calculateTotalExpenses(gameState) : 0;
 
   return (
     <div
-      className="relative w-full mx-auto rounded-2xl overflow-hidden ring-1 ring-amber-500/30 shadow-2xl"
+      className="relative w-full mx-auto rounded-3xl overflow-hidden"
       style={{
         aspectRatio: "1 / 1",
-        maxWidth: 720,
+        maxWidth: 820,
         background:
-          "radial-gradient(ellipse at 50% 30%, #1a2a55 0%, #0a1530 45%, #050a18 100%)",
+          "radial-gradient(ellipse at 50% 50%, hsl(225 60% 11%) 0%, hsl(225 70% 6%) 60%, hsl(225 80% 3%) 100%)",
+        boxShadow:
+          "0 0 0 1px hsla(45, 95%, 55%, 0.25), 0 30px 80px hsla(0, 0%, 0%, 0.6), inset 0 0 80px hsla(220, 80%, 35%, 0.15)",
       }}
     >
       {/* Skyline silhouette ambience (top) */}
       <div
-        className="absolute inset-x-0 top-0 h-1/2 opacity-60 pointer-events-none"
+        className="absolute inset-0 pointer-events-none opacity-90"
         style={{
           background:
-            "radial-gradient(ellipse at 20% 80%, rgba(79,158,255,0.25), transparent 60%), radial-gradient(ellipse at 80% 70%, rgba(255,107,157,0.18), transparent 60%)",
+            "radial-gradient(ellipse at 20% 20%, hsla(210, 100%, 50%, 0.18), transparent 55%), radial-gradient(ellipse at 80% 25%, hsla(325, 90%, 55%, 0.14), transparent 55%), radial-gradient(ellipse at 50% 80%, hsla(170, 80%, 45%, 0.12), transparent 60%)",
         }}
       />
-      {/* Distant city lights — subtle dots */}
       <div
-        className="absolute inset-0 pointer-events-none opacity-40"
+        className="absolute inset-0 pointer-events-none opacity-50"
         style={{
           backgroundImage:
-            "radial-gradient(rgba(255,220,120,0.5) 1px, transparent 1.5px)",
-          backgroundSize: "26px 26px",
+            "radial-gradient(hsla(45, 100%, 70%, 0.55) 0.6px, transparent 1.2px)",
+          backgroundSize: "22px 22px",
           maskImage:
-            "linear-gradient(to bottom, rgba(0,0,0,0.8) 0%, rgba(0,0,0,0.2) 35%, transparent 55%)",
+            "radial-gradient(ellipse at 50% 50%, transparent 30%, rgba(0,0,0,0.9) 75%)",
           WebkitMaskImage:
-            "linear-gradient(to bottom, rgba(0,0,0,0.8) 0%, rgba(0,0,0,0.2) 35%, transparent 55%)",
+            "radial-gradient(ellipse at 50% 50%, transparent 30%, rgba(0,0,0,0.9) 75%)",
         }}
       />
 
       {/* 7x7 grid */}
-      <div className="relative grid h-full w-full p-3 gap-1.5"
-           style={{ gridTemplateColumns: "repeat(7, 1fr)", gridTemplateRows: "repeat(7, 1fr)" }}>
+      <div
+        className="relative grid h-full w-full p-3 gap-1.5"
+        style={{ gridTemplateColumns: "repeat(7, 1fr)", gridTemplateRows: "repeat(7, 1fr)" }}
+      >
         {BOARD_TILES.map((tile, index) => {
           const [row, col] = cells[index];
           const isCurrent = displayedPosition === index;
           const wasVisited = visited.has(index);
+          const meta = getTileMeta(tile.type);
+          const neon = `hsl(${meta.neonHsl})`;
+          const neonSoft = `hsla(${meta.neonHsl.split(" ").join(", ").replace(/%/g, "%")}, 0.55)`;
+          // Build hsla properly
+          const [h, s, l] = meta.neonHsl.split(" ");
+          const neonGlow40 = `hsla(${h}, ${s}, ${l}, 0.40)`;
+          const neonGlow70 = `hsla(${h}, ${s}, ${l}, 0.70)`;
+          const neonGlow15 = `hsla(${h}, ${s}, ${l}, 0.15)`;
 
           return (
             <div
@@ -93,132 +102,95 @@ export const GameBoard2D = ({ currentPosition, diceValue, gameState }: GameBoard
               className="relative"
               style={{ gridRow: row + 1, gridColumn: col + 1 }}
             >
-              {/* Outer pulsing halo on the active tile */}
+              {/* Pulsing halo on active tile */}
               {isCurrent && (
-                <>
-                  <motion.div
-                    aria-hidden
-                    className="absolute -inset-2 rounded-lg pointer-events-none"
-                    style={{
-                      background: `radial-gradient(circle, ${tile.color}66 0%, transparent 70%)`,
-                      filter: "blur(6px)",
-                    }}
-                    animate={{ opacity: [0.55, 1, 0.55], scale: [0.95, 1.08, 0.95] }}
-                    transition={{ duration: 1.6, repeat: Infinity, ease: "easeInOut" }}
-                  />
-                  <motion.div
-                    aria-hidden
-                    className="absolute -inset-1 rounded-md pointer-events-none border-2"
-                    style={{ borderColor: tile.color }}
-                    animate={{ opacity: [0.4, 1, 0.4] }}
-                    transition={{ duration: 1.1, repeat: Infinity, ease: "easeInOut" }}
-                  />
-                </>
+                <motion.div
+                  aria-hidden
+                  className="absolute -inset-2 rounded-xl pointer-events-none"
+                  style={{
+                    background: `radial-gradient(circle, ${neonGlow70} 0%, transparent 70%)`,
+                    filter: "blur(8px)",
+                  }}
+                  animate={{ opacity: [0.5, 1, 0.5], scale: [0.95, 1.1, 0.95] }}
+                  transition={{ duration: 1.8, repeat: Infinity, ease: "easeInOut" }}
+                />
               )}
+
               <motion.div
-                key={isCurrent ? `active-${index}` : `idle-${index}`}
-                className="relative w-full h-full rounded-md flex flex-col items-center justify-center text-center overflow-hidden"
-                initial={isCurrent ? { scale: 0.92 } : false}
-                animate={
-                  isCurrent
-                    ? {
-                        scale: [0.92, 1.12, 1.04],
-                        boxShadow: [
-                          `0 0 0 2px ${tile.color}, 0 0 14px 3px ${tile.color}aa, inset 0 0 12px rgba(255,255,255,0.18)`,
-                          `0 0 0 3px #fff, 0 0 36px 10px ${tile.color}, inset 0 0 22px rgba(255,255,255,0.45)`,
-                          `0 0 0 2px ${tile.color}, 0 0 26px 6px ${tile.color}cc, inset 0 0 16px rgba(255,255,255,0.22)`,
-                        ],
-                      }
-                    : {
-                        scale: 1,
-                        boxShadow: `0 0 0 1.5px ${tile.color}, 0 0 10px ${tile.color}80, inset 0 0 8px rgba(0,0,0,0.4)`,
-                      }
-                }
-                transition={
-                  isCurrent
-                    ? { duration: 0.9, times: [0, 0.45, 1], ease: "easeOut" }
-                    : { duration: 0.3 }
-                }
+                className="relative w-full h-full rounded-lg flex flex-col items-center justify-between text-center overflow-hidden py-1.5 px-0.5"
+                animate={{
+                  scale: isCurrent ? [1, 1.08, 1.03] : 1,
+                  boxShadow: isCurrent
+                    ? `0 0 0 2px ${neon}, 0 0 22px 4px ${neonGlow70}, inset 0 0 18px ${neonGlow40}`
+                    : `0 0 0 1.5px ${neon}, 0 0 10px ${neonGlow40}, inset 0 0 10px hsla(0,0%,0%,0.5)`,
+                }}
+                transition={{ duration: isCurrent ? 0.8 : 0.3, ease: "easeOut" }}
                 style={{
-                  background: tile.gradient || tile.color,
-                  opacity: wasVisited || isCurrent ? 1 : 0.92,
+                  background: `linear-gradient(160deg, ${neonGlow15} 0%, hsla(225, 55%, 8%, 0.85) 60%, hsla(225, 70%, 5%, 0.95) 100%)`,
+                  opacity: wasVisited || isCurrent ? 1 : 0.85,
                 }}
               >
-                {/* Glossy top sheen */}
+                {/* Top glossy sheen */}
                 <div
                   className="absolute inset-x-0 top-0 h-1/2 pointer-events-none"
                   style={{
                     background:
-                      "linear-gradient(to bottom, rgba(255,255,255,0.22), rgba(255,255,255,0))",
+                      "linear-gradient(to bottom, hsla(0, 0%, 100%, 0.10), transparent)",
                   }}
                 />
-                {/* Sweeping shine across active tile */}
-                {isCurrent && (
-                  <motion.div
-                    aria-hidden
-                    className="absolute inset-0 pointer-events-none"
-                    style={{
-                      background:
-                        "linear-gradient(110deg, transparent 30%, rgba(255,255,255,0.55) 50%, transparent 70%)",
-                      mixBlendMode: "screen",
-                    }}
-                    initial={{ x: "-120%" }}
-                    animate={{ x: ["-120%", "120%"] }}
-                    transition={{
-                      duration: 1.4,
-                      repeat: Infinity,
-                      repeatDelay: 1.2,
-                      ease: "easeInOut",
-                    }}
-                  />
-                )}
+
+                {/* Icon */}
                 <motion.div
-                  className="relative text-lg sm:text-xl leading-none drop-shadow-md"
-                  animate={
-                    isCurrent
-                      ? { scale: [1, 1.25, 1], rotate: [0, -6, 6, 0] }
-                      : { scale: 1, rotate: 0 }
-                  }
-                  transition={{ duration: 0.7, ease: "easeOut" }}
+                  className="relative text-[18px] sm:text-[22px] leading-none"
+                  style={{ filter: `drop-shadow(0 2px 6px ${neonGlow70})` }}
+                  animate={isCurrent ? { scale: [1, 1.25, 1], rotate: [0, -8, 8, 0] } : { scale: 1 }}
+                  transition={{ duration: 0.7 }}
                 >
-                  {tile.icon}
+                  {meta.icon}
                 </motion.div>
+
+                {/* Title */}
                 <div
-                  className="relative font-extrabold text-white px-1 leading-tight mt-0.5 tracking-wide"
+                  className="relative font-extrabold leading-none tracking-wider text-white"
                   style={{
-                    fontSize: "0.55rem",
-                    textShadow: "0 1px 3px rgba(0,0,0,0.85)",
+                    fontSize: "0.5rem",
+                    textShadow: `0 0 6px ${neonGlow70}, 0 1px 2px hsla(0,0%,0%,0.9)`,
                   }}
                 >
-                  {tile.label.toUpperCase()}
+                  {meta.category}
+                </div>
+
+                {/* Subtitle */}
+                <div
+                  className="relative leading-none tracking-[0.1em] font-mono-num font-semibold"
+                  style={{
+                    fontSize: "0.45rem",
+                    color: `hsl(${h}, ${s}, 80%)`,
+                  }}
+                >
+                  {meta.subtitle}
                 </div>
               </motion.div>
 
+              {/* Pawn */}
               {isCurrent && (
                 <motion.div
                   layoutId="player-pawn"
-                  initial={false}
                   transition={{ type: "spring", stiffness: 380, damping: 28 }}
-                  className="absolute inset-0 flex items-end justify-center pointer-events-none pb-1"
+                  className="absolute inset-0 flex items-end justify-center pointer-events-none pb-0.5"
                 >
                   <motion.div
-                    animate={{ y: [0, -6, 0] }}
-                    transition={{ duration: 0.6, repeat: Infinity, ease: "easeInOut" }}
-                    className="relative"
+                    animate={{ y: [0, -5, 0] }}
+                    transition={{ duration: 0.7, repeat: Infinity, ease: "easeInOut" }}
                   >
-                    {/* Pawn — gold rounded silhouette */}
                     <div
-                      className="w-4 h-6 rounded-t-full"
+                      className="w-3.5 h-5 rounded-t-full"
                       style={{
                         background:
-                          "linear-gradient(180deg, #ffe082 0%, #f6b73c 55%, #a06a0c 100%)",
+                          "linear-gradient(180deg, hsl(45, 100%, 75%) 0%, hsl(42, 95%, 55%) 55%, hsl(35, 80%, 30%) 100%)",
                         boxShadow:
-                          "0 0 10px 2px rgba(255,200,80,0.85), inset 0 -2px 3px rgba(0,0,0,0.4)",
+                          "0 0 10px 2px hsla(45, 100%, 65%, 0.85), inset 0 -2px 3px hsla(0, 0%, 0%, 0.4)",
                       }}
-                    />
-                    <div
-                      className="w-5 h-1 -mt-0.5 mx-auto rounded-full"
-                      style={{ background: "rgba(0,0,0,0.45)", filter: "blur(1px)" }}
                     />
                   </motion.div>
                 </motion.div>
@@ -227,70 +199,96 @@ export const GameBoard2D = ({ currentPosition, diceValue, gameState }: GameBoard
           );
         })}
 
-        {/* Center dashboard — spans rows 2..6 / cols 2..6 (5x5 interior) */}
+        {/* Center — illustrated island + financial dashboard */}
         <div
-          className="relative rounded-xl border border-amber-500/30 bg-slate-950/70 backdrop-blur-md p-3 sm:p-4 flex flex-col items-center justify-center text-center shadow-[0_0_30px_rgba(0,0,0,0.5)_inset]"
+          className="relative flex flex-col items-center justify-center"
           style={{ gridRow: "2 / span 5", gridColumn: "2 / span 5" }}
         >
-          <div className="text-[10px] tracking-[0.3em] text-amber-300/80 font-semibold mb-2">
-            FINANCIAL DASHBOARD
-          </div>
+          {/* Decorative island base */}
+          <div
+            className="absolute inset-2 rounded-2xl pointer-events-none"
+            style={{
+              background:
+                "radial-gradient(ellipse at 50% 60%, hsl(150, 30%, 18%) 0%, hsl(220, 40%, 10%) 55%, hsl(225, 70%, 5%) 100%)",
+              boxShadow: "inset 0 0 40px hsla(0, 0%, 0%, 0.6), 0 0 30px hsla(45, 95%, 55%, 0.1)",
+            }}
+          />
+          {/* Decorative pin lights around island */}
+          <div
+            className="absolute inset-4 rounded-2xl pointer-events-none opacity-50"
+            style={{
+              backgroundImage:
+                "radial-gradient(circle at 15% 25%, hsla(45, 100%, 70%, 0.9) 1px, transparent 2px), radial-gradient(circle at 75% 20%, hsla(200, 100%, 75%, 0.9) 1px, transparent 2px), radial-gradient(circle at 30% 75%, hsla(325, 100%, 75%, 0.85) 1px, transparent 2px), radial-gradient(circle at 80% 80%, hsla(45, 100%, 70%, 0.85) 1px, transparent 2px)",
+            }}
+          />
 
-          {gameState ? (
-            <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-[11px] sm:text-xs text-slate-200">
-              <div className="text-left">
-                <div className="text-slate-400">Cash</div>
-                <div className="text-emerald-400 font-bold">₹{gameState.cash.toLocaleString()}</div>
+          {/* Glass dashboard */}
+          <div className="relative glass-card gold-border rounded-2xl px-5 py-4 w-[88%] max-w-[440px] flex flex-col items-center">
+            <div className="font-display text-[11px] tracking-[0.3em] text-gold font-bold mb-3">
+              FINANCIAL DASHBOARD
+            </div>
+
+            {gameState ? (
+              <div className="grid grid-cols-2 gap-x-6 gap-y-2 text-xs text-slate-200 w-full">
+                <Stat label="Cash"          value={`₹${gameState.cash.toLocaleString()}`}          tone="green" />
+                <Stat label="Expenses"      value={`₹${totalExpenses.toLocaleString()} /m`}        tone="red" />
+                <Stat label="Salary"        value={`₹${gameState.salary.toLocaleString()} /m`} />
+                <Stat label="Net Worth"     value={`₹${netWorth.toLocaleString()}`} tone={netWorth >= 0 ? "green" : "red"} />
+                <Stat label="Passive"       value={`₹${gameState.passiveIncome.toLocaleString()} /m`} tone="gold" />
+                <Stat label="Assets / Liab." value={
+                  <>
+                    <span className="text-emerald-400">{gameState.assets.length}</span>
+                    <span className="text-slate-500"> / </span>
+                    <span className="text-rose-400">{gameState.liabilities.length}</span>
+                  </>
+                } />
               </div>
-              <div className="text-left">
-                <div className="text-slate-400">Expenses</div>
-                <div className="text-rose-400 font-bold">₹{totalExpenses.toLocaleString()} /m</div>
-              </div>
-              <div className="text-left">
-                <div className="text-slate-400">Salary</div>
-                <div className="font-bold">₹{gameState.salary.toLocaleString()} /m</div>
-              </div>
-              <div className="text-left">
-                <div className="text-slate-400">Net Worth</div>
-                <div className={`font-bold ${netWorth >= 0 ? "text-emerald-400" : "text-rose-400"}`}>
-                  ₹{netWorth.toLocaleString()}
-                </div>
-              </div>
-              <div className="text-left">
-                <div className="text-slate-400">Passive</div>
-                <div className="text-amber-300 font-bold">₹{gameState.passiveIncome.toLocaleString()} /m</div>
-              </div>
-              <div className="text-left">
-                <div className="text-slate-400">Assets / Liab.</div>
-                <div className="font-bold">
-                  <span className="text-emerald-400">{gameState.assets.length}</span>
-                  <span className="text-slate-500"> / </span>
-                  <span className="text-rose-400">{gameState.liabilities.length}</span>
-                </div>
+            ) : (
+              <div className="text-slate-400 text-xs">Awaiting game state…</div>
+            )}
+
+            <div className="mt-4 w-full px-3 py-2 rounded-md border text-center" style={{ borderColor: "hsla(140, 90%, 55%, 0.4)", background: "hsla(140, 90%, 55%, 0.08)" }}>
+              <div className="text-[10px] tracking-[0.25em] text-gold-deep font-bold">GOAL</div>
+              <div className="text-[11px] text-slate-300 mt-0.5">Passive Income &gt; Monthly Expenses</div>
+              <div className="text-sm font-display font-bold mt-0.5" style={{ color: "hsl(140, 90%, 65%)", textShadow: "0 0 10px hsla(140, 90%, 55%, 0.6)" }}>
+                Escape The Rat Race!
               </div>
             </div>
-          ) : (
-            <div className="text-slate-400 text-xs">Awaiting game state…</div>
-          )}
 
-          <div className="mt-3 px-3 py-1.5 rounded-md border border-amber-400/40 bg-amber-500/10 text-amber-100 text-[10px] sm:text-[11px] max-w-[90%]">
-            <span className="text-amber-300/80">GOAL: </span>
-            Passive Income &gt; Monthly Expenses —{" "}
-            <span className="font-bold text-amber-300">Escape The Rat Race!</span>
-          </div>
-
-          <div className="mt-3 text-xs text-slate-300">
-            <span className="text-slate-400">On Tile: </span>
-            <span className="font-semibold">{currentTile?.icon} {currentTile?.label}</span>
-          </div>
-
-          {diceValue !== null && (
-            <div className="mt-2 px-3 py-1 rounded-full bg-amber-500/20 border border-amber-400/50 text-amber-100 text-xs font-bold">
-              🎲 Rolled {diceValue}
+            <div className="mt-3 text-[11px] text-slate-300">
+              <span className="text-slate-500">On Tile: </span>
+              <span className="font-semibold">{currentMeta.icon} {currentMeta.category}</span>
             </div>
-          )}
+
+            {diceValue !== null && (
+              <div className="mt-2 px-3 py-1 rounded-full text-[11px] font-bold" style={{ background: "hsla(45, 95%, 55%, 0.15)", border: "1px solid hsla(45, 95%, 55%, 0.5)", color: "hsl(45, 100%, 75%)" }}>
+                🎲 Rolled {diceValue}
+              </div>
+            )}
+          </div>
         </div>
       </div>
+    </div>
+  );
+};
+
+const Stat = ({
+  label,
+  value,
+  tone,
+}: {
+  label: string;
+  value: React.ReactNode;
+  tone?: "green" | "red" | "gold";
+}) => {
+  const color =
+    tone === "green" ? "text-emerald-400" :
+    tone === "red"   ? "text-rose-400"    :
+    tone === "gold"  ? "text-gold"        : "text-slate-100";
+  return (
+    <div className="text-left">
+      <div className="text-[10px] uppercase tracking-wider text-slate-500">{label}</div>
+      <div className={`font-mono-num font-bold text-[13px] ${color}`}>{value}</div>
     </div>
   );
 };
