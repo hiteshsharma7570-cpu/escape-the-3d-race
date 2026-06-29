@@ -836,14 +836,14 @@ export const applyPeriodicMechanics = (
   const events: string[] = [];
   let next = { ...state, liabilities: [...state.liabilities], assets: [...state.assets] };
 
-  // Inflation every 5 turns: liability monthlyPayment +3%
+  // Inflation every 5 turns: recurring expenses +3% (loan EMIs are fixed).
   if (next.turnCount > 0 && next.turnCount % 5 === 0) {
-    next.liabilities = next.liabilities.map(l => ({
-      ...l,
-      monthlyPayment: Math.round(l.monthlyPayment * 1.03),
+    next.expenses = next.expenses.map(e => ({
+      ...e,
+      monthlyAmount: Math.round(e.monthlyAmount * 1.03),
     }));
-    events.push("📈 Inflation! Your monthly costs just went up.");
-    pushLog(next, "📈 Inflation hit — all monthly payments +3%.");
+    events.push("📈 Inflation! Your recurring expenses just went up.");
+    pushLog(next, "📈 Inflation hit — all recurring expenses +3%.");
   }
 
   // Salary review every 8 turns: +5–15%
