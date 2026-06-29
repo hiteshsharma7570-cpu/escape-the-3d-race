@@ -52,6 +52,7 @@ const Index = () => {
   const [fiveCroreAwarded, setFiveCroreAwarded] = useState(false);
   const [showWelcome, setShowWelcome] = useState(false);
   const [showWinScreen, setShowWinScreen] = useState(false);
+  const [repayOpen, setRepayOpen] = useState(false);
   const [winRecorded, setWinRecorded] = useState(false);
   const [unlockedAchIds, setUnlockedAchIds] = useState<string[]>([]);
   const [gamesWon, setGamesWon] = useState(0);
