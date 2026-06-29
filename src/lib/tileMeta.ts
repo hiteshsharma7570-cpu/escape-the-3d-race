@@ -24,6 +24,18 @@ export const TILE_META: Record<TileType, TileMeta> = {
   inheritance:        { category: "INHERITANCE",  subtitle: "BONUS",       icon: "🎁", neonHsl: "50 100% 60%" },
   real_estate_boom:   { category: "REAL ESTATE",  subtitle: "BOOM",        icon: "🏠", neonHsl: "42 100% 58%" },
   stock_market_crash: { category: "RECESSION",    subtitle: "MARKET CRASH",icon: "🐻", neonHsl: "0 85% 50%" },
+  emi_hike:            { category: "EMI HIKE",       subtitle: "RATES UP",   icon: "📈", neonHsl: "0 75% 50%" },
+  insurance_premium:   { category: "INSURANCE",      subtitle: "PREMIUM",    icon: "🛡️", neonHsl: "280 70% 55%" },
+  home_repair:         { category: "HOME REPAIR",    subtitle: "-PAY",       icon: "🔧", neonHsl: "25 90% 55%" },
+  traffic_fine:        { category: "TRAFFIC FINE",   subtitle: "CHALLAN",    icon: "🚦", neonHsl: "0 90% 60%" },
+  credit_card_bill:    { category: "CC BILL",        subtitle: "DUE",        icon: "💳", neonHsl: "0 80% 50%" },
+  school_fees:         { category: "SCHOOL FEES",    subtitle: "TERM PAY",   icon: "🎒", neonHsl: "210 90% 58%" },
+  festival_expense:    { category: "FESTIVAL",       subtitle: "CELEBRATE",  icon: "🪔", neonHsl: "40 100% 58%" },
+  electricity_bill:    { category: "ELECTRICITY",    subtitle: "BILL",       icon: "⚡", neonHsl: "50 95% 55%" },
+  rent_hike:           { category: "RENT HIKE",      subtitle: "+RENT",      icon: "🏠", neonHsl: "0 70% 45%" },
+  vehicle_breakdown:   { category: "VEHICLE",        subtitle: "REPAIR",     icon: "🚗", neonHsl: "210 5% 55%" },
+  loan_interest_spike: { category: "INTEREST",       subtitle: "SPIKE",      icon: "🏦", neonHsl: "20 60% 35%" },
+  society_maintenance: { category: "SOCIETY",        subtitle: "MAINT.",     icon: "🏢", neonHsl: "205 70% 40%" },
 };
 
 // "Career start" corner — only for tile id 0 (PAY DAY) we mark as the start corner.
