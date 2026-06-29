@@ -56,6 +56,7 @@ export type Database = {
           player_name: string
           profession: string
           turns_taken: number
+          user_id: string | null
         }
         Insert: {
           achieved_at?: string
@@ -65,6 +66,7 @@ export type Database = {
           player_name: string
           profession: string
           turns_taken: number
+          user_id?: string | null
         }
         Update: {
           achieved_at?: string
@@ -74,6 +76,7 @@ export type Database = {
           player_name?: string
           profession?: string
           turns_taken?: number
+          user_id?: string | null
         }
         Relationships: []
       }
@@ -237,6 +240,7 @@ export type Database = {
           profession: string
           session_id: string
           turn_count: number
+          user_id: string | null
         }
         Insert: {
           cash?: number
@@ -254,6 +258,7 @@ export type Database = {
           profession: string
           session_id: string
           turn_count?: number
+          user_id?: string | null
         }
         Update: {
           cash?: number
@@ -271,6 +276,7 @@ export type Database = {
           profession?: string
           session_id?: string
           turn_count?: number
+          user_id?: string | null
         }
         Relationships: [
           {
@@ -290,6 +296,7 @@ export type Database = {
           player_name: string
           profession: string
           status: string
+          user_id: string | null
         }
         Insert: {
           bracket_session_id?: string | null
@@ -298,6 +305,7 @@ export type Database = {
           player_name: string
           profession: string
           status?: string
+          user_id?: string | null
         }
         Update: {
           bracket_session_id?: string | null
@@ -306,6 +314,7 @@ export type Database = {
           player_name?: string
           profession?: string
           status?: string
+          user_id?: string | null
         }
         Relationships: [
           {
@@ -326,6 +335,7 @@ export type Database = {
           player_name: string
           profession: string
           turns_taken: number
+          user_id: string | null
           week_start: string
         }
         Insert: {
@@ -336,6 +346,7 @@ export type Database = {
           player_name: string
           profession: string
           turns_taken: number
+          user_id?: string | null
           week_start: string
         }
         Update: {
@@ -346,6 +357,7 @@ export type Database = {
           player_name?: string
           profession?: string
           turns_taken?: number
+          user_id?: string | null
           week_start?: string
         }
         Relationships: []
@@ -355,6 +367,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      is_session_member: {
+        Args: { _session_id: string; _user_id: string }
+        Returns: boolean
+      }
       is_session_participant: {
         Args: { _session_id: string; _user_id: string }
         Returns: boolean
