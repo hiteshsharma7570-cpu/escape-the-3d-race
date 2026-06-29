@@ -131,14 +131,20 @@ export const handleTileEffect = (state: GameState, tile: Tile): GameState => {
       };
       
       let totalValueChange = 0;
+      let totalIncomeChange = 0;
       newState.assets = newState.assets.map(a => {
         const multiplier = riskMultipliers[a.risk] || riskMultipliers.medium;
         const oldValue = a.value;
         const newValue = Math.round(a.value * multiplier);
+        // Monthly income scales with the asset's new value (rents, dividends, yields all move with valuation).
+        const newIncome = Math.round(a.monthlyIncome * multiplier);
         totalValueChange += newValue - oldValue;
-        return { ...a, value: newValue };
+        totalIncomeChange += newIncome - a.monthlyIncome;
+        return { ...a, value: newValue, monthlyIncome: newIncome };
       });
-      
+      // Keep aggregate passive income in sync with per-asset changes so the financial model stays correct.
+      newState.passiveIncome = Math.max(0, newState.passiveIncome + totalIncomeChange);
+
       if (newState.assets.length === 0) {
         logMessage = isBoom 
           ? "Market Boom! But you have no investments to benefit." 
