@@ -82,6 +82,12 @@ const G = {
   gst_notice:           { color: "#1b4f72", gradient: "linear-gradient(135deg,#1b4f72,#2874a6)", icon: "🧾" },
   bonus:                { color: "#1e8449", gradient: "linear-gradient(135deg,#1e8449,#28b463)", icon: "🎉" },
   tax_refund:           { color: "#117864", gradient: "linear-gradient(135deg,#117864,#16a085)", icon: "💸" },
+  bnpl_trap:            { color: "#a93268", gradient: "linear-gradient(135deg,#a93268,#e84393)", icon: "🛍️" },
+  solar_install:        { color: "#d4ac0d", gradient: "linear-gradient(135deg,#d4ac0d,#f1c40f)", icon: "☀️" },
+  ev_switch:            { color: "#117a3e", gradient: "linear-gradient(135deg,#117a3e,#27ae60)", icon: "🔋" },
+  streaming_audit:      { color: "#117a8b", gradient: "linear-gradient(135deg,#117a8b,#1abc9c)", icon: "✂️" },
+  pet_adoption:         { color: "#cb6a1e", gradient: "linear-gradient(135deg,#cb6a1e,#f39c12)", icon: "🐶" },
+  elderly_care_hire:    { color: "#6c3483", gradient: "linear-gradient(135deg,#6c3483,#8e44ad)", icon: "🧓" },
 } as const;
 
 const t = (id: number, type: keyof typeof G, label: string): Tile => ({
