@@ -354,12 +354,12 @@ const Index = () => {
   const payOffDebts = () => {
     // Every liability now has an outstanding principal — all are clearable in a lump sum.
     // Recurring expenses live in their own array and cannot be paid off this way.
-    const clearable = gameState.liabilities.filter((l) => l.principal > 0);
+    const clearable = gameState.liabilities.filter((l) => (l.principal ?? 0) > 0);
     if (clearable.length === 0) {
       toast.error("No outstanding loans to clear. Recurring expenses can't be paid off in a lump sum.");
       return;
     }
-    const totalDebt = clearable.reduce((sum, l) => sum + l.principal, 0);
+    const totalDebt = clearable.reduce((sum, l) => sum + (l.principal ?? 0), 0);
     if (!confirm(`Pay off ${clearable.length} loan(s) totaling ₹${totalDebt.toLocaleString()}? Recurring expenses (rent, bills, subscriptions) will remain.`)) {
       return;
     }
