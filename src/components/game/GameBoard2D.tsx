@@ -10,13 +10,14 @@ interface GameBoard2DProps {
   gameState?: GameState;
 }
 
-// 7x7 perimeter ring (24 cells), clockwise from top-left.
-function buildPerimeter(): Array<[number, number]> {
+// NxN perimeter ring, clockwise from top-left. 10x10 -> 36 cells.
+const BOARD_SIZE = 10;
+function buildPerimeter(n: number = BOARD_SIZE): Array<[number, number]> {
   const cells: Array<[number, number]> = [];
-  for (let c = 0; c < 7; c++) cells.push([0, c]);
-  for (let r = 1; r < 7; r++) cells.push([r, 6]);
-  for (let c = 5; c >= 0; c--) cells.push([6, c]);
-  for (let r = 5; r > 0; r--) cells.push([r, 0]);
+  for (let c = 0; c < n; c++) cells.push([0, c]);
+  for (let r = 1; r < n; r++) cells.push([r, n - 1]);
+  for (let c = n - 2; c >= 0; c--) cells.push([n - 1, c]);
+  for (let r = n - 2; r > 0; r--) cells.push([r, 0]);
   return cells;
 }
 
@@ -81,7 +82,7 @@ export const GameBoard2D = ({ currentPosition, diceValue, gameState }: GameBoard
       {/* 7x7 grid */}
       <div
         className="relative grid h-full w-full p-3 gap-1.5"
-        style={{ gridTemplateColumns: "repeat(7, 1fr)", gridTemplateRows: "repeat(7, 1fr)" }}
+        style={{ gridTemplateColumns: `repeat(${BOARD_SIZE}, 1fr)`, gridTemplateRows: `repeat(${BOARD_SIZE}, 1fr)` }}
       >
         {BOARD_TILES.map((tile, index) => {
           const [row, col] = cells[index];
@@ -202,7 +203,7 @@ export const GameBoard2D = ({ currentPosition, diceValue, gameState }: GameBoard
         {/* Center — illustrated island + financial dashboard */}
         <div
           className="relative flex flex-col items-center justify-center"
-          style={{ gridRow: "2 / span 5", gridColumn: "2 / span 5" }}
+          style={{ gridRow: `2 / span ${BOARD_SIZE - 2}`, gridColumn: `2 / span ${BOARD_SIZE - 2}` }}
         >
           {/* Decorative island base */}
           <div
