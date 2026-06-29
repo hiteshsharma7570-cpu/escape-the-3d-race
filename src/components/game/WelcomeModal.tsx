@@ -60,7 +60,7 @@ export const WelcomeModal = ({
           </p>
           <p className="mb-4 text-yellow-50/90">
             Your mission: Build your wealth and reach{" "}
-            <span className="text-yellow-300 font-bold">₹10,00,00,000</span> (₹10 Crore)
+            <span className="text-yellow-300 font-bold">₹5,00,00,000</span> (₹5 Crore)
             in cash on hand.
           </p>
           <div className="text-left bg-black/30 border border-yellow-500/30 rounded-lg p-4 text-sm space-y-1 mb-4">
@@ -73,7 +73,7 @@ export const WelcomeModal = ({
             </ul>
           </div>
           <p className="text-xs italic text-yellow-200/80 mb-6">
-            The player who reaches ₹10 Crore in hand earns the
+            The player who reaches ₹5 Crore in hand earns the
             "Escape the Rat Race Financial Simulation" Certificate.
           </p>
           <div className="flex gap-3 justify-center">

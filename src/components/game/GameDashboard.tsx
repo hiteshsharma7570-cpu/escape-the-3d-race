@@ -40,14 +40,15 @@ export const GameDashboard = ({
   const monthlyCashFlow = calculateMonthlyCashFlow(gameState);
   const totalExpenses = calculateTotalExpenses(gameState);
   const netWorth = calculateNetWorth(gameState);
-  const TEN_CR = 100000000;
-  const tenCrPct = Math.min((gameState.cash / TEN_CR) * 100, 100);
-  // Milestones on bar: 25L (2.5%), 1Cr (10%), 5Cr (50%), 10Cr (100%)
+  const FIVE_CR = 50000000;
+  const fiveCrPct = Math.min((gameState.cash / FIVE_CR) * 100, 100);
+  // Milestones on bar: 25L (0.5%), 1Cr (20%), 2.5Cr (50%), 5Cr (100%)
+  // New scale: 5Cr = 100%
   const milestones = [
-    { label: "₹25L", pct: 2.5 },
-    { label: "₹1Cr", pct: 10 },
-    { label: "₹5Cr", pct: 50 },
-    { label: "₹10Cr", pct: 100 },
+    { label: "₹25L", pct: 5 },
+    { label: "₹1Cr", pct: 20 },
+    { label: "₹2.5Cr", pct: 50 },
+    { label: "₹5Cr", pct: 100 },
   ];
 
   return (
@@ -82,17 +83,17 @@ export const GameDashboard = ({
           </p>
         </div>
 
-        {/* Journey to ₹10 Crore */}
+        {/* Journey to ₹5 Crore */}
         <div className="mb-6 bg-accent/40 p-3 rounded-lg">
           <div className="flex items-center justify-between mb-2">
-            <p className="text-sm font-semibold">Journey to ₹10 Crore</p>
-            <p className="text-xs text-muted-foreground">{tenCrPct.toFixed(1)}%</p>
+            <p className="text-sm font-semibold">Journey to ₹5 Crore</p>
+            <p className="text-xs text-muted-foreground">{fiveCrPct.toFixed(1)}%</p>
           </div>
           <div className="relative h-4 rounded-full bg-background overflow-hidden border border-yellow-600/30">
             <div
               className="h-full transition-all duration-700"
               style={{
-                width: `${tenCrPct}%`,
+                width: `${fiveCrPct}%`,
                 background: "linear-gradient(90deg,#f7971e,#ffd700)",
               }}
             />
@@ -107,13 +108,13 @@ export const GameDashboard = ({
           </div>
           <div className="flex justify-between mt-1 text-[10px] text-muted-foreground">
             {milestones.map((m) => (
-              <span key={m.label} className={tenCrPct >= m.pct ? "text-yellow-500 font-semibold" : ""}>
+              <span key={m.label} className={fiveCrPct >= m.pct ? "text-yellow-500 font-semibold" : ""}>
                 {m.label}
               </span>
             ))}
           </div>
           <p className="text-xs mt-2 text-yellow-700 dark:text-yellow-400">
-            You're {tenCrPct.toFixed(0)}% of the way there!
+            You're {fiveCrPct.toFixed(0)}% of the way there!
           </p>
         </div>
 

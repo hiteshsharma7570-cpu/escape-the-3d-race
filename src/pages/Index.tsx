@@ -5,7 +5,7 @@ import { PlayerSetup } from "@/components/game/PlayerSetup";
 import { LocalLeaderboard, LEADERBOARD_UPDATE_EVENT } from "@/components/game/LocalLeaderboard";
 import { DecisionModal } from "@/components/game/DecisionModal";
 import { CashCertificateModal } from "@/components/game/CashCertificateModal";
-import { TenCroreCertificate } from "@/components/game/TenCroreCertificate";
+import { FiveCroreCertificate } from "@/components/game/FiveCroreCertificate";
 import { WelcomeModal } from "@/components/game/WelcomeModal";
 import { createInitialGameState, GameState } from "@/types/game";
 import {
@@ -46,8 +46,8 @@ const Index = () => {
   const [gameMode, setGameMode] = useState<"setup" | "playing">("setup");
   const [showCertificate, setShowCertificate] = useState(false);
   const [certificateAwarded, setCertificateAwarded] = useState(false);
-  const [showTenCrore, setShowTenCrore] = useState(false);
-  const [tenCroreAwarded, setTenCroreAwarded] = useState(false);
+  const [showFiveCrore, setShowFiveCrore] = useState(false);
+  const [fiveCroreAwarded, setFiveCroreAwarded] = useState(false);
   const [showWelcome, setShowWelcome] = useState(false);
   const [showWinScreen, setShowWinScreen] = useState(false);
   const [winRecorded, setWinRecorded] = useState(false);
@@ -112,15 +112,15 @@ const Index = () => {
     }
   }, [gameState.cash, gameMode, certificateAwarded]);
 
-  // Primary win: ₹10 Crore in cash
+  // Primary win: ₹5 Crore in cash
   useEffect(() => {
-    if (gameMode === "playing" && !tenCroreAwarded && gameState.cash >= 100000000) {
-      setTenCroreAwarded(true);
-      setShowTenCrore(true);
+    if (gameMode === "playing" && !fiveCroreAwarded && gameState.cash >= 50000000) {
+      setFiveCroreAwarded(true);
+      setShowFiveCrore(true);
       playSound("payDay");
-      toast.success("🏆 You reached ₹10 Crore! You've escaped the Rat Race!");
+      toast.success("🏆 You reached ₹5 Crore! You've escaped the Rat Race!");
     }
-  }, [gameState.cash, gameMode, tenCroreAwarded]);
+  }, [gameState.cash, gameMode, fiveCroreAwarded]);
 
   // Show win screen on rat-race escape (once) and bump games_won
   useEffect(() => {
@@ -181,11 +181,11 @@ const Index = () => {
         // Backward compat: ensure new fields exist (preserve persisted flags — do not recompute from current cash)
         if (parsed.turnCount === undefined) parsed.turnCount = 0;
         if (parsed.loansTaken === undefined) parsed.loansTaken = 0;
-        if (parsed.hasReachedTenCrore === undefined) parsed.hasReachedTenCrore = false;
+        if (parsed.hasReachedFiveCrore === undefined) parsed.hasReachedFiveCrore = false;
         setGameState(parsed);
         // Suppress the milestone modals on resume — they fire once per achievement, not per session.
         setCertificateAwarded(true);
-        setTenCroreAwarded(parsed.hasReachedTenCrore === true);
+        setFiveCroreAwarded(parsed.hasReachedFiveCrore === true);
         setWinRecorded(parsed.hasEscapedRatRace);
         setShowWelcome(false);
         setGameMode("playing");
@@ -200,7 +200,7 @@ const Index = () => {
     const initialState = createInitialGameState(playerName, profession);
     setGameState(initialState);
     setCertificateAwarded(initialState.cash >= 10000000);
-    setTenCroreAwarded(false);
+    setFiveCroreAwarded(false);
     setWinRecorded(false);
     setShowWelcome(true);
     toast.success(`Welcome, ${playerName}! Starting a fresh game as a ${profession}.`);
@@ -211,7 +211,7 @@ const Index = () => {
     if (!confirm("Switch to a different player? Your current game is already saved.")) return;
     setGameState(createInitialGameState());
     setCertificateAwarded(false);
-    setTenCroreAwarded(false);
+    setFiveCroreAwarded(false);
     setWinRecorded(false);
     setShowWinScreen(false);
     setShowWelcome(false);
@@ -595,15 +595,16 @@ const Index = () => {
         cash={gameState.cash}
       />
 
-      <TenCroreCertificate
-        open={showTenCrore}
+      <FiveCroreCertificate
+        open={showFiveCrore}
         playerName={gameState.playerName}
-        onClose={() => setShowTenCrore(false)}
+        turnCount={gameState.turnCount}
+        onClose={() => setShowFiveCrore(false)}
         onPlayAgain={() => {
-          setShowTenCrore(false);
+          setShowFiveCrore(false);
           setGameState(createInitialGameState());
           setCertificateAwarded(false);
-          setTenCroreAwarded(false);
+          setFiveCroreAwarded(false);
           setWinRecorded(false);
           setGameMode("setup");
         }}

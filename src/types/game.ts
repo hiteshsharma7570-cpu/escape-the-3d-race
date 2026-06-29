@@ -129,7 +129,7 @@ export interface GameState {
   gameLog: string[];
   marketCondition: "normal" | "boom" | "crash";
   hasEscapedRatRace: boolean;
-  hasReachedTenCrore: boolean;
+  hasReachedFiveCrore: boolean;
   pendingDecision: PendingDecision | null;
   marketHint: MarketHint | null;
   turnCount: number;
@@ -274,7 +274,7 @@ export const createInitialGameState = (
     gameLog: [`[Turn 0] Welcome, ${playerName}! Roll the dice to begin.`],
     marketCondition: "normal",
     hasEscapedRatRace: false,
-    hasReachedTenCrore: false,
+    hasReachedFiveCrore: false,
     pendingDecision: null,
     marketHint: null,
     turnCount: 0,
