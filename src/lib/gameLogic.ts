@@ -74,6 +74,14 @@ const G = {
   vehicle_breakdown:    { color: "#717d7e", gradient: "linear-gradient(135deg,#717d7e,#95a5a6)", icon: "🚗" },
   loan_interest_spike:  { color: "#6e2f1a", gradient: "linear-gradient(135deg,#6e2f1a,#a04000)", icon: "🏦" },
   society_maintenance:  { color: "#1a5276", gradient: "linear-gradient(135deg,#1a5276,#2471a3)", icon: "🏢" },
+  gold_loan_offer:      { color: "#b7950b", gradient: "linear-gradient(135deg,#b7950b,#f1c40f)", icon: "🪙" },
+  wedding_in_family:    { color: "#a93226", gradient: "linear-gradient(135deg,#a93226,#e74c3c)", icon: "💍" },
+  subscription_creep:   { color: "#5b2c6f", gradient: "linear-gradient(135deg,#5b2c6f,#8e44ad)", icon: "📺" },
+  fuel_price_hike:      { color: "#7b241c", gradient: "linear-gradient(135deg,#7b241c,#c0392b)", icon: "⛽" },
+  parents_medical:      { color: "#5d6d7e", gradient: "linear-gradient(135deg,#5d6d7e,#85929e)", icon: "👴" },
+  gst_notice:           { color: "#1b4f72", gradient: "linear-gradient(135deg,#1b4f72,#2874a6)", icon: "🧾" },
+  bonus:                { color: "#1e8449", gradient: "linear-gradient(135deg,#1e8449,#28b463)", icon: "🎉" },
+  tax_refund:           { color: "#117864", gradient: "linear-gradient(135deg,#117864,#16a085)", icon: "💸" },
 } as const;
 
 const t = (id: number, type: keyof typeof G, label: string): Tile => ({
@@ -87,11 +95,11 @@ export const BOARD_TILES: Tile[] = [
   t(3,  "market",              "Market"),
   t(4,  "tax_audit",           "Tax Audit"),
   t(5,  "credit_card_bill",    "Credit Card Bill"),
-  t(6,  "payday",              "Pay Day"),
+  t(6,  "bonus",               "Bonus!"),
   t(7,  "baby",                "Baby!"),
   t(8,  "school_fees",         "School Fees"),
   t(9,  "medical_emergency",   "Medical"),
-  t(10, "opportunity",         "Opportunity"),
+  t(10, "gold_loan_offer",     "Gold Loan"),
   t(11, "traffic_fine",        "Traffic Fine"),
   t(12, "side_hustle",         "Side Hustle"),
   t(13, "market",              "Market"),
@@ -100,38 +108,47 @@ export const BOARD_TILES: Tile[] = [
   t(16, "downsized",           "Downsized!"),
   t(17, "home_repair",         "Home Repair"),
   t(18, "inheritance",         "Inheritance"),
-  t(19, "payday",              "Pay Day"),
+  t(19, "tax_refund",          "Tax Refund"),
   t(20, "emi_hike",            "EMI Hike"),
   t(21, "real_estate_boom",    "RE Boom"),
-  t(22, "opportunity",         "Opportunity"),
+  t(22, "wedding_in_family",   "Wedding"),
   t(23, "insurance_premium",   "Insurance"),
   t(24, "stock_market_crash",  "Crash"),
   t(25, "vacation",            "Vacation"),
   t(26, "festival_expense",    "Festival"),
-  t(27, "payday",              "Pay Day"),
+  t(27, "fuel_price_hike",     "Fuel Hike"),
   t(28, "charity",             "Charity"),
   t(29, "rent_hike",           "Rent Hike"),
-  t(30, "opportunity",         "Opportunity"),
-  t(31, "tax_audit",           "Tax Audit"),
+  t(30, "parents_medical",     "Parents Care"),
+  t(31, "subscription_creep",  "Subscription"),
   t(32, "vehicle_breakdown",   "Vehicle Repair"),
   t(33, "market",              "Market"),
-  t(34, "side_hustle",         "Side Hustle"),
+  t(34, "gst_notice",          "GST Notice"),
   t(35, "loan_interest_spike", "Interest Spike"),
 ];
 
 export const calculateMonthlyCashFlow = (state: GameState): number => {
   const totalIncome = state.salary + state.passiveIncome;
-  const totalExpenses = state.liabilities.reduce((sum, l) => sum + l.monthlyPayment, 0);
-  return totalIncome - totalExpenses;
+  return totalIncome - calculateTotalExpenses(state);
 };
 
 export const calculateTotalExpenses = (state: GameState): number => {
-  return state.liabilities.reduce((sum, l) => sum + l.monthlyPayment, 0);
+  const debtServicing = state.liabilities.reduce((sum, l) => sum + l.monthlyEMI, 0);
+  const recurring = state.expenses.reduce((sum, e) => sum + e.monthlyAmount, 0);
+  return debtServicing + recurring;
 };
+
+/** Sum of all liability monthly EMIs (debt servicing only). */
+export const calculateDebtServicing = (state: GameState): number =>
+  state.liabilities.reduce((sum, l) => sum + l.monthlyEMI, 0);
+
+/** Sum of all recurring expenses (rent, bills, subscriptions). */
+export const calculateRecurringExpenses = (state: GameState): number =>
+  state.expenses.reduce((sum, e) => sum + e.monthlyAmount, 0);
 
 export const calculateNetWorth = (state: GameState): number => {
   const totalAssets = state.assets.reduce((sum, a) => sum + a.value, 0);
-  const totalLiabilities = state.liabilities.reduce((sum, l) => sum + l.amount, 0);
+  const totalLiabilities = state.liabilities.reduce((sum, l) => sum + l.principal, 0);
   return state.cash + totalAssets - totalLiabilities;
 };
 
