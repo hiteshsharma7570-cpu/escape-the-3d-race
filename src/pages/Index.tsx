@@ -598,6 +598,7 @@ const Index = () => {
       <FiveCroreCertificate
         open={showFiveCrore}
         playerName={gameState.playerName}
+        turnCount={gameState.turnCount}
         onClose={() => setShowFiveCrore(false)}
         onPlayAgain={() => {
           setShowFiveCrore(false);
