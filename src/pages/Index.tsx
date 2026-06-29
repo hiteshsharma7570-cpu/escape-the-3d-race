@@ -547,16 +547,14 @@ const Index = () => {
         </DialogContent>
       </Dialog>
 
-      <Dialog open={openPanel === "leaderboard"} onOpenChange={(o) => !o && setOpenPanel(null)}>
-        <></>
-      </Dialog>
       <RepayLoanDialog
         open={repayOpen}
         onOpenChange={setRepayOpen}
         gameState={gameState}
         onRepay={handleRepaySpecific}
       />
-      <Dialog open={openPanel === "leaderboard_dup_noop" } onOpenChange={() => {}}>
+
+      <Dialog open={openPanel === "leaderboard"} onOpenChange={(o) => !o && setOpenPanel(null)}>
         <DialogContent className="max-w-2xl glass-card gold-border">
           <DialogHeader>
             <DialogTitle className="font-display text-gold tracking-widest">LEADERBOARD</DialogTitle>
