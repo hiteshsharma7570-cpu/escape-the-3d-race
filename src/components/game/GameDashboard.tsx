@@ -206,7 +206,7 @@ export const GameDashboard = ({
                     <div key={liability.id} className="flex justify-between">
                       <span className="truncate">
                         {liability.name}
-                        <span className="text-[10px] text-muted-foreground ml-1">· {liability.category.replace(/_/g, " ")}</span>
+                       <span className="text-[10px] text-muted-foreground ml-1">· {(liability.category ?? "loan").replace(/_/g, " ")}</span>
                       </span>
                       <span>₹{liability.monthlyEMI.toLocaleString()}</span>
                     </div>
