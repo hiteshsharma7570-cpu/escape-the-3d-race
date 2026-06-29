@@ -88,6 +88,9 @@ const G = {
   streaming_audit:      { color: "#117a8b", gradient: "linear-gradient(135deg,#117a8b,#1abc9c)", icon: "✂️" },
   pet_adoption:         { color: "#cb6a1e", gradient: "linear-gradient(135deg,#cb6a1e,#f39c12)", icon: "🐶" },
   elderly_care_hire:    { color: "#6c3483", gradient: "linear-gradient(135deg,#6c3483,#8e44ad)", icon: "🧓" },
+  payday_loan:          { color: "#922b50", gradient: "linear-gradient(135deg,#922b50,#e84393)", icon: "💸" },
+  margin_call:          { color: "#7b1f1f", gradient: "linear-gradient(135deg,#7b1f1f,#e74c3c)", icon: "📞" },
+  tax_arrears:          { color: "#7e5109", gradient: "linear-gradient(135deg,#7e5109,#b9770e)", icon: "🧾" },
 } as const;
 
 const t = (id: number, type: keyof typeof G, label: string): Tile => ({
@@ -110,7 +113,7 @@ export const BOARD_TILES: Tile[] = [
   t(12, "side_hustle",         "Side Hustle"),
   t(13, "bnpl_trap",           "BNPL Trap"),
   t(14, "society_maintenance", "Society Fee"),
-  t(15, "dinner",              "Dinner Out"),
+  t(15, "payday_loan",         "Payday Loan"),
   t(16, "downsized",           "Downsized!"),
   t(17, "pet_adoption",        "Pet Adopt"),
   t(18, "inheritance",         "Inheritance"),
@@ -120,8 +123,8 @@ export const BOARD_TILES: Tile[] = [
   t(22, "wedding_in_family",   "Wedding"),
   t(23, "insurance_premium",   "Insurance"),
   t(24, "stock_market_crash",  "Crash"),
-  t(25, "vacation",            "Vacation"),
-  t(26, "festival_expense",    "Festival"),
+  t(25, "margin_call",         "Margin Call"),
+  t(26, "tax_arrears",         "Tax Arrears"),
   t(27, "ev_switch",           "Go EV"),
   t(28, "charity",             "Charity"),
   t(29, "rent_hike",           "Rent Hike"),
