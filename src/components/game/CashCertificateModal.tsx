@@ -75,7 +75,7 @@ export const CashCertificateModal = ({ open, onClose, playerName, cash }: CashCe
 
     doc.setFont("times", "normal");
     doc.setFontSize(13);
-    const desc = `for reaching the first milestone of Rs. 1 Crore in cash on hand. This is the first of ten —\nkeep building toward Rs. 10 Crore to fully escape the rat race.`;
+    const desc = `for reaching the first milestone of Rs. 1 Crore in cash on hand. This is the first of five —\nkeep building toward Rs. 5 Crore to fully escape the rat race.`;
     doc.text(desc, pageW / 2, 305, { align: "center" });
 
     doc.setFont("times", "bold");
@@ -134,7 +134,7 @@ export const CashCertificateModal = ({ open, onClose, playerName, cash }: CashCe
 
           <p className="text-base text-amber-900 leading-relaxed max-w-lg mx-auto mb-6">
             for reaching the <strong>first ₹1 Crore</strong> in cash on hand. This is the
-            first of ten — keep going to earn the gold <strong>₹10 Crore "Escape the Rat Race"</strong> certificate.
+            first of five — keep going to earn the gold <strong>₹5 Crore "Escape the Rat Race"</strong> certificate.
           </p>
 
           <p className="text-2xl font-bold text-amber-900 mb-6">

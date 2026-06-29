@@ -9,8 +9,8 @@ import { TrendingUp, TrendingDown, Minus, User } from "lucide-react";
 export const PlayerPanel = ({ gameState }: { gameState: GameState }) => {
   const netWorth = calculateNetWorth(gameState);
   const totalExpenses = calculateTotalExpenses(gameState);
-  const TEN_CR = 100000000;
-  const freedomPct = Math.min((gameState.cash / TEN_CR) * 100, 100);
+  const FIVE_CR = 50000000;
+  const freedomPct = Math.min((gameState.cash / FIVE_CR) * 100, 100);
   const initial = (gameState.playerName || "P").charAt(0).toUpperCase();
 
   return (

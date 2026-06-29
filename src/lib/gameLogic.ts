@@ -742,10 +742,10 @@ export const handleTileEffect = (state: GameState, tile: Tile): GameState => {
     pushLog(newState, "🎉 You escaped the Rat Race! Passive income covers all expenses!");
   }
 
-  // Primary win: ₹10 Crore in cash
-  if (newState.cash >= 100000000 && !newState.hasReachedTenCrore) {
-    newState.hasReachedTenCrore = true;
-    pushLog(newState, "🏆 You reached ₹10 Crore in cash!");
+  // Primary win: ₹5 Crore in cash
+  if (newState.cash >= 50000000 && !newState.hasReachedFiveCrore) {
+    newState.hasReachedFiveCrore = true;
+    pushLog(newState, "🏆 You reached ₹5 Crore in cash!");
   }
 
   return newState;
