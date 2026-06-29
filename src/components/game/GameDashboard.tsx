@@ -43,10 +43,11 @@ export const GameDashboard = ({
   const FIVE_CR = 50000000;
   const fiveCrPct = Math.min((gameState.cash / FIVE_CR) * 100, 100);
   // Milestones on bar: 25L (0.5%), 1Cr (20%), 2.5Cr (50%), 5Cr (100%)
+  // New scale: 5Cr = 100%
   const milestones = [
-    { label: "₹25L", pct: 2.5 },
-    { label: "₹1Cr", pct: 10 },
-    { label: "₹5Cr", pct: 50 },
+    { label: "₹25L", pct: 5 },
+    { label: "₹1Cr", pct: 20 },
+    { label: "₹2.5Cr", pct: 50 },
     { label: "₹5Cr", pct: 100 },
   ];
 
