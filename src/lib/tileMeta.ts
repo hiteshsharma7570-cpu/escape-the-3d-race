@@ -36,6 +36,14 @@ export const TILE_META: Record<TileType, TileMeta> = {
   vehicle_breakdown:   { category: "VEHICLE",        subtitle: "REPAIR",     icon: "🚗", neonHsl: "210 5% 55%" },
   loan_interest_spike: { category: "INTEREST",       subtitle: "SPIKE",      icon: "🏦", neonHsl: "20 60% 35%" },
   society_maintenance: { category: "SOCIETY",        subtitle: "MAINT.",     icon: "🏢", neonHsl: "205 70% 40%" },
+  gold_loan_offer:     { category: "GOLD LOAN",      subtitle: "PAWN",       icon: "🪙", neonHsl: "45 95% 55%" },
+  wedding_in_family:   { category: "WEDDING",        subtitle: "BIG SPEND",  icon: "💍", neonHsl: "0 75% 55%" },
+  subscription_creep:  { category: "SUBSCRIPTION",   subtitle: "AUTO-DEBIT", icon: "📺", neonHsl: "280 60% 55%" },
+  fuel_price_hike:     { category: "FUEL HIKE",      subtitle: "TRANSPORT",  icon: "⛽", neonHsl: "10 80% 45%" },
+  parents_medical:     { category: "PARENTS",        subtitle: "CARE",       icon: "👴", neonHsl: "210 15% 55%" },
+  gst_notice:          { category: "GST NOTICE",     subtitle: "TAX DUES",   icon: "🧾", neonHsl: "210 70% 45%" },
+  bonus:               { category: "BONUS",          subtitle: "+CASH",      icon: "🎉", neonHsl: "140 90% 55%" },
+  tax_refund:          { category: "TAX REFUND",     subtitle: "+CASH",      icon: "💸", neonHsl: "165 80% 50%" },
 };
 
 // "Career start" corner — only for tile id 0 (PAY DAY) we mark as the start corner.
