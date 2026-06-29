@@ -236,11 +236,13 @@ export const GameBoard2D = ({ currentPosition, diceValue, gameState }: GameBoard
                 <Stat label="Salary"        value={`₹${gameState.salary.toLocaleString()} /m`} />
                 <Stat label="Net Worth"     value={`₹${netWorth.toLocaleString()}`} tone={netWorth >= 0 ? "green" : "red"} />
                 <Stat label="Passive"       value={`₹${gameState.passiveIncome.toLocaleString()} /m`} tone="gold" />
-                <Stat label="Assets / Liab." value={
+                <Stat label="Assets / Debts / Bills" value={
                   <>
                     <span className="text-emerald-400">{gameState.assets.length}</span>
                     <span className="text-slate-500"> / </span>
                     <span className="text-rose-400">{gameState.liabilities.length}</span>
+                    <span className="text-slate-500"> / </span>
+                    <span className="text-amber-400">{gameState.expenses.length}</span>
                   </>
                 } />
               </div>
