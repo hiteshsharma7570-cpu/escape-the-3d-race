@@ -1,7 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { GameBoard2D } from "@/components/game/GameBoard2D";
 import { GameDashboard } from "@/components/game/GameDashboard";
-// Dice now rendered inside the 3D scene (board3d/DiceMesh).
 import { PlayerSetup } from "@/components/game/PlayerSetup";
 import { LocalLeaderboard, LEADERBOARD_UPDATE_EVENT } from "@/components/game/LocalLeaderboard";
 import { DecisionModal } from "@/components/game/DecisionModal";
@@ -21,16 +20,19 @@ import {
 } from "@/lib/gameLogic";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
-import { HelpCircle, Music, Volume2, VolumeX, RotateCcw, Check, LogOut } from "lucide-react";
+import { HelpCircle, Music, Volume2, VolumeX, RotateCcw, Check, LogOut, Settings as SettingsIcon } from "lucide-react";
 import { useGameSounds } from "@/hooks/useGameSounds";
 import { WinScreen } from "@/components/game/WinScreen";
 import { ACHIEVEMENTS, meetsThreshold } from "@/lib/achievements";
 import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
+  Tooltip, TooltipContent, TooltipProvider, TooltipTrigger,
 } from "@/components/ui/tooltip";
+import {
+  PlayerPanel, MarketStatusPanel, PlayersPanel, GameLogPanel,
+  TopCenterHud, DiceRoll, ActionBar,
+} from "@/components/game/HudPanels";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { AchievementsPanel } from "@/components/game/AchievementsPanel";
 
 const SAVE_KEY_PREFIX = "cashflow_game_save_v1:";
 const saveKeyFor = (name: string) => `${SAVE_KEY_PREFIX}${name.trim().toLowerCase()}`;
@@ -411,6 +413,9 @@ const Index = () => {
     );
   };
 
+  // Modal state for bottom action buttons
+  const [openPanel, setOpenPanel] = useState<null | "portfolio" | "assets" | "leaderboard" | "achievements">(null);
+
   if (gameMode === "setup") {
     return (
       <>
@@ -433,111 +438,147 @@ const Index = () => {
   }
 
   const netWorth = calculateNetWorth(gameState);
-  const currentTile = BOARD_TILES[gameState.position];
   return (
     <TooltipProvider delayDuration={150}>
-    <div className="min-h-screen bg-gradient-to-br from-background to-accent/20 p-4">
-      {/* Top Controls */}
-      <div className="flex justify-between items-center mb-4 max-w-7xl mx-auto">
-        <div className="flex items-center gap-2">
-          <h2 className="text-lg font-semibold">{gameState.playerName}'s Game</h2>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button variant="outline" size="sm" onClick={handleChangePlayer} className="gap-2">
-                <LogOut className="w-4 h-4" />
-                Change Player
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent>Switch to a different player (your save stays).</TooltipContent>
-          </Tooltip>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button variant="outline" size="sm" onClick={handleResetMyGame} className="gap-2">
-                <RotateCcw className="w-4 h-4" />
-                Restart
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent>Reset state, keep your player and profession.</TooltipContent>
-          </Tooltip>
-          {saveStatus.show && (
-            <span className="inline-flex items-center gap-1 text-xs text-muted-foreground">
-              <Check className="w-3 h-3 text-success" />
-              {saveStatus.message}
-            </span>
-          )}
-        </div>
-        <div className="flex gap-2">
-          <Button
-            variant="outline"
-            size="icon"
-            onClick={toggleMusic}
-            className="bg-card"
-          >
-            {isMusicEnabled ? <Music className="w-4 h-4" /> : <VolumeX className="w-4 h-4" />}
-          </Button>
-          <Button
-            variant="outline"
-            size="icon"
-            onClick={toggleSound}
-            className="bg-card"
-          >
-            {isSoundEnabled ? <Volume2 className="w-4 h-4" /> : <VolumeX className="w-4 h-4" />}
-          </Button>
-          <Button
-            variant="outline"
-            size="icon"
-            className="bg-card"
-            onClick={showInstructions}
-          >
-            <HelpCircle className="w-4 h-4" />
-          </Button>
-        </div>
+    <div className="relative min-h-screen overflow-hidden p-3 md:p-5">
+      {/* Night-city ambient backdrop layers */}
+      <div className="pointer-events-none absolute inset-0 -z-10" style={{
+        background:
+          "radial-gradient(ellipse 70% 50% at 50% 0%, hsla(220, 80%, 30%, 0.4), transparent 70%), radial-gradient(ellipse 50% 40% at 85% 25%, hsla(290, 75%, 40%, 0.28), transparent 70%), radial-gradient(ellipse 50% 40% at 15% 30%, hsla(190, 80%, 45%, 0.22), transparent 70%), linear-gradient(180deg, hsl(225 65% 6%) 0%, hsl(225 80% 3%) 100%)",
+      }} />
+      <div className="pointer-events-none absolute inset-0 -z-10 opacity-50" style={{
+        backgroundImage:
+          "radial-gradient(circle at 10% 35%, hsla(45, 100%, 70%, 0.85) 0.6px, transparent 1.4px), radial-gradient(circle at 25% 25%, hsla(200, 100%, 75%, 0.7) 0.6px, transparent 1.4px), radial-gradient(circle at 45% 40%, hsla(45, 100%, 70%, 0.85) 0.6px, transparent 1.4px), radial-gradient(circle at 70% 30%, hsla(325, 100%, 75%, 0.7) 0.6px, transparent 1.4px), radial-gradient(circle at 88% 38%, hsla(45, 100%, 70%, 0.85) 0.6px, transparent 1.4px), radial-gradient(circle at 60% 18%, hsla(45, 100%, 70%, 0.7) 0.5px, transparent 1.2px)",
+        maskImage: "linear-gradient(to bottom, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0.4) 40%, transparent 65%)",
+        WebkitMaskImage: "linear-gradient(to bottom, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0.4) 40%, transparent 65%)",
+      }} />
+      {/* Distant city silhouette */}
+      <div className="pointer-events-none absolute inset-x-0 top-0 h-[42vh] -z-10 opacity-40" style={{
+        background: "linear-gradient(180deg, transparent 60%, hsl(225 70% 4%) 100%)",
+      }} />
+
+      {/* === TOP CENTER HUD === */}
+      <div className="absolute top-3 left-1/2 -translate-x-1/2 z-30">
+        <TopCenterHud gameState={gameState} />
       </div>
 
-      {/* HUD bar */}
-      <div className="max-w-7xl mx-auto mb-3 grid grid-cols-2 md:grid-cols-5 gap-2 p-2 rounded-lg border border-border bg-card/60 text-xs">
-        <div><span className="text-muted-foreground">Cash:</span> <span className="font-bold text-success">₹{gameState.cash.toLocaleString()}</span></div>
-        <div><span className="text-muted-foreground">Passive:</span> <span className="font-bold">₹{gameState.passiveIncome.toLocaleString()}</span></div>
-        <div><span className="text-muted-foreground">Net Worth:</span> <span className={`font-bold ${netWorth>=0?"text-success":"text-destructive"}`}>₹{netWorth.toLocaleString()}</span></div>
-        <div><span className="text-muted-foreground">Turn:</span> <span className="font-bold">{gameState.turnCount}</span></div>
-        <div className="flex items-center gap-1">
-          <span className="text-muted-foreground">Market:</span>
-          <span className="font-bold capitalize">
-            {gameState.marketCondition === "boom" ? "🐂 Bull" : gameState.marketCondition === "crash" ? "🐻 Bear" : "➖ Neutral"}
-          </span>
-        </div>
+      {/* === TOP-RIGHT controls === */}
+      <div className="absolute top-3 right-3 z-30 flex gap-2">
+        <IconBtn onClick={toggleSound} title="Sound">
+          {isSoundEnabled ? <Volume2 className="w-4 h-4" /> : <VolumeX className="w-4 h-4" />}
+        </IconBtn>
+        <IconBtn onClick={toggleMusic} title="Music">
+          {isMusicEnabled ? <Music className="w-4 h-4" /> : <VolumeX className="w-4 h-4" />}
+        </IconBtn>
+        <IconBtn onClick={showInstructions} title="Help">
+          <HelpCircle className="w-4 h-4" />
+        </IconBtn>
+        <IconBtn onClick={handleChangePlayer} title="Change player">
+          <LogOut className="w-4 h-4" />
+        </IconBtn>
+        <IconBtn onClick={handleResetMyGame} title="Restart">
+          <RotateCcw className="w-4 h-4" />
+        </IconBtn>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 max-w-7xl mx-auto">
-        <div className="lg:col-span-2 space-y-2">
-          <div className="rounded-xl border border-border bg-card overflow-hidden">
-            <div className="px-4 py-2 flex items-center justify-between bg-card/80 border-b border-border">
-              <div className="text-sm font-semibold">
-                Turn {gameState.turnCount} · {currentTile?.icon} {currentTile?.label}
-              </div>
-              <div className="text-xs text-muted-foreground">{BOARD_TILES.length} tiles</div>
-            </div>
-            <div className="p-3">
-              <GameBoard2D
-                currentPosition={gameState.position}
+      {/* === MAIN GRID LAYOUT === */}
+      <div className="max-w-[1600px] mx-auto pt-16 pb-4 flex flex-col xl:flex-row gap-4 items-stretch justify-center">
+
+        {/* LEFT column: player panel + game log */}
+        <div className="flex flex-col justify-between gap-3 order-2 xl:order-1">
+          <PlayerPanel gameState={gameState} />
+          <GameLogPanel gameState={gameState} />
+        </div>
+
+        {/* CENTER: board + dice + actions */}
+        <div className="flex-1 flex flex-col items-center gap-3 order-1 xl:order-2">
+          <GameBoard2D
+            currentPosition={gameState.position}
+            diceValue={gameState.diceValue}
+            gameState={gameState}
+          />
+
+          <div className="flex items-end justify-between w-full max-w-[820px] gap-4 flex-wrap">
+            <div className="flex-1 min-w-[200px] flex justify-center">
+              <DiceRoll
                 diceValue={gameState.diceValue}
-                gameState={gameState}
+                isRolling={gameState.isRolling}
+                onRoll={rollDice}
               />
             </div>
+            <ActionBar
+              onPortfolio={() => setOpenPanel("portfolio")}
+              onAssets={() => setOpenPanel("assets")}
+              onLeaderboard={() => setOpenPanel("leaderboard")}
+              onAchievements={() => setOpenPanel("achievements")}
+            />
           </div>
+
+          {saveStatus.show && (
+            <div className="text-[10px] text-slate-500 flex items-center gap-1">
+              <Check className="w-3 h-3 text-emerald-400" /> {saveStatus.message}
+            </div>
+          )}
         </div>
-        <div className="space-y-4">
-          <LocalLeaderboard currentPlayerName={gameState.playerName} limit={5} />
-          <GameDashboard
-            gameState={gameState}
-            onRollDice={rollDice}
-            onTakeLoan={takeLoan}
-            onRepayLoan={repayLoan}
-            onPayOffDebts={payOffDebts}
-            onSellAsset={handleSellAsset}
-          />
+
+        {/* RIGHT column: market status + players list */}
+        <div className="flex flex-col gap-3 order-3">
+          <MarketStatusPanel gameState={gameState} />
+          <PlayersPanel currentPlayerName={gameState.playerName} currentNetWorth={netWorth} />
         </div>
       </div>
+
+      {/* === Modals for action bar === */}
+      <Dialog open={openPanel === "portfolio" || openPanel === "assets"} onOpenChange={(o) => !o && setOpenPanel(null)}>
+        <DialogContent className="max-w-3xl glass-card gold-border">
+          <DialogHeader>
+            <DialogTitle className="font-display text-gold tracking-widest">
+              {openPanel === "portfolio" ? "PORTFOLIO" : "ASSETS & LIABILITIES"}
+            </DialogTitle>
+          </DialogHeader>
+          <div className="max-h-[70vh] overflow-y-auto">
+            <GameDashboard
+              gameState={gameState}
+              onRollDice={rollDice}
+              onTakeLoan={takeLoan}
+              onRepayLoan={repayLoan}
+              onPayOffDebts={payOffDebts}
+              onSellAsset={handleSellAsset}
+            />
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={openPanel === "leaderboard"} onOpenChange={(o) => !o && setOpenPanel(null)}>
+        <DialogContent className="max-w-2xl glass-card gold-border">
+          <DialogHeader>
+            <DialogTitle className="font-display text-gold tracking-widest">LEADERBOARD</DialogTitle>
+          </DialogHeader>
+          <div className="max-h-[70vh] overflow-y-auto">
+            <LocalLeaderboard currentPlayerName={gameState.playerName} limit={10} />
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={openPanel === "achievements"} onOpenChange={(o) => !o && setOpenPanel(null)}>
+        <DialogContent className="max-w-2xl glass-card gold-border">
+          <DialogHeader>
+            <DialogTitle className="font-display text-gold tracking-widest">ACHIEVEMENTS</DialogTitle>
+          </DialogHeader>
+          <div className="max-h-[70vh] overflow-y-auto">
+            <AchievementsPanel
+              achievements={ACHIEVEMENTS.map((a) => ({ ...a, threshold: a.threshold ?? 0 })) as any}
+              isUnlocked={(id) => unlockedAchIds.includes(id)}
+              getProgress={(a: any) => {
+                if (meetsThreshold(a as any, gameState, gamesWon)) return 100;
+                return 0;
+              }}
+              gameState={gameState}
+              gamesWon={gamesWon}
+            />
+          </div>
+        </DialogContent>
+      </Dialog>
 
       <DecisionModal
         pendingDecision={gameState.pendingDecision}
@@ -584,3 +625,13 @@ const Index = () => {
 };
 
 export default Index;
+
+const IconBtn = ({ onClick, title, children }: { onClick: () => void; title: string; children: React.ReactNode }) => (
+  <button
+    onClick={onClick}
+    title={title}
+    className="w-9 h-9 rounded-full glass-card flex items-center justify-center text-slate-200 hover:text-gold hover:border-amber-500/50 transition-all"
+  >
+    {children}
+  </button>
+);
