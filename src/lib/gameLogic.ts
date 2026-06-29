@@ -859,6 +859,62 @@ export const handleTileEffect = (state: GameState, tile: Tile): GameState => {
       }
       break;
     }
+
+    case "payday_loan": {
+      // Predatory short-term loan — instant cash, brutal EMI for 4 months.
+      const principal = 40000 + Math.floor(Math.random() * 60000);
+      const emi = Math.round(principal / 4 * 1.15);
+      newState.cash += principal;
+      newState.loansTaken += 1;
+      addLiability(newState, {
+        name: "Payday Loan",
+        category: "payday_loan",
+        principal,
+        monthlyEMI: emi,
+        interestRate: 48,
+      });
+      logMessage = `💸 Payday Loan! +₹${principal.toLocaleString()} cash now, but ₹${emi.toLocaleString()}/mo for 4 months @ 48% APR.`;
+      lessonMessage = "💡 Payday loans look small but compound viciously — avoid unless truly desperate.";
+      break;
+    }
+
+    case "margin_call": {
+      // Broker calls in margin loan if you hold high-risk assets; otherwise minor fee.
+      const hasHighRisk = newState.assets.some(a => a.risk === "high");
+      if (hasHighRisk) {
+        const principal = 200000 + Math.floor(Math.random() * 300000);
+        const emi = Math.round(principal * 0.03);
+        addLiability(newState, {
+          name: "Margin Loan",
+          category: "margin_loan",
+          principal,
+          monthlyEMI: emi,
+          interestRate: 18,
+        });
+        logMessage = `📞 Margin Call! Broker financed your high-risk losses — ₹${principal.toLocaleString()} debt, ₹${emi.toLocaleString()}/mo.`;
+        lessonMessage = "💡 Leveraged investing magnifies losses. Margin loans survive even when the trade dies.";
+      } else {
+        const fee = 3000 + Math.floor(Math.random() * 5000);
+        newState.cash -= fee;
+        logMessage = `📞 Broker called — no margin position to liquidate. Paid ₹${fee.toLocaleString()} account fee.`;
+      }
+      break;
+    }
+
+    case "tax_arrears": {
+      // Old returns flagged — owe past taxes as a structured debt.
+      const arrears = 60000 + Math.floor(Math.random() * 140000);
+      const emi = Math.round(arrears / 24);
+      addLiability(newState, {
+        name: "Tax Arrears (IT Dept)",
+        category: "tax_arrears",
+        principal: arrears,
+        monthlyEMI: emi,
+        interestRate: 12,
+      });
+      logMessage = `🧾 Tax Arrears! IT Dept demands ₹${arrears.toLocaleString()} from past filings — installment ₹${emi.toLocaleString()}/mo.`;
+      break;
+    }
   }
 
   pushLog(newState, logMessage);
