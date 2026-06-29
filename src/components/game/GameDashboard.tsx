@@ -195,18 +195,40 @@ export const GameDashboard = ({
 
           <div>
             <h3 className="text-destructive font-bold mb-2">
-              <InfoLabel label="Expenses" tip="Total of all monthly liability payments — what you must pay every month." />
+              <InfoLabel label="Monthly Outflow" tip="Loan EMIs plus every recurring expense — what leaves your account each month." />
             </h3>
             <div className="space-y-1 text-sm">
-              {gameState.liabilities.map((liability) => (
-                <div key={liability.id} className="flex justify-between">
-                  <span>{liability.name}:</span>
-                  <span>₹{liability.monthlyPayment.toLocaleString()}</span>
-                </div>
-              ))}
+              {gameState.liabilities.length > 0 && (
+                <>
+                  <div className="text-[11px] uppercase tracking-wider text-muted-foreground mt-1">Debt EMIs</div>
+                  {gameState.liabilities.map((liability) => (
+                    <div key={liability.id} className="flex justify-between">
+                      <span className="truncate">
+                        {liability.name}
+                        <span className="text-[10px] text-muted-foreground ml-1">· {liability.category.replace(/_/g, " ")}</span>
+                      </span>
+                      <span>₹{liability.monthlyEMI.toLocaleString()}</span>
+                    </div>
+                  ))}
+                </>
+              )}
+              {gameState.expenses.length > 0 && (
+                <>
+                  <div className="text-[11px] uppercase tracking-wider text-muted-foreground mt-2">Recurring Expenses</div>
+                  {gameState.expenses.map((expense) => (
+                    <div key={expense.id} className="flex justify-between">
+                      <span className="truncate">
+                        {expense.name}
+                        <span className="text-[10px] text-muted-foreground ml-1">· {expense.category}</span>
+                      </span>
+                      <span>₹{expense.monthlyAmount.toLocaleString()}</span>
+                    </div>
+                  ))}
+                </>
+              )}
               <Separator className="my-2" />
               <div className="flex justify-between font-bold">
-                <span>Total Expenses:</span>
+                <span>Total Outflow:</span>
                 <span>₹{totalExpenses.toLocaleString()}</span>
               </div>
             </div>
@@ -266,14 +288,19 @@ export const GameDashboard = ({
           {gameState.liabilities.length > 0 && (
             <div>
               <h3 className="text-destructive font-bold mb-2">
-                <InfoLabel label="Liabilities" tip="Debts that cost you money every month — loans, mortgages, credit cards." />
+                <InfoLabel label="Outstanding Debts" tip="Principal you still owe on each loan. Pay these down to grow net worth." />
               </h3>
               <div className="space-y-1 text-sm">
                 {gameState.liabilities.map((liability) => (
                   <div key={liability.id} className="flex justify-between">
-                    <span>{liability.name}:</span>
+                    <span className="truncate">
+                      {liability.name}
+                      <span className="text-[10px] text-muted-foreground ml-1">
+                        · {liability.interestRate}% p.a.
+                      </span>
+                    </span>
                     <span className="text-destructive">
-                      ₹{liability.amount.toLocaleString()}
+                      ₹{liability.principal.toLocaleString()}
                     </span>
                   </div>
                 ))}
