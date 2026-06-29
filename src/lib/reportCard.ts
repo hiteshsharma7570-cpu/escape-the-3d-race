@@ -34,7 +34,7 @@ const clamp = (n: number, min = 0, max = 100) => Math.max(min, Math.min(max, n))
 export const buildReportCard = (state: GameState): ReportCard => {
   const netWorth = calculateNetWorth(state);
   const expenses = calculateTotalExpenses(state);
-  const totalLiabilityAmount = state.liabilities.reduce((s, l) => s + l.amount, 0);
+  const totalLiabilityAmount = state.liabilities.reduce((s, l) => s + l.principal, 0);
   const assets = state.assets;
   const turns = Math.max(1, state.turnCount);
 
@@ -48,7 +48,7 @@ export const buildReportCard = (state: GameState): ReportCard => {
   let riskScore = 40 + tiersUsed * 18; // 1 tier = 58, 2 = 76, 3 = 94
   if (highRatio > 0.6) riskScore -= 20; // over-concentrated in high risk
   if (assets.length === 0) riskScore = 30;
-  const hasMedicalDebt = state.liabilities.some((l) => /medical debt/i.test(l.name));
+  const hasMedicalDebt = state.liabilities.some((l) => l.category === "medical_debt");
   if (hasMedicalDebt) riskScore -= 12;
   riskScore = clamp(riskScore);
 

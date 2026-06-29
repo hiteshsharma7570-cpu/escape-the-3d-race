@@ -296,7 +296,7 @@ const Index = () => {
       return;
     }
     const loanAmount = 100000;
-    const monthlyPayment = 5000;
+    const monthlyEMI = 5000;
     
     playSound("earnMoney");
     setGameState((prev) => ({
@@ -308,12 +308,14 @@ const Index = () => {
         {
           id: `loan-${Date.now()}`,
           name: "Bank Loan",
-          amount: loanAmount,
-          monthlyPayment,
+          category: "personal_loan" as const,
+          principal: loanAmount,
+          monthlyEMI,
+          interestRate: 12,
         },
       ],
       gameLog: [
-        `[Turn ${prev.turnCount}] Took a loan of ₹${loanAmount.toLocaleString()}. Monthly payment: ₹${monthlyPayment.toLocaleString()}`,
+        `[Turn ${prev.turnCount}] Took a loan of ₹${loanAmount.toLocaleString()}. Monthly EMI: ₹${monthlyEMI.toLocaleString()}`,
         ...prev.gameLog.slice(0, 19),
       ],
     }));
@@ -334,14 +336,14 @@ const Index = () => {
 
     const loan = gameState.liabilities[loanIndex];
     
-    if (gameState.cash >= loan.amount) {
+    if (gameState.cash >= loan.principal) {
       playSound("earnMoney");
       setGameState((prev) => ({
         ...prev,
-        cash: prev.cash - loan.amount,
+        cash: prev.cash - loan.principal,
         liabilities: prev.liabilities.filter((_, i) => i !== loanIndex),
         gameLog: [
-          `[Turn ${prev.turnCount}] Repaid loan of ₹${loan.amount.toLocaleString()}`,
+          `[Turn ${prev.turnCount}] Repaid loan of ₹${loan.principal.toLocaleString()}`,
           ...prev.gameLog.slice(0, 19),
         ],
       }));
@@ -353,16 +355,15 @@ const Index = () => {
   };
 
   const payOffDebts = () => {
-    // Only liabilities with a remaining principal (amount > 0) are "clearable debts".
-    // Rows like Rent / GST have amount === 0 and represent permanent recurring expenses —
-    // they cannot be paid off in a lump sum.
-    const clearable = gameState.liabilities.filter((l) => l.amount > 0);
+    // Every liability now has an outstanding principal — all are clearable in a lump sum.
+    // Recurring expenses live in their own array and cannot be paid off this way.
+    const clearable = gameState.liabilities.filter((l) => l.principal > 0);
     if (clearable.length === 0) {
-      toast.error("No clearable debts. (Rent and recurring expenses can't be paid off.)");
+      toast.error("No outstanding loans to clear. Recurring expenses can't be paid off in a lump sum.");
       return;
     }
-    const totalDebt = clearable.reduce((sum, l) => sum + l.amount, 0);
-    if (!confirm(`Pay off ${clearable.length} loan(s) totaling ₹${totalDebt.toLocaleString()}? Recurring expenses (rent, GST) will remain.`)) {
+    const totalDebt = clearable.reduce((sum, l) => sum + l.principal, 0);
+    if (!confirm(`Pay off ${clearable.length} loan(s) totaling ₹${totalDebt.toLocaleString()}? Recurring expenses (rent, bills, subscriptions) will remain.`)) {
       return;
     }
     if (gameState.cash >= totalDebt) {
