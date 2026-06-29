@@ -1020,6 +1020,41 @@ export const sellAsset = (state: GameState, assetId: string): GameState => {
   return newState;
 };
 
+/**
+ * Repay a specific liability by `amount` rupees from cash.
+ * Full repayment removes the liability entirely (EMI disappears).
+ * Partial repayment shrinks principal proportionally and reduces the EMI pro-rata.
+ */
+export const repayLiability = (
+  state: GameState,
+  liabilityId: string,
+  amount: number,
+): { state: GameState; ok: boolean; error?: string } => {
+  const liability = state.liabilities.find(l => l.id === liabilityId);
+  if (!liability) return { state, ok: false, error: "Loan not found." };
+  const pay = Math.min(Math.max(0, Math.floor(amount)), liability.principal);
+  if (pay <= 0) return { state, ok: false, error: "Enter an amount greater than zero." };
+  if (state.cash < pay) return { state, ok: false, error: "Insufficient cash for this repayment." };
+
+  const next: GameState = { ...state, liabilities: [...state.liabilities] };
+  next.cash -= pay;
+
+  if (pay >= liability.principal) {
+    next.liabilities = next.liabilities.filter(l => l.id !== liabilityId);
+    pushLog(next, `✅ Fully repaid ${liability.name} (₹${pay.toLocaleString()}). EMI of ₹${liability.monthlyEMI.toLocaleString()}/mo cleared.`);
+  } else {
+    const ratio = (liability.principal - pay) / liability.principal;
+    const newEMI = Math.max(0, Math.round(liability.monthlyEMI * ratio));
+    next.liabilities = next.liabilities.map(l =>
+      l.id === liabilityId
+        ? { ...l, principal: l.principal - pay, monthlyEMI: newEMI }
+        : l
+    );
+    pushLog(next, `💰 Part-paid ${liability.name} (₹${pay.toLocaleString()}). EMI now ₹${newEMI.toLocaleString()}/mo.`);
+  }
+  return { state: next, ok: true };
+};
+
 // Apply periodic mechanics based on turn number. Mutates a copy.
 export const applyPeriodicMechanics = (
   state: GameState
