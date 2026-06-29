@@ -1,0 +1,2 @@
+DROP POLICY IF EXISTS "Authenticated users can view weekly leaderboard" ON public.weekly_leaderboard;
+CREATE POLICY "Users can view their own weekly leaderboard row" ON public.weekly_leaderboard FOR SELECT TO authenticated USING (auth.uid() = user_id);
