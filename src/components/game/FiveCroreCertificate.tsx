@@ -519,7 +519,7 @@ export const FiveCroreCertificate = ({
             <Download className="w-4 h-4" /> Download Certificate
           </Button>
           <Button variant="outline" onClick={share} className="gap-2">
-            <Share2 className="w-4 h-4" /> Share 🎉
+            <Share2 className="w-4 h-4" /> Share Certificate
           </Button>
           <Button variant="outline" onClick={onPlayAgain} className="gap-2">
             <RotateCcw className="w-4 h-4" /> Play Again
