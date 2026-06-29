@@ -50,6 +50,9 @@ export const TILE_META: Record<TileType, TileMeta> = {
   streaming_audit:     { category: "OTT AUDIT",      subtitle: "CUT BILLS",  icon: "✂️", neonHsl: "180 70% 55%" },
   pet_adoption:        { category: "PET ADOPT",      subtitle: "+CARE",      icon: "🐶", neonHsl: "30 85% 60%" },
   elderly_care_hire:   { category: "ELDER CARE",     subtitle: "CAREGIVER",  icon: "🧓", neonHsl: "260 50% 60%" },
+  payday_loan:         { category: "PAYDAY LOAN",    subtitle: "HIGH RATE",  icon: "💸", neonHsl: "350 85% 55%" },
+  margin_call:         { category: "MARGIN CALL",    subtitle: "+DEBT",      icon: "📞", neonHsl: "0 90% 50%" },
+  tax_arrears:         { category: "TAX ARREARS",    subtitle: "+DEBT",      icon: "🧾", neonHsl: "15 70% 45%" },
 };
 
 // "Career start" corner — only for tile id 0 (PAY DAY) we mark as the start corner.

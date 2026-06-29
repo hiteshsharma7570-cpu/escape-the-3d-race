@@ -88,6 +88,9 @@ const G = {
   streaming_audit:      { color: "#117a8b", gradient: "linear-gradient(135deg,#117a8b,#1abc9c)", icon: "✂️" },
   pet_adoption:         { color: "#cb6a1e", gradient: "linear-gradient(135deg,#cb6a1e,#f39c12)", icon: "🐶" },
   elderly_care_hire:    { color: "#6c3483", gradient: "linear-gradient(135deg,#6c3483,#8e44ad)", icon: "🧓" },
+  payday_loan:          { color: "#922b50", gradient: "linear-gradient(135deg,#922b50,#e84393)", icon: "💸" },
+  margin_call:          { color: "#7b1f1f", gradient: "linear-gradient(135deg,#7b1f1f,#e74c3c)", icon: "📞" },
+  tax_arrears:          { color: "#7e5109", gradient: "linear-gradient(135deg,#7e5109,#b9770e)", icon: "🧾" },
 } as const;
 
 const t = (id: number, type: keyof typeof G, label: string): Tile => ({
@@ -110,7 +113,7 @@ export const BOARD_TILES: Tile[] = [
   t(12, "side_hustle",         "Side Hustle"),
   t(13, "bnpl_trap",           "BNPL Trap"),
   t(14, "society_maintenance", "Society Fee"),
-  t(15, "dinner",              "Dinner Out"),
+  t(15, "payday_loan",         "Payday Loan"),
   t(16, "downsized",           "Downsized!"),
   t(17, "pet_adoption",        "Pet Adopt"),
   t(18, "inheritance",         "Inheritance"),
@@ -120,8 +123,8 @@ export const BOARD_TILES: Tile[] = [
   t(22, "wedding_in_family",   "Wedding"),
   t(23, "insurance_premium",   "Insurance"),
   t(24, "stock_market_crash",  "Crash"),
-  t(25, "vacation",            "Vacation"),
-  t(26, "festival_expense",    "Festival"),
+  t(25, "margin_call",         "Margin Call"),
+  t(26, "tax_arrears",         "Tax Arrears"),
   t(27, "ev_switch",           "Go EV"),
   t(28, "charity",             "Charity"),
   t(29, "rent_hike",           "Rent Hike"),
@@ -856,6 +859,62 @@ export const handleTileEffect = (state: GameState, tile: Tile): GameState => {
       }
       break;
     }
+
+    case "payday_loan": {
+      // Predatory short-term loan — instant cash, brutal EMI for 4 months.
+      const principal = 40000 + Math.floor(Math.random() * 60000);
+      const emi = Math.round(principal / 4 * 1.15);
+      newState.cash += principal;
+      newState.loansTaken += 1;
+      addLiability(newState, {
+        name: "Payday Loan",
+        category: "payday_loan",
+        principal,
+        monthlyEMI: emi,
+        interestRate: 48,
+      });
+      logMessage = `💸 Payday Loan! +₹${principal.toLocaleString()} cash now, but ₹${emi.toLocaleString()}/mo for 4 months @ 48% APR.`;
+      lessonMessage = "💡 Payday loans look small but compound viciously — avoid unless truly desperate.";
+      break;
+    }
+
+    case "margin_call": {
+      // Broker calls in margin loan if you hold high-risk assets; otherwise minor fee.
+      const hasHighRisk = newState.assets.some(a => a.risk === "high");
+      if (hasHighRisk) {
+        const principal = 200000 + Math.floor(Math.random() * 300000);
+        const emi = Math.round(principal * 0.03);
+        addLiability(newState, {
+          name: "Margin Loan",
+          category: "margin_loan",
+          principal,
+          monthlyEMI: emi,
+          interestRate: 18,
+        });
+        logMessage = `📞 Margin Call! Broker financed your high-risk losses — ₹${principal.toLocaleString()} debt, ₹${emi.toLocaleString()}/mo.`;
+        lessonMessage = "💡 Leveraged investing magnifies losses. Margin loans survive even when the trade dies.";
+      } else {
+        const fee = 3000 + Math.floor(Math.random() * 5000);
+        newState.cash -= fee;
+        logMessage = `📞 Broker called — no margin position to liquidate. Paid ₹${fee.toLocaleString()} account fee.`;
+      }
+      break;
+    }
+
+    case "tax_arrears": {
+      // Old returns flagged — owe past taxes as a structured debt.
+      const arrears = 60000 + Math.floor(Math.random() * 140000);
+      const emi = Math.round(arrears / 24);
+      addLiability(newState, {
+        name: "Tax Arrears (IT Dept)",
+        category: "tax_arrears",
+        principal: arrears,
+        monthlyEMI: emi,
+        interestRate: 12,
+      });
+      logMessage = `🧾 Tax Arrears! IT Dept demands ₹${arrears.toLocaleString()} from past filings — installment ₹${emi.toLocaleString()}/mo.`;
+      break;
+    }
   }
 
   pushLog(newState, logMessage);
@@ -959,6 +1018,41 @@ export const sellAsset = (state: GameState, assetId: string): GameState => {
   newState.assets = newState.assets.filter(a => a.id !== assetId);
   pushLog(newState, `Sold ${asset.name} for ₹${asset.value.toLocaleString()} (lost ₹${asset.monthlyIncome.toLocaleString()}/mo income)`);
   return newState;
+};
+
+/**
+ * Repay a specific liability by `amount` rupees from cash.
+ * Full repayment removes the liability entirely (EMI disappears).
+ * Partial repayment shrinks principal proportionally and reduces the EMI pro-rata.
+ */
+export const repayLiability = (
+  state: GameState,
+  liabilityId: string,
+  amount: number,
+): { state: GameState; ok: boolean; error?: string } => {
+  const liability = state.liabilities.find(l => l.id === liabilityId);
+  if (!liability) return { state, ok: false, error: "Loan not found." };
+  const pay = Math.min(Math.max(0, Math.floor(amount)), liability.principal);
+  if (pay <= 0) return { state, ok: false, error: "Enter an amount greater than zero." };
+  if (state.cash < pay) return { state, ok: false, error: "Insufficient cash for this repayment." };
+
+  const next: GameState = { ...state, liabilities: [...state.liabilities] };
+  next.cash -= pay;
+
+  if (pay >= liability.principal) {
+    next.liabilities = next.liabilities.filter(l => l.id !== liabilityId);
+    pushLog(next, `✅ Fully repaid ${liability.name} (₹${pay.toLocaleString()}). EMI of ₹${liability.monthlyEMI.toLocaleString()}/mo cleared.`);
+  } else {
+    const ratio = (liability.principal - pay) / liability.principal;
+    const newEMI = Math.max(0, Math.round(liability.monthlyEMI * ratio));
+    next.liabilities = next.liabilities.map(l =>
+      l.id === liabilityId
+        ? { ...l, principal: l.principal - pay, monthlyEMI: newEMI }
+        : l
+    );
+    pushLog(next, `💰 Part-paid ${liability.name} (₹${pay.toLocaleString()}). EMI now ₹${newEMI.toLocaleString()}/mo.`);
+  }
+  return { state: next, ok: true };
 };
 
 // Apply periodic mechanics based on turn number. Mutates a copy.
