@@ -153,7 +153,12 @@ export const calculateNetWorth = (state: GameState): number => {
 };
 
 export const handleTileEffect = (state: GameState, tile: Tile): GameState => {
-  const newState = { ...state };
+  const newState: GameState = {
+    ...state,
+    liabilities: [...state.liabilities],
+    expenses: [...state.expenses],
+    assets: [...state.assets],
+  };
   let logMessage = "";
   let lessonMessage: string | null = null;
 
@@ -233,16 +238,17 @@ export const handleTileEffect = (state: GameState, tile: Tile): GameState => {
       logMessage = `Charity opportunity! You can donate ₹${charityAmount.toLocaleString()}`;
       break;
 
-    case "baby":
+    case "baby": {
       const babyExpense = 16000;
-      newState.liabilities.push({
-        id: `liability-${Date.now()}`,
+      addExpense(newState, {
         name: "Child Expenses",
-        amount: 0,
-        monthlyPayment: babyExpense,
+        category: "childcare",
+        monthlyAmount: babyExpense,
+        essential: true,
       });
-      logMessage = `Baby! Monthly expenses increased by ₹${babyExpense.toLocaleString()}`;
+      logMessage = `👶 Baby! Monthly expenses increased by ₹${babyExpense.toLocaleString()}.`;
       break;
+    }
 
     case "vacation":
       const vacationCost = 30000;
@@ -277,18 +283,21 @@ export const handleTileEffect = (state: GameState, tile: Tile): GameState => {
 
     case "medical_emergency": {
       let cost = Math.floor(Math.random() * 250000) + 50000;
-      const hasInsurance = newState.assets.some(a => /insurance/i.test(a.name));
+      const hasInsurance =
+        newState.assets.some(a => /insurance/i.test(a.name)) ||
+        newState.expenses.some(e => e.category === "insurance" && /medical|health/i.test(e.name));
       if (hasInsurance) cost = Math.round(cost * 0.4);
       if (newState.cash >= cost) {
         newState.cash -= cost;
         logMessage = `🏥 Medical Emergency! Paid ₹${cost.toLocaleString()} in full.`;
       } else {
         newState.cash = Math.max(0, newState.cash);
-        newState.liabilities.push({
-          id: `med-${Date.now()}`,
+        addLiability(newState, {
           name: "Medical Debt",
-          amount: cost,
-          monthlyPayment: 8000,
+          category: "medical_debt",
+          principal: cost,
+          monthlyEMI: 8000,
+          interestRate: 13,
         });
         logMessage = `🏥 Medical Emergency! ₹${cost.toLocaleString()} added as Medical Debt (₹8,000/mo).`;
       }
@@ -399,33 +408,33 @@ export const handleTileEffect = (state: GameState, tile: Tile): GameState => {
 
     case "emi_hike": {
       const hikePct = 10 + Math.floor(Math.random() * 11);
-      newState.liabilities = newState.liabilities.map(l =>
-        /loan|emi|mortgage/i.test(l.name)
-          ? { ...l, monthlyPayment: Math.round(l.monthlyPayment * (1 + hikePct / 100)) }
-          : l
-      );
-      const hikedLoans = state.liabilities.filter(l => /loan|emi|mortgage/i.test(l.name));
-      const extra = hikedLoans.reduce((s, l) => s + Math.round(l.monthlyPayment * hikePct / 100), 0);
-      logMessage = `📈 RBI hikes rates! All loan EMIs increased by ${hikePct}%. Monthly burden up by ₹${extra.toLocaleString()}.`;
+      let extra = 0;
+      newState.liabilities = newState.liabilities.map(l => {
+        const bump = Math.round(l.monthlyEMI * hikePct / 100);
+        extra += bump;
+        return { ...l, monthlyEMI: l.monthlyEMI + bump };
+      });
+      logMessage = newState.liabilities.length
+        ? `📈 RBI hikes rates! All loan EMIs increased by ${hikePct}%. Monthly burden up by ₹${extra.toLocaleString()}.`
+        : `📈 RBI hikes rates by ${hikePct}% — but you have no loans. Phew.`;
       break;
     }
 
     case "insurance_premium": {
-      const existing = newState.liabilities.find(l => /insurance/i.test(l.name));
+      const existing = newState.expenses.find(e => e.category === "insurance");
       if (existing) {
-        newState.liabilities = newState.liabilities.map(l =>
-          /insurance/i.test(l.name)
-            ? { ...l, monthlyPayment: Math.round(l.monthlyPayment * 1.15) }
-            : l
+        const newAmt = Math.round(existing.monthlyAmount * 1.15);
+        newState.expenses = newState.expenses.map(e =>
+          e.id === existing.id ? { ...e, monthlyAmount: newAmt } : e
         );
-        logMessage = `🛡️ Insurance renewal! Premium increased by 15% to ₹${Math.round(existing.monthlyPayment * 1.15).toLocaleString()}/mo.`;
+        logMessage = `🛡️ Insurance renewal! ${existing.name} premium up 15% to ₹${newAmt.toLocaleString()}/mo.`;
       } else {
         const premium = 3000 + Math.floor(Math.random() * 4000);
-        newState.liabilities.push({
-          id: `ins-${Date.now()}`,
+        addExpense(newState, {
           name: "Insurance Premium",
-          amount: 0,
-          monthlyPayment: premium,
+          category: "insurance",
+          monthlyAmount: premium,
+          essential: true,
         });
         logMessage = `🛡️ You need insurance! Added ₹${premium.toLocaleString()}/mo insurance premium.`;
       }
@@ -438,11 +447,12 @@ export const handleTileEffect = (state: GameState, tile: Tile): GameState => {
         newState.cash -= repairCost;
         logMessage = `🔧 Home Repair! Paid ₹${repairCost.toLocaleString()} for urgent repairs.`;
       } else {
-        newState.liabilities.push({
-          id: `repair-${Date.now()}`,
+        addLiability(newState, {
           name: "Home Repair Loan",
-          amount: repairCost,
-          monthlyPayment: 5000,
+          category: "personal_loan",
+          principal: repairCost,
+          monthlyEMI: 5000,
+          interestRate: 14,
         });
         logMessage = `🔧 Home Repair! Can't afford it — added ₹${repairCost.toLocaleString()} as loan (₹5,000/mo).`;
       }
@@ -462,19 +472,20 @@ export const handleTileEffect = (state: GameState, tile: Tile): GameState => {
         newState.cash -= bill;
         logMessage = `💳 Credit Card Bill due! Paid ₹${bill.toLocaleString()}.`;
       } else {
-        const existing = newState.liabilities.find(l => /credit card/i.test(l.name));
+        const existing = newState.liabilities.find(l => l.category === "credit_card");
         if (existing) {
           newState.liabilities = newState.liabilities.map(l =>
-            /credit card/i.test(l.name)
-              ? { ...l, amount: l.amount + bill, monthlyPayment: l.monthlyPayment + 2000 }
+            l.id === existing.id
+              ? { ...l, principal: l.principal + bill, monthlyEMI: l.monthlyEMI + 2000 }
               : l
           );
         } else {
-          newState.liabilities.push({
-            id: `cc-${Date.now()}`,
-            name: "Credit Card Debt",
-            amount: bill,
-            monthlyPayment: 4000,
+          addLiability(newState, {
+            name: "Credit Card",
+            category: "credit_card",
+            principal: bill,
+            monthlyEMI: 4000,
+            interestRate: 36,
           });
         }
         logMessage = `💳 Credit Card Bill! Added ₹${bill.toLocaleString()} to card debt (+₹4,000/mo minimum).`;
@@ -483,7 +494,7 @@ export const handleTileEffect = (state: GameState, tile: Tile): GameState => {
     }
 
     case "school_fees": {
-      const hasChild = newState.liabilities.some(l => /child/i.test(l.name));
+      const hasChild = newState.expenses.some(e => e.category === "childcare" || /child/i.test(e.name));
       if (hasChild) {
         const fees = 25000 + Math.floor(Math.random() * 50000);
         newState.cash -= fees;
@@ -509,21 +520,19 @@ export const handleTileEffect = (state: GameState, tile: Tile): GameState => {
     }
 
     case "rent_hike": {
-      const rentLiability = newState.liabilities.find(l => /rent/i.test(l.name));
-      if (rentLiability) {
-        const hike = Math.round(rentLiability.monthlyPayment * 0.15);
-        newState.liabilities = newState.liabilities.map(l =>
-          /rent/i.test(l.name)
-            ? { ...l, monthlyPayment: l.monthlyPayment + hike }
-            : l
+      const rentExpense = newState.expenses.find(e => e.category === "rent");
+      if (rentExpense) {
+        const hike = Math.round(rentExpense.monthlyAmount * 0.15);
+        newState.expenses = newState.expenses.map(e =>
+          e.id === rentExpense.id ? { ...e, monthlyAmount: e.monthlyAmount + hike } : e
         );
         logMessage = `🏠 Rent Hike! Landlord raised rent by ₹${hike.toLocaleString()}/mo.`;
       } else {
-        newState.liabilities.push({
-          id: `rent-${Date.now()}`,
+        addExpense(newState, {
           name: "Home Rent",
-          amount: 0,
-          monthlyPayment: 15000,
+          category: "rent",
+          monthlyAmount: 15000,
+          essential: true,
         });
         logMessage = `🏠 Rent Hike! New rental added — ₹15,000/mo.`;
       }
@@ -536,11 +545,12 @@ export const handleTileEffect = (state: GameState, tile: Tile): GameState => {
         newState.cash -= repairCost;
         logMessage = `🚗 Vehicle Breakdown! Paid ₹${repairCost.toLocaleString()} in repair costs.`;
       } else {
-        newState.liabilities.push({
-          id: `vehicle-${Date.now()}`,
+        addLiability(newState, {
           name: "Vehicle Repair Loan",
-          amount: repairCost,
-          monthlyPayment: 3000,
+          category: "vehicle_loan",
+          principal: repairCost,
+          monthlyEMI: 3000,
+          interestRate: 13,
         });
         logMessage = `🚗 Vehicle Breakdown! Added ₹${repairCost.toLocaleString()} repair loan (₹3,000/mo).`;
       }
@@ -548,15 +558,14 @@ export const handleTileEffect = (state: GameState, tile: Tile): GameState => {
     }
 
     case "loan_interest_spike": {
-      const floatingLoans = newState.liabilities.filter(l =>
-        /home loan|mortgage|personal loan/i.test(l.name)
+      const floatingLoans = newState.liabilities.filter(
+        l => l.category === "home_loan" || l.category === "personal_loan"
       );
       if (floatingLoans.length > 0) {
         const spike = 1500 + Math.floor(Math.random() * 3500);
+        const ids = new Set(floatingLoans.map(l => l.id));
         newState.liabilities = newState.liabilities.map(l =>
-          /home loan|mortgage|personal loan/i.test(l.name)
-            ? { ...l, monthlyPayment: l.monthlyPayment + spike }
-            : l
+          ids.has(l.id) ? { ...l, monthlyEMI: l.monthlyEMI + spike } : l
         );
         logMessage = `🏦 Floating rate spike! Home/personal loan payments up by ₹${spike.toLocaleString()}/mo.`;
       } else {
@@ -569,19 +578,150 @@ export const handleTileEffect = (state: GameState, tile: Tile): GameState => {
 
     case "society_maintenance": {
       const fee = 2500 + Math.floor(Math.random() * 5000);
-      const existing = newState.liabilities.find(l => /society|maintenance/i.test(l.name));
+      const existing = newState.expenses.find(e => e.category === "maintenance");
       if (!existing) {
-        newState.liabilities.push({
-          id: `society-${Date.now()}`,
+        addExpense(newState, {
           name: "Society Maintenance",
-          amount: 0,
-          monthlyPayment: fee,
+          category: "maintenance",
+          monthlyAmount: fee,
+          essential: true,
         });
         logMessage = `🏢 Society maintenance added — ₹${fee.toLocaleString()}/mo ongoing.`;
       } else {
         newState.cash -= fee;
         logMessage = `🏢 Annual society maintenance paid — ₹${fee.toLocaleString()}.`;
       }
+      break;
+    }
+
+    case "gold_loan_offer": {
+      // Pawn family gold for fast cash.
+      const principal = 80000 + Math.floor(Math.random() * 170000);
+      const emi = Math.round(principal * 0.025); // ~2.5% / month
+      newState.cash += principal;
+      newState.loansTaken += 1;
+      addLiability(newState, {
+        name: "Gold Loan",
+        category: "gold_loan",
+        principal,
+        monthlyEMI: emi,
+        interestRate: 12,
+      });
+      logMessage = `🪙 Gold Loan! Pawned family gold — +₹${principal.toLocaleString()} cash, EMI ₹${emi.toLocaleString()}/mo (12% p.a.).`;
+      break;
+    }
+
+    case "wedding_in_family": {
+      const cost = 300000 + Math.floor(Math.random() * 700000);
+      if (newState.cash >= cost) {
+        newState.cash -= cost;
+        logMessage = `💍 Wedding in the family! Spent ₹${cost.toLocaleString()} from savings.`;
+      } else {
+        const paid = Math.max(0, newState.cash);
+        const shortfall = cost - paid;
+        newState.cash -= paid;
+        const emi = Math.max(6000, Math.round(shortfall / 60));
+        addLiability(newState, {
+          name: "Wedding Loan",
+          category: "personal_loan",
+          principal: shortfall,
+          monthlyEMI: emi,
+          interestRate: 15,
+        });
+        logMessage = `💍 Wedding! Paid ₹${paid.toLocaleString()}, rest ₹${shortfall.toLocaleString()} financed (₹${emi.toLocaleString()}/mo @ 15%).`;
+      }
+      break;
+    }
+
+    case "subscription_creep": {
+      const apps = ["Netflix", "Spotify Premium", "Hotstar", "Prime Video", "iCloud+", "ChatGPT Plus", "YouTube Premium"];
+      const name = apps[Math.floor(Math.random() * apps.length)];
+      const monthly = 200 + Math.floor(Math.random() * 1800);
+      addExpense(newState, {
+        name,
+        category: "subscription",
+        monthlyAmount: monthly,
+        essential: false,
+      });
+      logMessage = `📺 Subscription Creep! You signed up for ${name} — ₹${monthly.toLocaleString()}/mo on auto-debit.`;
+      lessonMessage = "💡 Small recurring charges silently inflate your monthly burn. Audit them quarterly.";
+      break;
+    }
+
+    case "fuel_price_hike": {
+      const transport = newState.expenses.filter(e => e.category === "transport");
+      if (transport.length === 0) {
+        const penalty = 1500 + Math.floor(Math.random() * 2500);
+        newState.cash -= penalty;
+        logMessage = `⛽ Fuel price hike! You drove minimally — only ₹${penalty.toLocaleString()} extra this month.`;
+      } else {
+        const pct = 10 + Math.floor(Math.random() * 16);
+        let extra = 0;
+        newState.expenses = newState.expenses.map(e => {
+          if (e.category !== "transport") return e;
+          const bump = Math.round(e.monthlyAmount * pct / 100);
+          extra += bump;
+          return { ...e, monthlyAmount: e.monthlyAmount + bump };
+        });
+        logMessage = `⛽ Fuel price hike (+${pct}%)! Transport costs rose by ₹${extra.toLocaleString()}/mo.`;
+      }
+      break;
+    }
+
+    case "parents_medical": {
+      const cost = 25000 + Math.floor(Math.random() * 75000);
+      const hasParentInsurance = newState.expenses.some(
+        e => e.category === "insurance" && /parent|senior/i.test(e.name)
+      );
+      if (newState.cash >= cost) {
+        newState.cash -= cost;
+        logMessage = `👴 Parents needed medical care. Paid ₹${cost.toLocaleString()} from cash.`;
+      } else {
+        addLiability(newState, {
+          name: "Parents Medical Debt",
+          category: "medical_debt",
+          principal: cost,
+          monthlyEMI: 4000,
+          interestRate: 12,
+        });
+        logMessage = `👴 Parents medical emergency! ₹${cost.toLocaleString()} added as debt (₹4,000/mo).`;
+      }
+      if (!hasParentInsurance && Math.random() < 0.5) {
+        addExpense(newState, {
+          name: "Parents' Health Insurance",
+          category: "insurance",
+          monthlyAmount: 3500,
+          essential: true,
+        });
+        lessonMessage = "💡 You bought parents' health cover — +₹3,500/mo, future hits will be softer.";
+      }
+      break;
+    }
+
+    case "gst_notice": {
+      const isBiz =
+        newState.profession === "Business Owner" ||
+        newState.profession === "Lawyer" ||
+        newState.liabilities.some(l => l.category === "business_loan");
+      const base = isBiz ? 25000 + Math.floor(Math.random() * 75000) : 5000 + Math.floor(Math.random() * 10000);
+      newState.cash -= base;
+      logMessage = isBiz
+        ? `🧾 GST Notice! Compliance shortfall — paid ₹${base.toLocaleString()} in dues + penalty.`
+        : `🧾 Tax notice! Filed late — penalty ₹${base.toLocaleString()}.`;
+      break;
+    }
+
+    case "bonus": {
+      const bonus = Math.round(newState.salary * (0.5 + Math.random() * 2));
+      newState.cash += bonus;
+      logMessage = `🎉 Performance Bonus! +₹${bonus.toLocaleString()} credited.`;
+      break;
+    }
+
+    case "tax_refund": {
+      const refund = 8000 + Math.floor(Math.random() * 42000);
+      newState.cash += refund;
+      logMessage = `💸 Tax Refund! ₹${refund.toLocaleString()} from the IT department.`;
       break;
     }
   }
