@@ -208,7 +208,7 @@ export const GameDashboard = ({
                         {liability.name}
                        <span className="text-[10px] text-muted-foreground ml-1">· {(liability.category ?? "loan").replace(/_/g, " ")}</span>
                       </span>
-                      <span>₹{liability.monthlyEMI.toLocaleString()}</span>
+                      <span>₹{(liability.monthlyEMI ?? 0).toLocaleString()}</span>
                     </div>
                   ))}
                 </>
@@ -222,7 +222,7 @@ export const GameDashboard = ({
                         {expense.name}
                         <span className="text-[10px] text-muted-foreground ml-1">· {expense.category}</span>
                       </span>
-                      <span>₹{expense.monthlyAmount.toLocaleString()}</span>
+                      <span>₹{(expense.monthlyAmount ?? 0).toLocaleString()}</span>
                     </div>
                   ))}
                 </>
@@ -297,11 +297,11 @@ export const GameDashboard = ({
                     <span className="truncate">
                       {liability.name}
                       <span className="text-[10px] text-muted-foreground ml-1">
-                        · {liability.interestRate}% p.a.
+                        · {liability.interestRate ?? 0}% p.a.
                       </span>
                     </span>
                     <span className="text-destructive">
-                      ₹{liability.principal.toLocaleString()}
+                      ₹{(liability.principal ?? 0).toLocaleString()}
                     </span>
                   </div>
                 ))}
