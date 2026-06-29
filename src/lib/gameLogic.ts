@@ -139,22 +139,22 @@ export const calculateMonthlyCashFlow = (state: GameState): number => {
 };
 
 export const calculateTotalExpenses = (state: GameState): number => {
-  const debtServicing = state.liabilities.reduce((sum, l) => sum + l.monthlyEMI, 0);
-  const recurring = state.expenses.reduce((sum, e) => sum + e.monthlyAmount, 0);
+  const debtServicing = (state.liabilities ?? []).reduce((sum, l) => sum + (l.monthlyEMI ?? 0), 0);
+  const recurring = (state.expenses ?? []).reduce((sum, e) => sum + (e.monthlyAmount ?? 0), 0);
   return debtServicing + recurring;
 };
 
 /** Sum of all liability monthly EMIs (debt servicing only). */
 export const calculateDebtServicing = (state: GameState): number =>
-  state.liabilities.reduce((sum, l) => sum + l.monthlyEMI, 0);
+  (state.liabilities ?? []).reduce((sum, l) => sum + (l.monthlyEMI ?? 0), 0);
 
 /** Sum of all recurring expenses (rent, bills, subscriptions). */
 export const calculateRecurringExpenses = (state: GameState): number =>
-  state.expenses.reduce((sum, e) => sum + e.monthlyAmount, 0);
+  (state.expenses ?? []).reduce((sum, e) => sum + (e.monthlyAmount ?? 0), 0);
 
 export const calculateNetWorth = (state: GameState): number => {
-  const totalAssets = state.assets.reduce((sum, a) => sum + a.value, 0);
-  const totalLiabilities = state.liabilities.reduce((sum, l) => sum + l.principal, 0);
+  const totalAssets = (state.assets ?? []).reduce((sum, a) => sum + (a.value ?? 0), 0);
+  const totalLiabilities = (state.liabilities ?? []).reduce((sum, l) => sum + (l.principal ?? 0), 0);
   return state.cash + totalAssets - totalLiabilities;
 };
 
