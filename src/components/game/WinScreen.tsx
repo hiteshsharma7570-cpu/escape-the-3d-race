@@ -4,6 +4,8 @@ import { GameState } from "@/types/game";
 import { calculateNetWorth, calculateTotalExpenses } from "@/lib/gameLogic";
 import { Trophy, Share2, RotateCcw } from "lucide-react";
 import { toast } from "sonner";
+import { buildReportCard, gradeColor } from "@/lib/reportCard";
+import { useMemo } from "react";
 
 interface WinScreenProps {
   open: boolean;
@@ -15,15 +17,19 @@ export const WinScreen = ({ open, gameState, onPlayAgain }: WinScreenProps) => {
   const netWorth = calculateNetWorth(gameState);
   const expenses = calculateTotalExpenses(gameState);
   const best = [...gameState.assets].sort((a, b) => b.monthlyIncome - a.monthlyIncome)[0];
+  const report = useMemo(() => buildReportCard(gameState), [gameState]);
 
   const share = async () => {
+    const grades = report.categories
+      .map((c) => `${c.label}: ${c.grade}`)
+      .join(" · ");
     const text =
       `🎉 ${gameState.playerName} escaped the Rat Race!\n` +
-      `Turns: ${gameState.turnCount}\n` +
-      `Net Worth: ₹${netWorth.toLocaleString()}\n` +
-      `Passive Income: ₹${gameState.passiveIncome.toLocaleString()}/mo\n` +
-      `Assets owned: ${gameState.assets.length}\n` +
-      (best ? `Best investment: ${best.name} (₹${best.monthlyIncome.toLocaleString()}/mo)` : "");
+      `Overall Grade: ${report.overall} (${report.overallScore}/100)\n` +
+      `${grades}\n` +
+      `Turns: ${gameState.turnCount} · Net Worth: ₹${netWorth.toLocaleString()}\n` +
+      `Passive Income: ₹${gameState.passiveIncome.toLocaleString()}/mo` +
+      (best ? `\nBest investment: ${best.name} (₹${best.monthlyIncome.toLocaleString()}/mo)` : "");
     try {
       await navigator.clipboard.writeText(text);
       toast.success("Score copied to clipboard!");
@@ -34,7 +40,7 @@ export const WinScreen = ({ open, gameState, onPlayAgain }: WinScreenProps) => {
 
   return (
     <Dialog open={open} onOpenChange={() => {}}>
-      <DialogContent className="max-w-lg">
+      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="text-3xl text-center flex items-center justify-center gap-2">
             <Trophy className="w-8 h-8 text-yellow-500" />
@@ -45,6 +51,45 @@ export const WinScreen = ({ open, gameState, onPlayAgain }: WinScreenProps) => {
           <div className="text-center text-muted-foreground">
             Congratulations, <span className="font-semibold text-foreground">{gameState.playerName}</span>!
           </div>
+
+          {/* Financial Report Card */}
+          <div className="rounded-lg border-2 border-primary/40 bg-gradient-to-br from-card to-accent/20 p-4">
+            <div className="flex items-center justify-between mb-3 pb-3 border-b border-border">
+              <div>
+                <div className="text-xs uppercase tracking-wider text-muted-foreground">Financial Report Card</div>
+                <div className="text-sm italic text-muted-foreground mt-0.5">{report.headline}</div>
+              </div>
+              <div className="text-right">
+                <div className={`text-5xl font-extrabold leading-none ${gradeColor(report.overall)}`}>
+                  {report.overall}
+                </div>
+                <div className="text-xs text-muted-foreground mt-1">{report.overallScore}/100</div>
+              </div>
+            </div>
+            <div className="space-y-2">
+              {report.categories.map((cat) => (
+                <div key={cat.key} className="flex items-start gap-3 p-2 rounded-md hover:bg-accent/30 transition-colors">
+                  <div className={`text-2xl font-bold w-12 text-center ${gradeColor(cat.grade)}`}>
+                    {cat.grade}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center justify-between gap-2">
+                      <div className="font-semibold text-sm">{cat.label}</div>
+                      <div className="text-xs text-muted-foreground tabular-nums">{Math.round(cat.score)}/100</div>
+                    </div>
+                    <div className="text-xs text-muted-foreground mt-0.5">{cat.summary}</div>
+                    <div className="mt-1.5 h-1 bg-muted rounded-full overflow-hidden">
+                      <div
+                        className="h-full bg-gradient-to-r from-primary to-success transition-all"
+                        style={{ width: `${cat.score}%` }}
+                      />
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
           <div className="grid grid-cols-2 gap-3 text-sm">
             <div className="bg-accent/40 rounded-md p-3">
               <div className="text-muted-foreground text-xs">Total Turns</div>
