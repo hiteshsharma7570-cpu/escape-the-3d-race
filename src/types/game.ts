@@ -38,7 +38,10 @@ export type TileType =
   | "ev_switch"
   | "streaming_audit"
   | "pet_adoption"
-  | "elderly_care_hire";
+  | "elderly_care_hire"
+  | "payday_loan"
+  | "margin_call"
+  | "tax_arrears";
 
 export interface Tile {
   id: number;
@@ -67,7 +70,10 @@ export type LiabilityCategory =
   | "business_loan"
   | "medical_debt"
   | "gold_loan"
-  | "bnpl";
+  | "bnpl"
+  | "payday_loan"
+  | "margin_loan"
+  | "tax_arrears";
 
 export interface Liability {
   id: string;
@@ -269,10 +275,21 @@ export const createInitialGameState = (
     salary: profile.salary,
     passiveIncome: 0,
     assets: [],
-    liabilities: profile.liabilities.map((l, i) => ({
-      ...l,
-      id: `start-liability-${i}-${seed}`,
-    })),
+    liabilities: [
+      // Every player begins with a ₹5 lakh outstanding personal loan.
+      {
+        id: `start-liability-starter-${seed}`,
+        name: "Starter Personal Loan",
+        category: "personal_loan" as const,
+        principal: 500000,
+        monthlyEMI: 11000,
+        interestRate: 13,
+      },
+      ...profile.liabilities.map((l, i) => ({
+        ...l,
+        id: `start-liability-${i}-${seed}`,
+      })),
+    ],
     expenses: profile.expenses.map((e, i) => ({
       ...e,
       id: `start-expense-${i}-${seed}`,
