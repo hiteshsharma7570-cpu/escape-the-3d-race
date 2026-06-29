@@ -44,6 +44,12 @@ export const TILE_META: Record<TileType, TileMeta> = {
   gst_notice:          { category: "GST NOTICE",     subtitle: "TAX DUES",   icon: "🧾", neonHsl: "210 70% 45%" },
   bonus:               { category: "BONUS",          subtitle: "+CASH",      icon: "🎉", neonHsl: "140 90% 55%" },
   tax_refund:          { category: "TAX REFUND",     subtitle: "+CASH",      icon: "💸", neonHsl: "165 80% 50%" },
+  bnpl_trap:           { category: "BNPL TRAP",      subtitle: "AUTO-EMI",   icon: "🛍️", neonHsl: "330 75% 55%" },
+  solar_install:       { category: "GO SOLAR",       subtitle: "ROOFTOP",    icon: "☀️", neonHsl: "45 100% 55%" },
+  ev_switch:           { category: "GO EV",          subtitle: "SWAP CAR",   icon: "🔋", neonHsl: "150 75% 50%" },
+  streaming_audit:     { category: "OTT AUDIT",      subtitle: "CUT BILLS",  icon: "✂️", neonHsl: "180 70% 55%" },
+  pet_adoption:        { category: "PET ADOPT",      subtitle: "+CARE",      icon: "🐶", neonHsl: "30 85% 60%" },
+  elderly_care_hire:   { category: "ELDER CARE",     subtitle: "CAREGIVER",  icon: "🧓", neonHsl: "260 50% 60%" },
 };
 
 // "Career start" corner — only for tile id 0 (PAY DAY) we mark as the start corner.

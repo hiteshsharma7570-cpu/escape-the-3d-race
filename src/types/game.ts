@@ -32,7 +32,13 @@ export type TileType =
   | "parents_medical"
   | "gst_notice"
   | "bonus"
-  | "tax_refund";
+  | "tax_refund"
+  | "bnpl_trap"
+  | "solar_install"
+  | "ev_switch"
+  | "streaming_audit"
+  | "pet_adoption"
+  | "elderly_care_hire";
 
 export interface Tile {
   id: number;
@@ -60,7 +66,8 @@ export type LiabilityCategory =
   | "credit_card"
   | "business_loan"
   | "medical_debt"
-  | "gold_loan";
+  | "gold_loan"
+  | "bnpl";
 
 export interface Liability {
   id: string;
@@ -85,7 +92,9 @@ export type ExpenseCategory =
   | "professional"
   | "maintenance"
   | "transport"
-  | "food";
+  | "food"
+  | "pet"
+  | "eldercare";
 
 export interface Expense {
   id: string;

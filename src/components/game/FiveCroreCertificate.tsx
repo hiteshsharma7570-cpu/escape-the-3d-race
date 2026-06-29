@@ -75,7 +75,9 @@ export const FiveCroreCertificate = ({
       ? `Achieved in ${turnCount} turn${turnCount === 1 ? "" : "s"} of strategic play.`
       : `Awarded for reaching the pinnacle of financial freedom.`;
 
-  const handleDownload = () => {
+  // Build the PDF and return both the jsPDF doc and the filename.
+  // Used by both Download and Share so they always produce the same artwork.
+  const buildPdf = () => {
     const doc = new jsPDF({ orientation: "landscape", unit: "pt", format: "a4" });
     const w = doc.internal.pageSize.getWidth();
     const h = doc.internal.pageSize.getHeight();
@@ -248,17 +250,71 @@ export const FiveCroreCertificate = ({
       { align: "center" }
     );
 
-    doc.save(`${playerName}-5cr-certificate.pdf`);
+    const filename = `${(playerName || "player").replace(/[^a-zA-Z0-9_-]+/g, "_")}-5cr-certificate.pdf`;
+    return { doc, filename };
+  };
+
+  const handleDownload = () => {
+    const { doc, filename } = buildPdf();
+    doc.save(filename);
   };
 
   const share = async () => {
+    const { doc, filename } = buildPdf();
+    const blob = doc.output("blob") as Blob;
+    const shareText =
+      `🏆 ${playerName} just accumulated ₹5 Crore in Escape the Rat Race!\n` +
+      `Certificate #${certId} · Issued ${dateStr}`;
+
+    // 1. Best path: Web Share API with the actual PDF file attached.
     try {
-      await navigator.clipboard.writeText(
-        `🏆 ${playerName} just accumulated ₹5 Crore in Escape the Rat Race! Certificate #${certId}`
-      );
-      toast.success("Achievement copied to clipboard!");
+      const file = new File([blob], filename, { type: "application/pdf" });
+      const nav = navigator as Navigator & {
+        canShare?: (data: { files?: File[] }) => boolean;
+        share?: (data: ShareData & { files?: File[] }) => Promise<void>;
+      };
+      if (nav.share && nav.canShare && nav.canShare({ files: [file] })) {
+        await nav.share({
+          files: [file],
+          title: "Escape the Rat Race — ₹5 Crore Certificate",
+          text: shareText,
+        });
+        toast.success("Certificate shared!");
+        return;
+      }
+      // 2. Fallback: Web Share API with text only (mobile browsers without file share).
+      if (nav.share) {
+        await nav.share({
+          title: "Escape the Rat Race — ₹5 Crore Certificate",
+          text: shareText,
+        });
+        toast.success("Shared!");
+        return;
+      }
+    } catch (err) {
+      const e = err as { name?: string };
+      if (e?.name === "AbortError") return; // user cancelled
+      // fall through to clipboard fallback
+    }
+
+    // 3. Final fallback: download the PDF locally and copy text to clipboard.
+    try {
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+      try {
+        await navigator.clipboard.writeText(shareText);
+      } catch {
+        /* ignore clipboard failure */
+      }
+      toast.success("Certificate downloaded — caption copied to clipboard!");
     } catch {
-      toast.error("Could not copy.");
+      toast.error("Could not share or download.");
     }
   };
 
@@ -463,7 +519,7 @@ export const FiveCroreCertificate = ({
             <Download className="w-4 h-4" /> Download Certificate
           </Button>
           <Button variant="outline" onClick={share} className="gap-2">
-            <Share2 className="w-4 h-4" /> Share 🎉
+            <Share2 className="w-4 h-4" /> Share Certificate
           </Button>
           <Button variant="outline" onClick={onPlayAgain} className="gap-2">
             <RotateCcw className="w-4 h-4" /> Play Again

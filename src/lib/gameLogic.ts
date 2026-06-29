@@ -82,6 +82,12 @@ const G = {
   gst_notice:           { color: "#1b4f72", gradient: "linear-gradient(135deg,#1b4f72,#2874a6)", icon: "🧾" },
   bonus:                { color: "#1e8449", gradient: "linear-gradient(135deg,#1e8449,#28b463)", icon: "🎉" },
   tax_refund:           { color: "#117864", gradient: "linear-gradient(135deg,#117864,#16a085)", icon: "💸" },
+  bnpl_trap:            { color: "#a93268", gradient: "linear-gradient(135deg,#a93268,#e84393)", icon: "🛍️" },
+  solar_install:        { color: "#d4ac0d", gradient: "linear-gradient(135deg,#d4ac0d,#f1c40f)", icon: "☀️" },
+  ev_switch:            { color: "#117a3e", gradient: "linear-gradient(135deg,#117a3e,#27ae60)", icon: "🔋" },
+  streaming_audit:      { color: "#117a8b", gradient: "linear-gradient(135deg,#117a8b,#1abc9c)", icon: "✂️" },
+  pet_adoption:         { color: "#cb6a1e", gradient: "linear-gradient(135deg,#cb6a1e,#f39c12)", icon: "🐶" },
+  elderly_care_hire:    { color: "#6c3483", gradient: "linear-gradient(135deg,#6c3483,#8e44ad)", icon: "🧓" },
 } as const;
 
 const t = (id: number, type: keyof typeof G, label: string): Tile => ({
@@ -102,11 +108,11 @@ export const BOARD_TILES: Tile[] = [
   t(10, "gold_loan_offer",     "Gold Loan"),
   t(11, "traffic_fine",        "Traffic Fine"),
   t(12, "side_hustle",         "Side Hustle"),
-  t(13, "market",              "Market"),
+  t(13, "bnpl_trap",           "BNPL Trap"),
   t(14, "society_maintenance", "Society Fee"),
   t(15, "dinner",              "Dinner Out"),
   t(16, "downsized",           "Downsized!"),
-  t(17, "home_repair",         "Home Repair"),
+  t(17, "pet_adoption",        "Pet Adopt"),
   t(18, "inheritance",         "Inheritance"),
   t(19, "tax_refund",          "Tax Refund"),
   t(20, "emi_hike",            "EMI Hike"),
@@ -116,14 +122,14 @@ export const BOARD_TILES: Tile[] = [
   t(24, "stock_market_crash",  "Crash"),
   t(25, "vacation",            "Vacation"),
   t(26, "festival_expense",    "Festival"),
-  t(27, "fuel_price_hike",     "Fuel Hike"),
+  t(27, "ev_switch",           "Go EV"),
   t(28, "charity",             "Charity"),
   t(29, "rent_hike",           "Rent Hike"),
   t(30, "parents_medical",     "Parents Care"),
-  t(31, "subscription_creep",  "Subscription"),
+  t(31, "streaming_audit",     "OTT Audit"),
   t(32, "vehicle_breakdown",   "Vehicle Repair"),
-  t(33, "market",              "Market"),
-  t(34, "gst_notice",          "GST Notice"),
+  t(33, "solar_install",       "Go Solar"),
+  t(34, "elderly_care_hire",   "Elder Care"),
   t(35, "loan_interest_spike", "Interest Spike"),
 ];
 
@@ -722,6 +728,132 @@ export const handleTileEffect = (state: GameState, tile: Tile): GameState => {
       const refund = 8000 + Math.floor(Math.random() * 42000);
       newState.cash += refund;
       logMessage = `💸 Tax Refund! ₹${refund.toLocaleString()} from the IT department.`;
+      break;
+    }
+
+    case "bnpl_trap": {
+      // Buy Now Pay Later — adds 0% headline but real EMI hit for 6 months.
+      const gadgets = ["iPhone", "OLED TV", "Gaming Laptop", "Smartwatch", "DSLR Camera", "Air Fryer Pro"];
+      const item = gadgets[Math.floor(Math.random() * gadgets.length)];
+      const principal = 30000 + Math.floor(Math.random() * 120000);
+      const emi = Math.round(principal / 6);
+      addLiability(newState, {
+        name: `BNPL: ${item}`,
+        category: "bnpl",
+        principal,
+        monthlyEMI: emi,
+        interestRate: 24,
+      });
+      logMessage = `🛍️ BNPL Trap! "${item}" on EMI — ₹${emi.toLocaleString()}/mo for 6 months on auto-debit.`;
+      lessonMessage = "💡 'No-cost EMI' still drains cash flow every single month. Read the fine print.";
+      break;
+    }
+
+    case "solar_install": {
+      // Rooftop solar — adds a personal loan but PERMANENTLY cuts the electricity bill.
+      const principal = 150000;
+      const emi = 4000;
+      addLiability(newState, {
+        name: "Solar Rooftop Loan",
+        category: "personal_loan",
+        principal,
+        monthlyEMI: emi,
+        interestRate: 9,
+      });
+      const elec = newState.expenses.find(e => e.category === "utilities" && /electric/i.test(e.name));
+      let saved = 0;
+      if (elec) {
+        const cut = Math.round(elec.monthlyAmount * 0.6);
+        saved = cut;
+        newState.expenses = newState.expenses.map(e =>
+          e.id === elec.id ? { ...e, monthlyAmount: e.monthlyAmount - cut } : e
+        );
+      }
+      logMessage = saved > 0
+        ? `☀️ Solar Installed! +₹${emi.toLocaleString()}/mo EMI, but electricity bill -₹${saved.toLocaleString()}/mo forever.`
+        : `☀️ Solar Installed! New loan ₹${emi.toLocaleString()}/mo (no electricity bill to offset yet).`;
+      lessonMessage = "💡 Smart liabilities can pay for themselves over time — net cash flow matters.";
+      break;
+    }
+
+    case "ev_switch": {
+      // Trade in petrol vehicle: new vehicle loan, but transport (fuel) expenses halved.
+      const principal = 600000;
+      const emi = 11000;
+      addLiability(newState, {
+        name: "EV Auto Loan",
+        category: "vehicle_loan",
+        principal,
+        monthlyEMI: emi,
+        interestRate: 8.5,
+      });
+      let fuelCut = 0;
+      newState.expenses = newState.expenses.map(e => {
+        if (e.category === "transport") {
+          const cut = Math.round(e.monthlyAmount * 0.5);
+          fuelCut += cut;
+          return { ...e, monthlyAmount: e.monthlyAmount - cut };
+        }
+        return e;
+      });
+      logMessage = fuelCut > 0
+        ? `🔋 Switched to EV! +₹${emi.toLocaleString()}/mo EMI, but transport costs -₹${fuelCut.toLocaleString()}/mo.`
+        : `🔋 Switched to EV! New ₹${emi.toLocaleString()}/mo EMI added.`;
+      break;
+    }
+
+    case "streaming_audit": {
+      // Audit your subscription stack — cut 40% off recurring subs.
+      const subs = newState.expenses.filter(e => e.category === "subscription");
+      if (subs.length === 0) {
+        logMessage = `✂️ Subscription audit — nothing to cut. Stay disciplined!`;
+      } else {
+        let saved = 0;
+        newState.expenses = newState.expenses.map(e => {
+          if (e.category !== "subscription") return e;
+          const cut = Math.round(e.monthlyAmount * 0.4);
+          saved += cut;
+          return { ...e, monthlyAmount: e.monthlyAmount - cut };
+        });
+        logMessage = `✂️ OTT Audit! Cancelled overlapping subscriptions — saved ₹${saved.toLocaleString()}/mo.`;
+        lessonMessage = "💡 Auditing subscriptions every quarter is one of the highest-ROI financial habits.";
+      }
+      break;
+    }
+
+    case "pet_adoption": {
+      // New family member — recurring pet expense + small one-time setup.
+      const setup = 8000 + Math.floor(Math.random() * 12000);
+      newState.cash -= setup;
+      addExpense(newState, {
+        name: "Pet Care",
+        category: "pet",
+        monthlyAmount: 3500,
+        essential: true,
+      });
+      logMessage = `🐶 You adopted a pet! Setup ₹${setup.toLocaleString()} + ₹3,500/mo for food, vet & grooming.`;
+      break;
+    }
+
+    case "elderly_care_hire": {
+      // Hire a caregiver — high recurring expense, but prevents future parents_medical hits.
+      const existing = newState.expenses.find(e => e.category === "eldercare");
+      if (existing) {
+        const bump = Math.round(existing.monthlyAmount * 0.1);
+        newState.expenses = newState.expenses.map(e =>
+          e.id === existing.id ? { ...e, monthlyAmount: e.monthlyAmount + bump } : e
+        );
+        logMessage = `🧓 Caregiver salary revision: +₹${bump.toLocaleString()}/mo (now ₹${(existing.monthlyAmount + bump).toLocaleString()}).`;
+      } else {
+        addExpense(newState, {
+          name: "Live-in Caregiver",
+          category: "eldercare",
+          monthlyAmount: 8000,
+          essential: true,
+        });
+        logMessage = `🧓 Hired a live-in caregiver for parents — ₹8,000/mo recurring.`;
+        lessonMessage = "💡 Eldercare is a long-tail expense that's often missed in retirement planning.";
+      }
       break;
     }
   }
