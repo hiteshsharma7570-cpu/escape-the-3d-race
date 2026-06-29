@@ -42,7 +42,7 @@ export const GameDashboard = ({
   const netWorth = calculateNetWorth(gameState);
   const FIVE_CR = 50000000;
   const fiveCrPct = Math.min((gameState.cash / FIVE_CR) * 100, 100);
-  // Milestones on bar: 25L (2.5%), 1Cr (10%), 5Cr (50%), 10Cr (100%)
+  // Milestones on bar: 25L (0.5%), 1Cr (20%), 2.5Cr (50%), 5Cr (100%)
   const milestones = [
     { label: "₹25L", pct: 2.5 },
     { label: "₹1Cr", pct: 10 },

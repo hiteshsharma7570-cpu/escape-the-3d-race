@@ -47,7 +47,7 @@ const Index = () => {
   const [showCertificate, setShowCertificate] = useState(false);
   const [certificateAwarded, setCertificateAwarded] = useState(false);
   const [showFiveCrore, setShowFiveCrore] = useState(false);
-  const [fiveCroreAwarded, setTenCroreAwarded] = useState(false);
+  const [fiveCroreAwarded, setFiveCroreAwarded] = useState(false);
   const [showWelcome, setShowWelcome] = useState(false);
   const [showWinScreen, setShowWinScreen] = useState(false);
   const [winRecorded, setWinRecorded] = useState(false);
@@ -115,7 +115,7 @@ const Index = () => {
   // Primary win: ₹5 Crore in cash
   useEffect(() => {
     if (gameMode === "playing" && !fiveCroreAwarded && gameState.cash >= 50000000) {
-      setTenCroreAwarded(true);
+      setFiveCroreAwarded(true);
       setShowFiveCrore(true);
       playSound("payDay");
       toast.success("🏆 You reached ₹5 Crore! You've escaped the Rat Race!");
@@ -185,7 +185,7 @@ const Index = () => {
         setGameState(parsed);
         // Suppress the milestone modals on resume — they fire once per achievement, not per session.
         setCertificateAwarded(true);
-        setTenCroreAwarded(parsed.hasReachedFiveCrore === true);
+        setFiveCroreAwarded(parsed.hasReachedFiveCrore === true);
         setWinRecorded(parsed.hasEscapedRatRace);
         setShowWelcome(false);
         setGameMode("playing");
@@ -200,7 +200,7 @@ const Index = () => {
     const initialState = createInitialGameState(playerName, profession);
     setGameState(initialState);
     setCertificateAwarded(initialState.cash >= 10000000);
-    setTenCroreAwarded(false);
+    setFiveCroreAwarded(false);
     setWinRecorded(false);
     setShowWelcome(true);
     toast.success(`Welcome, ${playerName}! Starting a fresh game as a ${profession}.`);
@@ -211,7 +211,7 @@ const Index = () => {
     if (!confirm("Switch to a different player? Your current game is already saved.")) return;
     setGameState(createInitialGameState());
     setCertificateAwarded(false);
-    setTenCroreAwarded(false);
+    setFiveCroreAwarded(false);
     setWinRecorded(false);
     setShowWinScreen(false);
     setShowWelcome(false);
@@ -603,7 +603,7 @@ const Index = () => {
           setShowFiveCrore(false);
           setGameState(createInitialGameState());
           setCertificateAwarded(false);
-          setTenCroreAwarded(false);
+          setFiveCroreAwarded(false);
           setWinRecorded(false);
           setGameMode("setup");
         }}
