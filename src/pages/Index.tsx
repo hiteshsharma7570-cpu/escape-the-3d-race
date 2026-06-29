@@ -17,7 +17,9 @@ import {
   sellAsset,
   applyPeriodicMechanics,
   calculateNetWorth,
+  repayLiability,
 } from "@/lib/gameLogic";
+import { RepayLoanDialog } from "@/components/game/RepayLoanDialog";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { HelpCircle, Music, Volume2, VolumeX, RotateCcw, Check, LogOut, Settings as SettingsIcon } from "lucide-react";
@@ -329,34 +331,23 @@ const Index = () => {
   };
 
   const repayLoan = () => {
-    // Repay the most recently taken Bank Loan
-    let loanIndex = -1;
-    for (let i = gameState.liabilities.length - 1; i >= 0; i--) {
-      if (gameState.liabilities[i].name === "Bank Loan") { loanIndex = i; break; }
-    }
-    if (loanIndex === -1) {
-      toast.error("No active loan to repay");
+    if (gameState.liabilities.length === 0) {
+      toast.error("You have no outstanding loans.");
       return;
     }
+    setRepayOpen(true);
+  };
 
-    const loan = gameState.liabilities[loanIndex];
-    
-    if (gameState.cash >= loan.principal) {
-      playSound("earnMoney");
-      setGameState((prev) => ({
-        ...prev,
-        cash: prev.cash - loan.principal,
-        liabilities: prev.liabilities.filter((_, i) => i !== loanIndex),
-        gameLog: [
-          `[Turn ${prev.turnCount}] Repaid loan of ₹${loan.principal.toLocaleString()}`,
-          ...prev.gameLog.slice(0, 19),
-        ],
-      }));
-      toast.success("Loan fully repaid!");
-    } else {
+  const handleRepaySpecific = (liabilityId: string, amount: number) => {
+    const result = repayLiability(gameState, liabilityId, amount);
+    if (!result.ok) {
       playSound("loseMoney");
-      toast.error("Insufficient funds to repay loan");
+      toast.error(result.error ?? "Could not repay loan.");
+      return;
     }
+    playSound("earnMoney");
+    setGameState(result.state);
+    toast.success("Loan payment applied!");
   };
 
   const payOffDebts = () => {
