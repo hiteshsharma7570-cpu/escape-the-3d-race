@@ -419,7 +419,7 @@ const Index = () => {
           onPlayerCreate={handlePlayerCreate}
         />
         <WelcomeModal
-          open={showWelcome}
+          open={showWelcome && !!gameState.playerName}
           playerName={gameState.playerName}
           profession={gameState.profession}
           onStart={() => {
