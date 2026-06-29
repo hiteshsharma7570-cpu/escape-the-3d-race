@@ -57,9 +57,6 @@ const Index = () => {
   });
   const saveStatusTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const { playSound, isMusicEnabled, isSoundEnabled, toggleMusic, toggleSound } = useGameSounds();
-  // UI-only counter — increments each Roll click so the dice + camera cinematic
-  // can replay even when the rolled value repeats.
-  const [rollSeq, setRollSeq] = useState(0);
 
   const flashSaved = () => {
     setSaveStatus({ show: true, message: "Saved just now" });
@@ -179,14 +176,16 @@ const Index = () => {
       const saved = localStorage.getItem(saveKeyFor(playerName));
       if (saved) {
         const parsed = JSON.parse(saved) as GameState;
-        // Backward compat: ensure new fields exist
+        // Backward compat: ensure new fields exist (preserve persisted flags — do not recompute from current cash)
         if (parsed.turnCount === undefined) parsed.turnCount = 0;
         if (parsed.loansTaken === undefined) parsed.loansTaken = 0;
-        if ((parsed as any).hasReachedTenCrore === undefined) (parsed as any).hasReachedTenCrore = parsed.cash >= 100000000;
+        if (parsed.hasReachedTenCrore === undefined) parsed.hasReachedTenCrore = false;
         setGameState(parsed);
-        setCertificateAwarded(parsed.cash >= 10000000);
-        setTenCroreAwarded(parsed.cash >= 100000000);
+        // Suppress the milestone modals on resume — they fire once per achievement, not per session.
+        setCertificateAwarded(true);
+        setTenCroreAwarded(parsed.hasReachedTenCrore === true);
         setWinRecorded(parsed.hasEscapedRatRace);
+        setShowWelcome(false);
         setGameMode("playing");
         toast.success(`Welcome back, ${playerName}! Resuming your game.`);
         return;
@@ -195,6 +194,7 @@ const Index = () => {
       console.error("Failed to load saved game", err);
     }
 
+    // No saved game confirmed — start fresh and show welcome.
     const initialState = createInitialGameState(playerName, profession);
     setGameState(initialState);
     setCertificateAwarded(initialState.cash >= 10000000);
@@ -209,8 +209,10 @@ const Index = () => {
     if (!confirm("Switch to a different player? Your current game is already saved.")) return;
     setGameState(createInitialGameState());
     setCertificateAwarded(false);
+    setTenCroreAwarded(false);
     setWinRecorded(false);
     setShowWinScreen(false);
+    setShowWelcome(false);
     setGameMode("setup");
     toast.info("Pick a player to continue");
   };
@@ -234,7 +236,6 @@ const Index = () => {
   const rollDice = () => {
     if (gameState.isRolling) return;
     playSound("diceRoll");
-    setRollSeq((n) => n + 1);
     const diceValue = Math.floor(Math.random() * 6) + 1;
     setGameState((prev) => {
       const newPosition = (prev.position + diceValue) % BOARD_TILES.length;
@@ -276,7 +277,8 @@ const Index = () => {
       }, 100);
       return updated;
     });
-    toast.info(`Rolled ${diceValue}!`);
+    // Delay the toast so it lands after the pawn animation starts, not before.
+    setTimeout(() => toast.info(`Rolled ${diceValue}!`), 150);
   };
 
   const handleSellAsset = (assetId: string) => {
@@ -349,29 +351,34 @@ const Index = () => {
   };
 
   const payOffDebts = () => {
-    if (gameState.liabilities.length === 0) {
-      toast.error("No debts to pay off");
+    // Only liabilities with a remaining principal (amount > 0) are "clearable debts".
+    // Rows like Rent / GST have amount === 0 and represent permanent recurring expenses —
+    // they cannot be paid off in a lump sum.
+    const clearable = gameState.liabilities.filter((l) => l.amount > 0);
+    if (clearable.length === 0) {
+      toast.error("No clearable debts. (Rent and recurring expenses can't be paid off.)");
       return;
     }
-    const totalDebt = gameState.liabilities.reduce((sum, l) => sum + l.amount, 0);
-    if (!confirm(`Pay off ALL liabilities totaling ₹${totalDebt.toLocaleString()}? This cannot be undone.`)) {
+    const totalDebt = clearable.reduce((sum, l) => sum + l.amount, 0);
+    if (!confirm(`Pay off ${clearable.length} loan(s) totaling ₹${totalDebt.toLocaleString()}? Recurring expenses (rent, GST) will remain.`)) {
       return;
     }
     if (gameState.cash >= totalDebt) {
       playSound("earnMoney");
+      const clearableIds = new Set(clearable.map((l) => l.id));
       setGameState((prev) => ({
         ...prev,
         cash: prev.cash - totalDebt,
-        liabilities: [],
+        liabilities: prev.liabilities.filter((l) => !clearableIds.has(l.id)),
         gameLog: [
-          `[Turn ${prev.turnCount}] Paid off all debts totaling ₹${totalDebt.toLocaleString()}`,
+          `[Turn ${prev.turnCount}] Paid off loans totaling ₹${totalDebt.toLocaleString()}`,
           ...prev.gameLog.slice(0, 19),
         ],
       }));
-      toast.success("All debts cleared!");
+      toast.success("Loans cleared! Recurring expenses remain.");
     } else {
       playSound("loseMoney");
-      toast.error("Insufficient funds to pay off all debts");
+      toast.error("Insufficient funds to pay off all loans");
     }
   };
 
@@ -412,7 +419,7 @@ const Index = () => {
           onPlayerCreate={handlePlayerCreate}
         />
         <WelcomeModal
-          open={showWelcome}
+          open={showWelcome && !!gameState.playerName}
           playerName={gameState.playerName}
           profession={gameState.profession}
           onStart={() => {

@@ -46,18 +46,18 @@ export const CashCertificateModal = ({ open, onClose, playerName, cash }: CashCe
     doc.setFont("helvetica", "normal");
     doc.setFontSize(12);
     doc.setTextColor(146, 64, 14);
-    doc.text("CERTIFICATE OF ACHIEVEMENT", pageW / 2, 110, { align: "center", charSpace: 4 });
+    doc.text("MILESTONE BADGE  ·  STEP 1 OF 10", pageW / 2, 110, { align: "center", charSpace: 4 });
 
     // Title
     doc.setFont("times", "bold");
     doc.setFontSize(36);
     doc.setTextColor(120, 53, 15);
-    doc.text("Crorepati Club", pageW / 2, 155, { align: "center" });
+    doc.text("First Crore Milestone", pageW / 2, 155, { align: "center" });
 
     doc.setFont("times", "italic");
     doc.setFontSize(14);
     doc.setTextColor(146, 64, 14);
-    doc.text("The Rat Race - Financial Milestone", pageW / 2, 180, { align: "center" });
+    doc.text("A badge of progress — not the final win", pageW / 2, 180, { align: "center" });
 
     // Body
     doc.setFont("times", "normal");
@@ -75,7 +75,7 @@ export const CashCertificateModal = ({ open, onClose, playerName, cash }: CashCe
 
     doc.setFont("times", "normal");
     doc.setFontSize(13);
-    const desc = `for reaching the remarkable milestone of Rs. 1 Crore in cash on hand, demonstrating outstanding\nfinancial discipline and investment acumen on the journey to escape the rat race.`;
+    const desc = `for reaching the first milestone of Rs. 1 Crore in cash on hand. This is the first of ten —\nkeep building toward Rs. 10 Crore to fully escape the rat race.`;
     doc.text(desc, pageW / 2, 305, { align: "center" });
 
     doc.setFont("times", "bold");
@@ -123,9 +123,9 @@ export const CashCertificateModal = ({ open, onClose, playerName, cash }: CashCe
             </div>
           </div>
 
-          <p className="text-sm tracking-[0.4em] text-amber-800 mb-2">CERTIFICATE OF ACHIEVEMENT</p>
-          <h1 className="text-4xl font-bold text-amber-900 mb-1">Crorepati Club 🏆</h1>
-          <p className="text-amber-800 italic mb-6">The Rat Race — Financial Milestone</p>
+          <p className="text-sm tracking-[0.4em] text-amber-800 mb-2">MILESTONE BADGE · STEP 1 OF 10</p>
+          <h1 className="text-4xl font-bold text-amber-900 mb-1">First Crore Milestone 🥉</h1>
+          <p className="text-amber-800 italic mb-6">A badge of progress — not the final win</p>
 
           <p className="text-base text-amber-900 mb-2">This certificate is proudly presented to</p>
           <p className="text-3xl font-bold text-amber-950 mb-6 underline decoration-amber-700 decoration-2 underline-offset-8">
@@ -133,8 +133,8 @@ export const CashCertificateModal = ({ open, onClose, playerName, cash }: CashCe
           </p>
 
           <p className="text-base text-amber-900 leading-relaxed max-w-lg mx-auto mb-6">
-            for reaching the remarkable milestone of <strong>₹1 Crore</strong> in cash on hand,
-            demonstrating outstanding financial discipline and investment acumen on the journey to escape the rat race.
+            for reaching the <strong>first ₹1 Crore</strong> in cash on hand. This is the
+            first of ten — keep going to earn the gold <strong>₹10 Crore "Escape the Rat Race"</strong> certificate.
           </p>
 
           <p className="text-2xl font-bold text-amber-900 mb-6">
