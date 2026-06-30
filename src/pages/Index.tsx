@@ -527,7 +527,7 @@ const Index = () => {
         </div>
 
         {/* CENTER: board + dice + actions */}
-        <div className="flex-1 flex flex-col items-center gap-3 order-1 xl:order-2">
+        <div className="flex-1 flex flex-col items-stretch gap-3 order-1 xl:order-2 min-w-0">
           <GameBoard2D
             currentPosition={gameState.position}
             diceValue={gameState.diceValue}
@@ -539,24 +539,28 @@ const Index = () => {
 
 
           {saveStatus.show && (
-            <div className="text-[10px] text-slate-500 flex items-center gap-1">
+            <div className="text-[10px] text-slate-500 flex items-center gap-1 self-center">
               <Check className="w-3 h-3 text-emerald-400" /> {saveStatus.message}
             </div>
           )}
+
+          {/* Portfolio dashboard directly below the board, matching its width */}
+          <div className="w-full">
+            <GameDashboard
+              gameState={gameState}
+              onRollDice={rollDice}
+              onTakeLoan={takeLoan}
+              onRepayLoan={repayLoan}
+              onPayOffDebts={payOffDebts}
+              onSellAsset={handleSellAsset}
+            />
+          </div>
         </div>
 
         {/* RIGHT column: market status + players list */}
         <div className="flex flex-col gap-3 order-3 xl:w-[380px]">
           <MarketStatusPanel gameState={gameState} />
           <PlayersPanel currentPlayerName={gameState.playerName} currentNetWorth={netWorth} />
-          <GameDashboard
-            gameState={gameState}
-            onRollDice={rollDice}
-            onTakeLoan={takeLoan}
-            onRepayLoan={repayLoan}
-            onPayOffDebts={payOffDebts}
-            onSellAsset={handleSellAsset}
-          />
         </div>
       </div>
 
