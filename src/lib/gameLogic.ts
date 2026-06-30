@@ -1052,8 +1052,8 @@ export const sellAsset = (state: GameState, assetId: string): GameState => {
 
 /**
  * Repay a specific liability by `amount` rupees from cash.
- * Full repayment removes the liability entirely (EMI disappears).
- * Partial repayment shrinks principal proportionally and reduces the EMI pro-rata.
+ * Full repayment removes the liability entirely.
+ * Partial repayment shrinks the outstanding principal.
  */
 export const repayLiability = (
   state: GameState,
@@ -1090,7 +1090,7 @@ export const applyPeriodicMechanics = (
   const events: string[] = [];
   let next = { ...state, liabilities: [...state.liabilities], assets: [...state.assets] };
 
-  // Inflation every 5 turns: recurring expenses +3% (loan EMIs are fixed).
+  // Inflation every 5 turns: recurring expenses +3% (liabilities are principal-only and unaffected).
   if (next.turnCount > 0 && next.turnCount % 5 === 0) {
     next.expenses = next.expenses.map(e => ({
       ...e,
