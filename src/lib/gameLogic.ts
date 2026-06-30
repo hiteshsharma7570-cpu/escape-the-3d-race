@@ -913,20 +913,26 @@ export const handleTileEffect = (state: GameState, tile: Tile): GameState => {
     }
 
     case "payday_loan": {
-      // Predatory short-term loan — instant cash, brutal EMI for 4 months.
-      const principal = 40000 + Math.floor(Math.random() * 60000);
+      // Half the time it's a sketchy NBFC instant-app loan flavor.
+      const isApp = Math.random() < 0.5;
+      const principal = isApp
+        ? 15000 + Math.floor(Math.random() * 35000)
+        : 40000 + Math.floor(Math.random() * 60000);
+      const apr = isApp ? 28 + Math.floor(Math.random() * 9) : 48;
       const emi = Math.round(principal / 4 * 1.15);
       newState.cash += principal;
       newState.loansTaken += 1;
       addLiability(newState, {
-        name: "Payday Loan",
+        name: isApp ? "NBFC Instant App Loan" : "Payday Loan",
         category: "payday_loan",
         principal,
         monthlyEMI: emi,
-        interestRate: 48,
+        interestRate: apr,
       });
-      logMessage = `💸 Payday Loan! +₹${principal.toLocaleString()} cash now, but ₹${emi.toLocaleString()}/mo for 4 months @ 48% APR.`;
-      lessonMessage = "💡 Payday loans look small but compound viciously — avoid unless truly desperate.";
+      logMessage = isApp
+        ? `📱 NBFC Instant App Loan! +₹${principal.toLocaleString()} in seconds @ ${apr}% APR.`
+        : `💸 Payday Loan! +₹${principal.toLocaleString()} cash now @ 48% APR.`;
+      lessonMessage = "💡 Quick-cash loans compound viciously — avoid unless truly desperate.";
       break;
     }
 
