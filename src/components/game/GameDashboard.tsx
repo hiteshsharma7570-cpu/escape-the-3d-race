@@ -283,7 +283,7 @@ export const GameDashboard = ({
                     <span className="truncate">
                       {liability.name}
                       <span className="text-[10px] text-muted-foreground ml-1">
-                        · {liability.interestRate ?? 0}% p.a.
+                        · {(liability.category ?? "loan").replace(/_/g, " ")}
                       </span>
                     </span>
                     <span className="text-destructive">
