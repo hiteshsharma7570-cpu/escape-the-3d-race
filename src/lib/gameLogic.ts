@@ -937,17 +937,18 @@ export const handleTileEffect = (state: GameState, tile: Tile): GameState => {
     }
 
     case "margin_call": {
-      // Broker calls in margin loan if you hold high-risk assets; otherwise minor fee.
       const hasHighRisk = newState.assets.some(a => a.risk === "high");
-      if (hasHighRisk) {
+      const hasStocks = newState.assets.some(a => /stock|equity|mutual|crypto|startup/i.test(a.name));
+      if (hasHighRisk || hasStocks) {
         const principal = 200000 + Math.floor(Math.random() * 300000);
         const emi = Math.round(principal * 0.03);
+        const isLAS = hasStocks && !hasHighRisk;
         addLiability(newState, {
-          name: "Margin Loan",
+          name: isLAS ? "Loan Against Securities" : "Margin Loan",
           category: "margin_loan",
           principal,
           monthlyEMI: emi,
-          interestRate: 18,
+          interestRate: isLAS ? 11 : 18,
         });
         logMessage = `📞 Margin Call! Broker financed your high-risk losses — ₹${principal.toLocaleString()} debt, ₹${emi.toLocaleString()}/mo.`;
         lessonMessage = "💡 Leveraged investing magnifies losses. Margin loans survive even when the trade dies.";
