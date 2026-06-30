@@ -466,14 +466,26 @@ export const handleTileEffect = (state: GameState, tile: Tile): GameState => {
         newState.cash -= repairCost;
         logMessage = `🔧 Home Repair! Paid ₹${repairCost.toLocaleString()} for urgent repairs.`;
       } else {
-        addLiability(newState, {
-          name: "Home Repair Loan",
-          category: "personal_loan",
-          principal: repairCost,
-          monthlyEMI: 5000,
-          interestRate: 14,
-        });
-        logMessage = `🔧 Home Repair! Can't afford it — added ₹${repairCost.toLocaleString()} as loan (₹5,000/mo).`;
+        if (repairCost >= 60000) {
+          const principal = repairCost + 50000;
+          addLiability(newState, {
+            name: "Home Renovation Loan",
+            category: "home_loan",
+            principal,
+            monthlyEMI: Math.round(principal / 60),
+            interestRate: 10.5,
+          });
+          logMessage = `🔧 Home Renovation Loan taken — ₹${principal.toLocaleString()} outstanding @ 10.5% p.a.`;
+        } else {
+          addLiability(newState, {
+            name: "Home Repair Loan",
+            category: "personal_loan",
+            principal: repairCost,
+            monthlyEMI: 5000,
+            interestRate: 14,
+          });
+          logMessage = `🔧 Home Repair! Couldn't afford it — added ₹${repairCost.toLocaleString()} as personal loan.`;
+        }
       }
       break;
     }
