@@ -41,8 +41,8 @@ export async function logMaintenanceError(params: {
         error_type: errorType,
         error_message: err.message?.slice(0, 2000) ?? null,
         stack: err.stack?.slice(0, 4000) ?? null,
-        context: context as Record<string, unknown>,
-        game_state: gameState as unknown as Record<string, unknown> | null,
+        context: JSON.parse(JSON.stringify(context)),
+        game_state: gameState ? JSON.parse(JSON.stringify(gameState)) : null,
       })
       .select("id")
       .single();
