@@ -163,9 +163,9 @@ export const PROFESSION_PROFILES: Record<string, ProfessionProfile> = {
     salary: 45000,
     cash: 50000,
     liabilities: [
-      { name: "Two-Wheeler Loan", category: "vehicle_loan",   principal: 120000, monthlyEMI: 3500, interestRate: 11 },
-      { name: "Mobile EMI",       category: "personal_loan",  principal: 25000,  monthlyEMI: 1500, interestRate: 14 },
-      { name: "Gold Loan",        category: "gold_loan",      principal: 80000,  monthlyEMI: 2200, interestRate: 12 },
+      { name: "Two-Wheeler Loan", category: "vehicle_loan",   principal: 120000, monthlyEMI: 2500, interestRate: 8.5 },
+      { name: "Mobile EMI",       category: "personal_loan",  principal: 25000,  monthlyEMI: 1000, interestRate: 10 },
+      { name: "Gold Loan",        category: "gold_loan",      principal: 80000,  monthlyEMI: 1500, interestRate: 9 },
     ],
     expenses: [
       { name: "Home Rent",          category: "rent",         monthlyAmount: 12000, essential: true  },
@@ -181,10 +181,10 @@ export const PROFESSION_PROFILES: Record<string, ProfessionProfile> = {
     salary: 90000,
     cash: 80000,
     liabilities: [
-      { name: "Home Loan",     category: "home_loan",     principal: 3500000, monthlyEMI: 32000, interestRate: 8.5 },
-      { name: "Car Loan",      category: "vehicle_loan",  principal: 600000,  monthlyEMI: 12000, interestRate: 9.0 },
-      { name: "Education Loan",category: "education_loan",principal: 400000,  monthlyEMI: 8000,  interestRate: 7.5 },
-      { name: "Credit Card",   category: "credit_card",   principal: 50000,   monthlyEMI: 5000,  interestRate: 36  },
+      { name: "Home Loan",     category: "home_loan",     principal: 3500000, monthlyEMI: 22000, interestRate: 6.5 },
+      { name: "Car Loan",      category: "vehicle_loan",  principal: 600000,  monthlyEMI: 8500,  interestRate: 7.0 },
+      { name: "Education Loan",category: "education_loan",principal: 400000,  monthlyEMI: 5500,  interestRate: 5.5 },
+      { name: "Credit Card",   category: "credit_card",   principal: 50000,   monthlyEMI: 3500,  interestRate: 24  },
     ],
     expenses: [
       { name: "Society Maintenance",category: "maintenance",  monthlyAmount: 4000,  essential: true  },
@@ -202,9 +202,9 @@ export const PROFESSION_PROFILES: Record<string, ProfessionProfile> = {
     salary: 150000,
     cash: 100000,
     liabilities: [
-      { name: "Medical Education Loan", category: "education_loan", principal: 2000000, monthlyEMI: 25000, interestRate: 9.0 },
-      { name: "Car Loan",               category: "vehicle_loan",   principal: 1200000, monthlyEMI: 18000, interestRate: 9.0 },
-      { name: "Clinic Equipment Loan",  category: "business_loan",  principal: 800000,  monthlyEMI: 10000, interestRate: 10.5 },
+      { name: "Medical Education Loan", category: "education_loan", principal: 2000000, monthlyEMI: 17000, interestRate: 7.0 },
+      { name: "Car Loan",               category: "vehicle_loan",   principal: 1200000, monthlyEMI: 12500, interestRate: 7.0 },
+      { name: "Clinic Equipment Loan",  category: "business_loan",  principal: 800000,  monthlyEMI: 7000,  interestRate: 8 },
     ],
     expenses: [
       { name: "Home Rent",            category: "rent",         monthlyAmount: 25000, essential: true  },
@@ -223,9 +223,9 @@ export const PROFESSION_PROFILES: Record<string, ProfessionProfile> = {
     salary: 120000,
     cash: 90000,
     liabilities: [
-      { name: "Education Loan", category: "education_loan", principal: 1000000, monthlyEMI: 12000, interestRate: 8.0 },
-      { name: "Car Loan",       category: "vehicle_loan",   principal: 800000,  monthlyEMI: 14000, interestRate: 9.0 },
-      { name: "Credit Card",    category: "credit_card",    principal: 80000,   monthlyEMI: 6000,  interestRate: 36 },
+      { name: "Education Loan", category: "education_loan", principal: 1000000, monthlyEMI: 8500,  interestRate: 6.0 },
+      { name: "Car Loan",       category: "vehicle_loan",   principal: 800000,  monthlyEMI: 10000, interestRate: 7.0 },
+      { name: "Credit Card",    category: "credit_card",    principal: 80000,   monthlyEMI: 4000,  interestRate: 24 },
     ],
     expenses: [
       { name: "Office Rent",          category: "rent",         monthlyAmount: 20000, essential: true  },
@@ -243,9 +243,9 @@ export const PROFESSION_PROFILES: Record<string, ProfessionProfile> = {
     salary: 60000,
     cash: 150000,
     liabilities: [
-      { name: "Business Loan",           category: "business_loan", principal: 2500000, monthlyEMI: 30000, interestRate: 11 },
-      { name: "Working Capital Loan",    category: "business_loan", principal: 800000,  monthlyEMI: 14000, interestRate: 13 },
-      { name: "Inventory Credit",        category: "business_loan", principal: 500000,  monthlyEMI: 8000,  interestRate: 14 },
+      { name: "Business Loan",           category: "business_loan", principal: 2500000, monthlyEMI: 21000, interestRate: 8.5 },
+      { name: "Working Capital Loan",    category: "business_loan", principal: 800000,  monthlyEMI: 10000, interestRate: 10 },
+      { name: "Inventory Credit",        category: "business_loan", principal: 500000,  monthlyEMI: 5500,  interestRate: 10.5 },
     ],
     expenses: [
       { name: "Office Rent",            category: "rent",         monthlyAmount: 35000, essential: true  },
@@ -282,8 +282,8 @@ export const createInitialGameState = (
         name: "Starter Personal Loan",
         category: "personal_loan" as const,
         principal: 500000,
-        monthlyEMI: 11000,
-        interestRate: 13,
+        monthlyEMI: 7500,
+        interestRate: 9,
       },
       ...profile.liabilities.map((l, i) => ({
         ...l,
