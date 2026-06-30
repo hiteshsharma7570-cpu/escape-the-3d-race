@@ -33,8 +33,8 @@ import {
   PlayerPanel, MarketStatusPanel, PlayersPanel, GameLogPanel,
   TopCenterHud,
 } from "@/components/game/HudPanels";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { AchievementsPanel } from "@/components/game/AchievementsPanel";
+import { RepayLoanDialog } from "@/components/game/RepayLoanDialog";
+import { WinScreen } from "@/components/game/WinScreen";
 
 const SAVE_KEY_PREFIX = "cashflow_game_save_v1:";
 const saveKeyFor = (name: string) => `${SAVE_KEY_PREFIX}${name.trim().toLowerCase()}`;
