@@ -79,7 +79,7 @@ export const GameDashboard = ({
         <div className="text-center mb-6">
           <p className="text-sm text-muted-foreground mb-2">Cash on Hand</p>
           <p className="text-5xl font-bold text-success tracking-wider">
-            ₹{gameState.cash.toLocaleString()}
+            ₹{(gameState.cash ?? 0).toLocaleString()}
           </p>
         </div>
 
@@ -168,7 +168,7 @@ export const GameDashboard = ({
         <div className="space-y-4">
           <div>
             <p className="text-sm text-muted-foreground">
-              {gameState.profession} · Starting salary ₹{gameState.salary.toLocaleString()}
+              {gameState.profession} · Starting salary ₹{(gameState.salary ?? 0).toLocaleString()}
             </p>
             <p className="text-xs text-muted-foreground mt-1">
               Loans taken: <span className="font-semibold">{gameState.loansTaken}</span>
@@ -180,16 +180,16 @@ export const GameDashboard = ({
             <div className="space-y-1 text-sm">
               <div className="flex justify-between">
                 <span>Salary:</span>
-                <span>₹{gameState.salary.toLocaleString()}</span>
+                <span>₹{(gameState.salary ?? 0).toLocaleString()}</span>
               </div>
               <div className="flex justify-between">
                 <span><InfoLabel label="Passive Income" tip="Money you earn without actively working — rent, dividends, business profits. The goal is to make this exceed your expenses." /></span>
-                <span>₹{gameState.passiveIncome.toLocaleString()}</span>
+                <span>₹{(gameState.passiveIncome ?? 0).toLocaleString()}</span>
               </div>
               <Separator className="my-2" />
               <div className="flex justify-between font-bold">
                 <span>Total Income:</span>
-                <span>₹{(gameState.salary + gameState.passiveIncome).toLocaleString()}</span>
+                <span>₹{((gameState.salary ?? 0) + (gameState.passiveIncome ?? 0)).toLocaleString()}</span>
               </div>
             </div>
           </div>
@@ -239,8 +239,8 @@ export const GameDashboard = ({
             <h3 className="font-bold mb-2">
               <InfoLabel label="Monthly Cash Flow" tip="Salary + passive income minus all monthly liability payments. Negative means you're going backwards." />
             </h3>
-            <p className={`text-2xl font-bold ${monthlyCashFlow >= 0 ? 'text-success' : 'text-destructive'}`}>
-              ₹{monthlyCashFlow.toLocaleString()}
+            <p className={`text-2xl font-bold ${(monthlyCashFlow ?? 0) >= 0 ? 'text-success' : 'text-destructive'}`}>
+              ₹{(monthlyCashFlow ?? 0).toLocaleString()}
             </p>
           </div>
 
@@ -314,8 +314,8 @@ export const GameDashboard = ({
               <span className="font-bold">
                 <InfoLabel label="Net Worth" tip="Total assets minus total liabilities. Positive means you own more than you owe." />
               </span>
-              <span className={`text-xl font-bold ${netWorth >= 0 ? 'text-success' : 'text-destructive'}`}>
-                ₹{netWorth.toLocaleString()}
+              <span className={`text-xl font-bold ${(netWorth ?? 0) >= 0 ? 'text-success' : 'text-destructive'}`}>
+                ₹{(netWorth ?? 0).toLocaleString()}
               </span>
             </div>
           </div>
