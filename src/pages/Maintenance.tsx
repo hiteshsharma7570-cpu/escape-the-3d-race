@@ -11,6 +11,7 @@ interface MaintenanceRow {
   error_message: string | null;
   stack: string | null;
   context: Record<string, unknown> | null;
+  game_state: Record<string, unknown> | null;
   ai_diagnosis: string | null;
   ai_suggested_fix: string | null;
   diagnosed_at: string | null;
@@ -33,7 +34,7 @@ const Maintenance = () => {
     setError(null);
     const { data, error } = await supabase
       .from("ai_maintenance_log")
-      .select("id, created_at, error_type, error_message, stack, context, ai_diagnosis, ai_suggested_fix, diagnosed_at")
+      .select("id, created_at, error_type, error_message, stack, context, game_state, ai_diagnosis, ai_suggested_fix, diagnosed_at")
       .order("created_at", { ascending: false })
       .limit(50);
     if (error) setError(error.message);
@@ -53,6 +54,37 @@ const Maintenance = () => {
     } finally {
       setDiagnosing(null);
     }
+  };
+
+  const num = (v: unknown) => (typeof v === "number" && Number.isFinite(v) ? v : null);
+  const fmt = (v: number | null) => (v == null ? "—" : `₹${Math.round(v).toLocaleString()}`);
+
+  /** Extract the key vitals from a GameState snapshot for at-a-glance triage. */
+  const summarizeGameState = (gs: Record<string, unknown> | null) => {
+    if (!gs) return null;
+    const assets = Array.isArray(gs.assets) ? (gs.assets as Array<{ value?: number }>) : [];
+    const liabs = Array.isArray(gs.liabilities) ? (gs.liabilities as Array<{ principal?: number }>) : [];
+    const exps = Array.isArray(gs.expenses) ? (gs.expenses as Array<{ monthlyAmount?: number }>) : [];
+    const cash = num(gs.cash);
+    const assetTotal = assets.reduce((s, a) => s + (a.value ?? 0), 0);
+    const debtTotal = liabs.reduce((s, l) => s + (l.principal ?? 0), 0);
+    const monthlyOut = exps.reduce((s, e) => s + (e.monthlyAmount ?? 0), 0);
+    return {
+      playerName: typeof gs.playerName === "string" ? gs.playerName : null,
+      profession: typeof gs.profession === "string" ? gs.profession : null,
+      position: num(gs.position),
+      turnCount: num(gs.turnCount),
+      cash,
+      salary: num(gs.salary),
+      passiveIncome: num(gs.passiveIncome),
+      netWorth: cash != null ? cash + assetTotal - debtTotal : null,
+      assetCount: assets.length,
+      assetTotal,
+      liabilityCount: liabs.length,
+      debtTotal,
+      expenseCount: exps.length,
+      monthlyOut,
+    };
   };
 
   if (!allowed) {
@@ -120,14 +152,39 @@ const Maintenance = () => {
                 </div>
                 <Button
                   size="sm"
-                  variant="ghost"
+                  variant={row.ai_diagnosis ? "ghost" : "default"}
                   onClick={() => triggerDiagnose(row.id)}
                   disabled={diagnosing === row.id}
+                  title="Ask the AI to read this error + GameState and write a fresh diagnosis"
                 >
-                  <Sparkles className="w-3.5 h-3.5 mr-1" />
-                  {row.ai_diagnosis ? "Re-diagnose" : "Diagnose"}
+                  <Sparkles className={`w-3.5 h-3.5 mr-1 ${diagnosing === row.id ? "animate-pulse" : ""}`} />
+                  {diagnosing === row.id
+                    ? "Re-running…"
+                    : row.ai_diagnosis
+                      ? "Re-run diagnosis"
+                      : "Diagnose"}
                 </Button>
               </div>
+
+              {/* Raw error context chips — tile type, turn, anything else the
+                  reporter attached. Always visible for fast triage. */}
+              {row.context && Object.keys(row.context).length > 0 && (
+                <div className="flex flex-wrap gap-1.5">
+                  {Object.entries(row.context).map(([k, v]) => (
+                    <span
+                      key={k}
+                      className="text-[10px] font-mono px-2 py-0.5 rounded bg-slate-800/80 border border-slate-700/60 text-slate-300"
+                    >
+                      <span className="text-slate-500">{k}:</span>{" "}
+                      <span className="text-slate-200">
+                        {typeof v === "object"
+                          ? JSON.stringify(v).slice(0, 60)
+                          : String(v).slice(0, 60)}
+                      </span>
+                    </span>
+                  ))}
+                </div>
+              )}
 
               {row.error_message && (
                 <p className="text-sm text-slate-200 font-mono break-words">
@@ -135,11 +192,45 @@ const Maintenance = () => {
                 </p>
               )}
 
-              {row.context && Object.keys(row.context).length > 0 && (
+              {/* GameState snapshot — the moral equivalent of a diff: it's the
+                  state at the moment of the crash, which is what a developer
+                  needs to reproduce locally. */}
+              {(() => {
+                const gs = summarizeGameState(row.game_state);
+                if (!gs) return null;
+                return (
+                  <div className="text-[11px] grid grid-cols-2 sm:grid-cols-4 gap-1.5 mt-1 p-2 rounded border border-slate-700/40 bg-slate-950/40">
+                    {gs.playerName && (
+                      <div><span className="text-slate-500">player</span>{" "}<span className="text-slate-200">{gs.playerName}</span></div>
+                    )}
+                    {gs.profession && (
+                      <div><span className="text-slate-500">profession</span>{" "}<span className="text-slate-200">{gs.profession}</span></div>
+                    )}
+                    <div><span className="text-slate-500">turn</span>{" "}<span className="text-slate-200">{gs.turnCount ?? "—"}</span></div>
+                    <div><span className="text-slate-500">position</span>{" "}<span className="text-slate-200">{gs.position ?? "—"}</span></div>
+                    <div><span className="text-slate-500">cash</span>{" "}<span className="text-emerald-300">{fmt(gs.cash)}</span></div>
+                    <div><span className="text-slate-500">salary</span>{" "}<span className="text-slate-200">{fmt(gs.salary)}</span></div>
+                    <div><span className="text-slate-500">passive</span>{" "}<span className="text-slate-200">{fmt(gs.passiveIncome)}</span></div>
+                    <div><span className="text-slate-500">net worth</span>{" "}<span className="text-amber-300">{fmt(gs.netWorth)}</span></div>
+                    <div><span className="text-slate-500">assets</span>{" "}<span className="text-slate-200">{gs.assetCount} ({fmt(gs.assetTotal)})</span></div>
+                    <div><span className="text-slate-500">debt</span>{" "}<span className="text-red-300">{gs.liabilityCount} ({fmt(gs.debtTotal)})</span></div>
+                    <div><span className="text-slate-500">expenses</span>{" "}<span className="text-slate-200">{gs.expenseCount} ({fmt(gs.monthlyOut)}/mo)</span></div>
+                  </div>
+                );
+              })()}
+
+              <details className="text-xs text-slate-400">
+                <summary className="cursor-pointer">Raw context JSON</summary>
+                <pre className="whitespace-pre-wrap mt-1 text-[11px]">
+                  {JSON.stringify(row.context ?? {}, null, 2)}
+                </pre>
+              </details>
+
+              {row.game_state && (
                 <details className="text-xs text-slate-400">
-                  <summary className="cursor-pointer">Context</summary>
-                  <pre className="whitespace-pre-wrap mt-1 text-[11px]">
-                    {JSON.stringify(row.context, null, 2)}
+                  <summary className="cursor-pointer">Full GameState snapshot</summary>
+                  <pre className="whitespace-pre-wrap mt-1 text-[11px] max-h-80 overflow-auto">
+                    {JSON.stringify(row.game_state, null, 2)}
                   </pre>
                 </details>
               )}
