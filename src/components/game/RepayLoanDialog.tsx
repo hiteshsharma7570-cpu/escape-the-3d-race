@@ -75,7 +75,7 @@ export const RepayLoanDialog = ({ open, onOpenChange, gameState, onRepay }: Repa
                         <div className="min-w-0">
                           <p className="font-semibold truncate">{l.name}</p>
                           <p className="text-[11px] text-muted-foreground">
-                            {(l.category ?? "loan").replace(/_/g, " ")} · {l.interestRate ?? 0}% p.a. · EMI ₹{(l.monthlyEMI ?? 0).toLocaleString()}/mo
+                            {(l.category ?? "loan").replace(/_/g, " ")} · {l.interestRate ?? 0}% p.a.
                           </p>
                         </div>
                         <span className="text-destructive font-bold whitespace-nowrap">
