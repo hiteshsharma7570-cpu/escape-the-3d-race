@@ -15,8 +15,9 @@ interface GameBoard2DProps {
 }
 
 
-// NxN perimeter ring, clockwise from top-left. 10x10 -> 36 cells.
-const BOARD_SIZE = 10;
+// NxN perimeter ring, clockwise from top-left. Size auto-fits BOARD_TILES.length
+// (perimeter of NxN = 4*(N-1) cells, so N = ceil(tiles/4) + 1, min 4).
+const BOARD_SIZE = Math.max(4, Math.ceil(BOARD_TILES.length / 4) + 1);
 function buildPerimeter(n: number = BOARD_SIZE): Array<[number, number]> {
   const cells: Array<[number, number]> = [];
   for (let c = 0; c < n; c++) cells.push([0, c]);
