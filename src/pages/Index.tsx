@@ -21,6 +21,7 @@ import {
 } from "@/lib/gameLogic";
 import { RepayLoanDialog } from "@/components/game/RepayLoanDialog";
 import { toast } from "sonner";
+import { logMaintenanceError } from "@/lib/maintenanceLog";
 import { Button } from "@/components/ui/button";
 import { HelpCircle, Music, Volume2, VolumeX, RotateCcw, Check, LogOut, Settings as SettingsIcon } from "lucide-react";
 import { useGameSounds } from "@/hooks/useGameSounds";
@@ -299,11 +300,44 @@ const Index = () => {
         isRolling: false,
         turnCount: prev.turnCount + 1,
       };
-      updated = handleTileEffect(updated, landedTile);
-      // Apply periodic mechanics (inflation, salary review, depreciation)
-      const periodic = applyPeriodicMechanics(updated);
-      updated = periodic.state;
-      periodic.events.forEach((e) => setTimeout(() => toast.info(e), 200));
+      // --- Self-healing layer ---------------------------------------------
+      // Tile resolution is the hottest source of "weird" runtime errors
+      // (new tile types, unexpected state shapes from older saves, etc).
+      // If anything throws, fall back to the deterministic post-move state
+      // (movement still counts, dice still updates) and log the failure
+      // with full context for human review. Never let the exception escape.
+      try {
+        updated = handleTileEffect(updated, landedTile);
+      } catch (err) {
+        void logMaintenanceError({
+          errorType: "tile_effect",
+          error: err,
+          context: { turnCount: updated.turnCount, tileType: landedTile?.type, tileId: landedTile?.id },
+          gameState: updated,
+        });
+        setTimeout(() => toast("Recovered from a hiccup, your progress is safe"), 0);
+        updated = {
+          ...updated,
+          gameLog: [
+            `[Turn ${updated.turnCount}] (Recovered from a tile error — moved safely.)`,
+            ...updated.gameLog.slice(0, 19),
+          ],
+        };
+      }
+      // Periodic mechanics (inflation, salary review, depreciation).
+      try {
+        const periodic = applyPeriodicMechanics(updated);
+        updated = periodic.state;
+        periodic.events.forEach((e) => setTimeout(() => toast.info(e), 200));
+      } catch (err) {
+        void logMaintenanceError({
+          errorType: "periodic_mechanics",
+          error: err,
+          context: { turnCount: updated.turnCount },
+          gameState: updated,
+        });
+        setTimeout(() => toast("Recovered from a hiccup, your progress is safe"), 0);
+      }
       if (
         !updated.marketHint &&
         !updated.pendingDecision &&
