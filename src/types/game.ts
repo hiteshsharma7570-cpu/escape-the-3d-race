@@ -286,6 +286,7 @@ export const createInitialGameState = (
  name: "Starter Personal Loan",
  category: "personal_loan" as const,
  principal: 300000,
+ interestRate: 9,
  },
  ...profile.liabilities.map((l, i) => ({
  ...l,
