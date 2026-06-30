@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { GameBoard2D } from "@/components/game/GameBoard2D";
+import { GameDashboard } from "@/components/game/GameDashboard";
 import { PlayerSetup } from "@/components/game/PlayerSetup";
 import { LEADERBOARD_UPDATE_EVENT } from "@/components/game/LocalLeaderboard";
 import { DecisionModal } from "@/components/game/DecisionModal";
@@ -510,7 +511,20 @@ const Index = () => {
         </div>
       </div>
 
+      {/* Portfolio dashboard displayed directly on the homepage */}
+      <div className="max-w-[1600px] mx-auto w-full px-3 md:px-5 pb-4">
+        <GameDashboard
+          gameState={gameState}
+          onRollDice={rollDice}
+          onTakeLoan={takeLoan}
+          onRepayLoan={repayLoan}
+          onPayOffDebts={payOffDebts}
+          onSellAsset={handleSellAsset}
+        />
+      </div>
+
       {/* === Repay loan dialog === */}
+
       <RepayLoanDialog
         open={repayOpen}
         onOpenChange={setRepayOpen}
