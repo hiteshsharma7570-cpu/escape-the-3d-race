@@ -14,7 +14,7 @@ const uid = (prefix: string) => `${prefix}-${Date.now().toString(36)}-${(_uid++)
 
 const addLiability = (
   state: GameState,
-  data: { name: string; category: LiabilityCategory; principal: number; monthlyEMI: number; interestRate: number }
+  data: { name: string; category: LiabilityCategory; principal: number; interestRate: number }
 ): Liability => {
   const l: Liability = { id: uid("liab"), ...data };
   state.liabilities.push(l);
