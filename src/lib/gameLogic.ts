@@ -528,6 +528,27 @@ export const handleTileEffect = (state: GameState, tile: Tile): GameState => {
       const festCost = 10000 + Math.floor(Math.random() * 40000);
       newState.cash -= festCost;
       logMessage = `🪔 Festival season! Spent ₹${festCost.toLocaleString()} on celebrations and gifts.`;
+      const hasFestFund = newState.expenses.some(e => /festival fund/i.test(e.name));
+      if (!hasFestFund && Math.random() < 0.6) {
+        addExpense(newState, {
+          name: "Society Festival Fund (Ganpati/Diwali)",
+          category: "maintenance",
+          monthlyAmount: 600,
+          essential: false,
+        });
+        lessonMessage = "💡 Society collections feel small but add up — they're a real recurring expense.";
+      }
+      if (Math.random() < 0.2) {
+        const principal = 60000 + Math.floor(Math.random() * 90000);
+        addLiability(newState, {
+          name: "Chit Fund Default",
+          category: "personal_loan",
+          principal,
+          monthlyEMI: Math.round(principal / 24),
+          interestRate: 18,
+        });
+        logMessage += ` Chit fund payout missed — ₹${principal.toLocaleString()} now owed to the group.`;
+      }
       break;
     }
 
