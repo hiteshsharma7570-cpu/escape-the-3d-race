@@ -53,6 +53,15 @@ export const TILE_META: Record<TileType, TileMeta> = {
   payday_loan:         { category: "PAYDAY LOAN",    subtitle: "HIGH RATE",  icon: "💸", neonHsl: "350 85% 55%" },
   margin_call:         { category: "MARGIN CALL",    subtitle: "+DEBT",      icon: "📞", neonHsl: "0 90% 50%" },
   tax_arrears:         { category: "TAX ARREARS",    subtitle: "+DEBT",      icon: "🧾", neonHsl: "15 70% 45%" },
+  // ---- Pool slots on the 24-tile board ----
+  quick_cash_trap:     { category: "QUICK CASH TRAP", subtitle: "+DEBT",       icon: "💸", neonHsl: "350 80% 55%" },
+  tax_trouble:         { category: "TAX TROUBLE",     subtitle: "IT DEPT",     icon: "🧾", neonHsl: "20 70% 45%" },
+  bill_shock:          { category: "BILL SHOCK",      subtitle: "+EXPENSE",    icon: "💥", neonHsl: "10 80% 50%" },
+  unexpected_repair:   { category: "UNEXPECTED REPAIR", subtitle: "URGENT FIX",icon: "🛠️", neonHsl: "25 90% 55%" },
+  life_event:          { category: "LIFE EVENT",      subtitle: "BIG SPEND",   icon: "🎈", neonHsl: "325 95% 65%" },
+  family_care:         { category: "FAMILY CARE",     subtitle: "LOVED ONES",  icon: "👨‍👩‍👧", neonHsl: "260 50% 60%" },
+  monthly_bills:       { category: "MONTHLY BILLS",   subtitle: "RECURRING",   icon: "🧾", neonHsl: "205 70% 45%" },
+  green_upgrade:       { category: "GREEN UPGRADE",   subtitle: "EV / SOLAR",  icon: "🌱", neonHsl: "150 75% 50%" },
 };
 
 // "Career start" corner — only for tile id 0 (PAY DAY) we mark as the start corner.
