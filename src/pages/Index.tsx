@@ -70,7 +70,6 @@ const normalizeSavedGame = (saved: GameState, fallbackPlayerName: string, fallba
           id: liability.id ?? `liability-${idx}-${Date.now()}`,
           category: liability.category ?? "personal_loan",
           principal: liability.principal ?? 0,
-          interestRate: liability.interestRate ?? 0,
         }))
       : [],
     expenses: Array.isArray(saved.expenses)
@@ -393,7 +392,6 @@ const Index = () => {
           name: "Bank Loan",
           category: "personal_loan" as const,
           principal: loanAmount,
-          interestRate: 12,
         },
       ],
       gameLog: [
