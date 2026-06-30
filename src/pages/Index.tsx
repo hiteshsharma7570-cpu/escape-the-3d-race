@@ -496,16 +496,15 @@ const Index = () => {
             gameState={gameState}
             isRolling={gameState.isRolling}
             onRollDice={rollDice}
+            actionBar={
+              <ActionBar
+                onPortfolio={() => setOpenPanel("portfolio")}
+                onAssets={() => setOpenPanel("assets")}
+                onLeaderboard={() => setOpenPanel("leaderboard")}
+                onAchievements={() => setOpenPanel("achievements")}
+              />
+            }
           />
-
-          <div className="flex items-end justify-center w-full max-w-[820px] gap-4 flex-wrap">
-            <ActionBar
-              onPortfolio={() => setOpenPanel("portfolio")}
-              onAssets={() => setOpenPanel("assets")}
-              onLeaderboard={() => setOpenPanel("leaderboard")}
-              onAchievements={() => setOpenPanel("achievements")}
-            />
-          </div>
 
           {saveStatus.show && (
             <div className="text-[10px] text-slate-500 flex items-center gap-1">

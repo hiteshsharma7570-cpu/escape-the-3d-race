@@ -11,6 +11,7 @@ interface GameBoard2DProps {
   gameState?: GameState;
   isRolling?: boolean;
   onRollDice?: () => void;
+  actionBar?: React.ReactNode;
 }
 
 // NxN perimeter ring, clockwise from top-left. 10x10 -> 36 cells.
@@ -24,7 +25,7 @@ function buildPerimeter(n: number = BOARD_SIZE): Array<[number, number]> {
   return cells;
 }
 
-export const GameBoard2D = ({ currentPosition, diceValue, gameState, isRolling, onRollDice }: GameBoard2DProps) => {
+export const GameBoard2D = ({ currentPosition, diceValue, gameState, isRolling, onRollDice, actionBar }: GameBoard2DProps) => {
   const [displayedPosition, setDisplayedPosition] = useState(currentPosition);
   const [visited, setVisited] = useState<Set<number>>(new Set([currentPosition]));
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -273,6 +274,12 @@ export const GameBoard2D = ({ currentPosition, diceValue, gameState, isRolling, 
                   isRolling={!!isRolling}
                   onRoll={onRollDice}
                 />
+              </div>
+            )}
+
+            {actionBar && (
+              <div className="mt-4 pt-4 w-full border-t border-amber-500/20 flex justify-center">
+                {actionBar}
               </div>
             )}
           </div>
