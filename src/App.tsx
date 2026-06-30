@@ -7,6 +7,8 @@ import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import LeagueHub from "./pages/LeagueHub";
 import FriendsRoom from "./pages/FriendsRoom";
+import Maintenance from "./pages/Maintenance";
+import { GameErrorBoundary } from "./components/ErrorBoundary";
 
 const queryClient = new QueryClient();
 
@@ -17,9 +19,23 @@ const App = () => (
       <Sonner />
       <BrowserRouter>
         <Routes>
-          <Route path="/" element={<Index />} />
+          <Route
+            path="/"
+            element={
+              <GameErrorBoundary
+                onRecover={() => {
+                  // Hard reload — Index.tsx hydrates from localStorage on mount,
+                  // so this restores the last known-good GameState automatically.
+                  if (typeof window !== "undefined") window.location.reload();
+                }}
+              >
+                <Index />
+              </GameErrorBoundary>
+            }
+          />
           <Route path="/leagues" element={<LeagueHub />} />
           <Route path="/leagues/room/:roomCode" element={<FriendsRoom />} />
+          <Route path="/maintenance" element={<Maintenance />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
