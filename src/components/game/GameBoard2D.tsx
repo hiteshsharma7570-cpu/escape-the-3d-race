@@ -236,11 +236,11 @@ export const GameBoard2D = ({ currentPosition, diceValue, gameState, isRolling, 
 
             {gameState ? (
               <div className="grid grid-cols-2 gap-x-6 gap-y-2 text-xs text-slate-200 w-full">
-                <Stat label="Cash"          value={`₹${gameState.cash.toLocaleString()}`}          tone="green" />
-                <Stat label="Expenses"      value={`₹${totalExpenses.toLocaleString()} /m`}        tone="red" />
-                <Stat label="Salary"        value={`₹${gameState.salary.toLocaleString()} /m`} />
-                <Stat label="Net Worth"     value={`₹${netWorth.toLocaleString()}`} tone={netWorth >= 0 ? "green" : "red"} />
-                <Stat label="Passive"       value={`₹${gameState.passiveIncome.toLocaleString()} /m`} tone="gold" />
+                <Stat label="Cash"          value={`₹${(gameState.cash ?? 0).toLocaleString()}`}          tone="green" />
+                <Stat label="Expenses"      value={`₹${(totalExpenses ?? 0).toLocaleString()} /m`}        tone="red" />
+                <Stat label="Salary"        value={`₹${(gameState.salary ?? 0).toLocaleString()} /m`} />
+                <Stat label="Net Worth"     value={`₹${(netWorth ?? 0).toLocaleString()}`} tone={(netWorth ?? 0) >= 0 ? "green" : "red"} />
+                <Stat label="Passive"       value={`₹${(gameState.passiveIncome ?? 0).toLocaleString()} /m`} tone="gold" />
                 <Stat label="Assets / Debts / Bills" value={
                   <>
                     <span className="text-emerald-400">{gameState.assets.length}</span>
