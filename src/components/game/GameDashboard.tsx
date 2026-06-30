@@ -196,23 +196,9 @@ export const GameDashboard = ({
 
           <div>
             <h3 className="text-destructive font-bold mb-2">
-              <InfoLabel label="Monthly Outflow" tip="Loan EMIs plus every recurring expense — what leaves your account each month." />
+              <InfoLabel label="Monthly Outflow" tip="Every recurring expense that leaves your account each month. Outstanding debts are tracked separately and do not deduct monthly." />
             </h3>
             <div className="space-y-1 text-sm">
-              {gameState.liabilities.length > 0 && (
-                <>
-                  <div className="text-[11px] uppercase tracking-wider text-muted-foreground mt-1">Debt EMIs</div>
-                  {gameState.liabilities.map((liability) => (
-                    <div key={liability.id} className="flex justify-between">
-                      <span className="truncate">
-                        {liability.name}
-                       <span className="text-[10px] text-muted-foreground ml-1">· {(liability.category ?? "loan").replace(/_/g, " ")}</span>
-                      </span>
-                      <span>₹{(liability.monthlyEMI ?? 0).toLocaleString()}</span>
-                    </div>
-                  ))}
-                </>
-              )}
               {gameState.expenses.length > 0 && (
                 <>
                   <div className="text-[11px] uppercase tracking-wider text-muted-foreground mt-2">Recurring Expenses</div>

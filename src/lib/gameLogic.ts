@@ -142,14 +142,13 @@ export const calculateMonthlyCashFlow = (state: GameState): number => {
 };
 
 export const calculateTotalExpenses = (state: GameState): number => {
-  const debtServicing = (state.liabilities ?? []).reduce((sum, l) => sum + (l.monthlyEMI ?? 0), 0);
+  // EMI system removed — liabilities are outstanding debts only, not monthly outflows.
   const recurring = (state.expenses ?? []).reduce((sum, e) => sum + (e.monthlyAmount ?? 0), 0);
-  return debtServicing + recurring;
+  return recurring;
 };
 
-/** Sum of all liability monthly EMIs (debt servicing only). */
-export const calculateDebtServicing = (state: GameState): number =>
-  (state.liabilities ?? []).reduce((sum, l) => sum + (l.monthlyEMI ?? 0), 0);
+/** Debt servicing removed — liabilities no longer create monthly EMI outflows. */
+export const calculateDebtServicing = (_state: GameState): number => 0;
 
 /** Sum of all recurring expenses (rent, bills, subscriptions). */
 export const calculateRecurringExpenses = (state: GameState): number =>
@@ -1041,16 +1040,14 @@ export const repayLiability = (
 
   if (pay >= liability.principal) {
     next.liabilities = next.liabilities.filter(l => l.id !== liabilityId);
-    pushLog(next, `✅ Fully repaid ${liability.name} (₹${pay.toLocaleString()}). EMI of ₹${liability.monthlyEMI.toLocaleString()}/mo cleared.`);
+    pushLog(next, `✅ Fully repaid ${liability.name} (₹${pay.toLocaleString()}). Debt cleared.`);
   } else {
-    const ratio = (liability.principal - pay) / liability.principal;
-    const newEMI = Math.max(0, Math.round(liability.monthlyEMI * ratio));
     next.liabilities = next.liabilities.map(l =>
       l.id === liabilityId
-        ? { ...l, principal: l.principal - pay, monthlyEMI: newEMI }
+        ? { ...l, principal: l.principal - pay }
         : l
     );
-    pushLog(next, `💰 Part-paid ${liability.name} (₹${pay.toLocaleString()}). EMI now ₹${newEMI.toLocaleString()}/mo.`);
+    pushLog(next, `💰 Part-paid ${liability.name} (₹${pay.toLocaleString()}). Outstanding: ₹${(liability.principal - pay).toLocaleString()}.`);
   }
   return { state: next, ok: true };
 };
