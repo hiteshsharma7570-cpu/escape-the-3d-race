@@ -17,6 +17,7 @@ interface GameBoard2DProps {
 
 // NxN perimeter ring, clockwise from top-left. Size auto-fits BOARD_TILES.length
 // (perimeter of NxN = 4*(N-1) cells, so N = ceil(tiles/4) + 1, min 4).
+// At 24 tiles this resolves to a clean 7x7 board (4*7 - 4 = 24).
 const BOARD_SIZE = Math.max(4, Math.ceil(BOARD_TILES.length / 4) + 1);
 function buildPerimeter(n: number = BOARD_SIZE): Array<[number, number]> {
   const cells: Array<[number, number]> = [];
