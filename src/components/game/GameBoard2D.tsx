@@ -149,7 +149,7 @@ export const GameBoard2D = ({ currentPosition, diceValue, gameState, isRolling, 
 
                 {/* Icon */}
                 <motion.div
-                  className="relative text-[18px] sm:text-[22px] leading-none"
+                  className="relative text-[22px] sm:text-[28px] leading-none"
                   style={{ filter: `drop-shadow(0 2px 6px ${neonGlow70})` }}
                   animate={isCurrent ? { scale: [1, 1.25, 1], rotate: [0, -8, 8, 0] } : { scale: 1 }}
                   transition={{ duration: 0.7 }}
@@ -159,9 +159,9 @@ export const GameBoard2D = ({ currentPosition, diceValue, gameState, isRolling, 
 
                 {/* Title */}
                 <div
-                  className="relative font-extrabold leading-none tracking-wider text-white"
+                  className="relative font-extrabold leading-tight tracking-wide text-white"
                   style={{
-                    fontSize: "0.5rem",
+                    fontSize: "0.7rem",
                     textShadow: `0 0 6px ${neonGlow70}, 0 1px 2px hsla(0,0%,0%,0.9)`,
                   }}
                 >
@@ -170,9 +170,9 @@ export const GameBoard2D = ({ currentPosition, diceValue, gameState, isRolling, 
 
                 {/* Subtitle */}
                 <div
-                  className="relative leading-none tracking-[0.1em] font-mono-num font-semibold"
+                  className="relative leading-none tracking-[0.08em] font-mono-num font-semibold"
                   style={{
-                    fontSize: "0.45rem",
+                    fontSize: "0.6rem",
                     color: `hsl(${h}, ${s}, 80%)`,
                   }}
                 >
