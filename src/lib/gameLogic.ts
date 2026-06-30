@@ -420,16 +420,14 @@ export const handleTileEffect = (state: GameState, tile: Tile): GameState => {
       break;
     }
 
-    case "emi_hike": {
+    case "rate_hike": {
       const hikePct = 10 + Math.floor(Math.random() * 11);
-      let extra = 0;
-      newState.liabilities = newState.liabilities.map(l => {
-        const bump = Math.round(l.monthlyEMI * hikePct / 100);
-        extra += bump;
-        return { ...l, monthlyEMI: l.monthlyEMI + bump };
-      });
+      newState.liabilities = newState.liabilities.map(l => ({
+        ...l,
+        interestRate: Math.round((l.interestRate + l.interestRate * hikePct / 100) * 10) / 10,
+      }));
       logMessage = newState.liabilities.length
-        ? `📈 RBI hikes rates! All loan EMIs increased by ${hikePct}%. Monthly burden up by ₹${extra.toLocaleString()}.`
+        ? `📈 RBI hikes rates! Interest rates on all your loans are up ${hikePct}% (informational).`
         : `📈 RBI hikes rates by ${hikePct}% — but you have no loans. Phew.`;
       break;
     }
@@ -500,7 +498,7 @@ export const handleTileEffect = (state: GameState, tile: Tile): GameState => {
         if (existing) {
           newState.liabilities = newState.liabilities.map(l =>
             l.id === existing.id
-              ? { ...l, principal: l.principal + bill, monthlyEMI: l.monthlyEMI + 2000 }
+              ? { ...l, principal: l.principal + bill }
               : l
           );
         } else {
@@ -511,7 +509,7 @@ export const handleTileEffect = (state: GameState, tile: Tile): GameState => {
             interestRate: 36,
           });
         }
-        logMessage = `💳 Credit Card Bill! Added ₹${bill.toLocaleString()} to card debt (+₹4,000/mo minimum).`;
+        logMessage = `💳 Credit Card Bill! Added ₹${bill.toLocaleString()} to outstanding card debt @ 36% p.a.`;
       }
       break;
     }
@@ -604,12 +602,12 @@ export const handleTileEffect = (state: GameState, tile: Tile): GameState => {
         l => l.category === "home_loan" || l.category === "personal_loan"
       );
       if (floatingLoans.length > 0) {
-        const spike = 1500 + Math.floor(Math.random() * 3500);
+        const spikePct = 1 + Math.floor(Math.random() * 3); // +1 to +3 percentage points
         const ids = new Set(floatingLoans.map(l => l.id));
         newState.liabilities = newState.liabilities.map(l =>
-          ids.has(l.id) ? { ...l, monthlyEMI: l.monthlyEMI + spike } : l
+          ids.has(l.id) ? { ...l, interestRate: l.interestRate + spikePct } : l
         );
-        logMessage = `🏦 Floating rate spike! Home/personal loan payments up by ₹${spike.toLocaleString()}/mo.`;
+        logMessage = `🏦 Floating rate spike! Home/personal loan interest rates up by ${spikePct}% (informational).`;
       } else {
         const penalty = 5000 + Math.floor(Math.random() * 10000);
         newState.cash -= penalty;
