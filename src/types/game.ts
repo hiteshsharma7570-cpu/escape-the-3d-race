@@ -13,7 +13,7 @@ export type TileType =
  | "inheritance"
  | "real_estate_boom"
  | "stock_market_crash"
- | "emi_hike"
+  | "rate_hike"
  | "insurance_premium"
  | "home_repair"
  | "traffic_fine"
