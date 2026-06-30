@@ -62,8 +62,11 @@ const normalizeSavedGame = (saved: GameState, fallbackPlayerName: string, fallba
         }))
       : [],
     liabilities: Array.isArray(saved.liabilities)
-      ? saved.liabilities.map((liability) => ({
+      ? saved.liabilities.map((liability, idx) => ({
           ...liability,
+          // Guarantee unique ids — duplicates would make repayments
+          // collapse multiple liabilities at once.
+          id: liability.id ?? `liability-${idx}-${Date.now()}`,
           category: liability.category ?? "personal_loan",
           principal: liability.principal ?? 0,
           monthlyEMI: liability.monthlyEMI ?? 0,
