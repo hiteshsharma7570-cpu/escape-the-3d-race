@@ -89,10 +89,8 @@ export interface Liability {
  id: string;
  name: string;
  category: LiabilityCategory;
- /** Outstanding principal in rupees. */
+ /** Outstanding principal in rupees — the only financial attribute of a debt. */
  principal: number;
- /** Annualised interest rate, percent. Informational. */
- interestRate: number;
 }
 
 /** Recurring monthly outflows with no principal — rent, bills, subscriptions. */
@@ -171,9 +169,9 @@ export const PROFESSION_PROFILES: Record<string, ProfessionProfile> = {
  salary: 45000,
  cash: 50000,
  liabilities: [
- { name: "Two-Wheeler Loan", category: "vehicle_loan", principal: 80000, interestRate: 8.5 },
- { name: "Mobile Loan", category: "personal_loan", principal: 15000, interestRate: 10 },
- { name: "Family Loan (No Interest)", category: "personal_loan", principal: 50000, interestRate: 0 },
+ { name: "Two-Wheeler Loan", category: "vehicle_loan", principal: 80000 },
+ { name: "Mobile Loan", category: "personal_loan", principal: 15000 },
+ { name: "Family Loan", category: "personal_loan", principal: 50000 },
  ],
  expenses: [
  { name: "Home Rent", category: "rent", monthlyAmount: 9000, essential: true },
@@ -190,10 +188,10 @@ export const PROFESSION_PROFILES: Record<string, ProfessionProfile> = {
  salary: 90000,
  cash: 80000,
  liabilities: [
- { name: "Home Loan", category: "home_loan", principal: 2500000, interestRate: 6.5 },
- { name: "Car Loan", category: "vehicle_loan", principal: 400000, interestRate: 7.0 },
- { name: "Education Loan",category: "education_loan",principal: 250000, interestRate: 5.5 },
- { name: "Furniture & Appliance Financing", category: "bnpl", principal: 90000, interestRate: 18 },
+ { name: "Home Loan", category: "home_loan", principal: 2500000 },
+ { name: "Car Loan", category: "vehicle_loan", principal: 400000 },
+ { name: "Education Loan",category: "education_loan",principal: 250000 },
+ { name: "Furniture & Appliance Financing", category: "bnpl", principal: 90000 },
  ],
  expenses: [
  { name: "Society Maintenance",category: "maintenance", monthlyAmount: 3000, essential: true },
@@ -211,10 +209,10 @@ export const PROFESSION_PROFILES: Record<string, ProfessionProfile> = {
  salary: 150000,
  cash: 100000,
  liabilities: [
- { name: "Medical Education Loan", category: "education_loan", principal: 1400000, interestRate: 7.0 },
- { name: "Car Loan", category: "vehicle_loan", principal: 800000, interestRate: 7.0 },
- { name: "Clinic Equipment Loan", category: "business_loan", principal: 500000, interestRate: 8 },
- { name: "Home Renovation Loan", category: "home_loan", principal: 600000, interestRate: 10.5 },
+ { name: "Medical Education Loan", category: "education_loan", principal: 1400000 },
+ { name: "Car Loan", category: "vehicle_loan", principal: 800000 },
+ { name: "Clinic Equipment Loan", category: "business_loan", principal: 500000 },
+ { name: "Home Renovation Loan", category: "home_loan", principal: 600000 },
  ],
  expenses: [
  { name: "Home Rent", category: "rent", monthlyAmount: 18000, essential: true },
@@ -234,9 +232,9 @@ export const PROFESSION_PROFILES: Record<string, ProfessionProfile> = {
  salary: 120000,
  cash: 90000,
  liabilities: [
- { name: "Education Loan", category: "education_loan", principal: 700000, interestRate: 6.0 },
- { name: "Car Loan", category: "vehicle_loan", principal: 500000, interestRate: 7.0 },
- { name: "Loan Against Securities", category: "margin_loan", principal: 200000, interestRate: 11 },
+ { name: "Education Loan", category: "education_loan", principal: 700000 },
+ { name: "Car Loan", category: "vehicle_loan", principal: 500000 },
+ { name: "Loan Against Securities", category: "margin_loan", principal: 200000 },
  ],
  expenses: [
  { name: "Office Rent", category: "rent", monthlyAmount: 14000, essential: true },
@@ -256,10 +254,10 @@ export const PROFESSION_PROFILES: Record<string, ProfessionProfile> = {
  salary: 60000,
  cash: 150000,
  liabilities: [
- { name: "Business Loan", category: "business_loan", principal: 1700000, interestRate: 8.5 },
- { name: "Working Capital Loan", category: "business_loan", principal: 500000, interestRate: 10 },
- { name: "Co-signed Sibling's Loan", category: "personal_loan", principal: 250000, interestRate: 12 },
- { name: "NBFC Instant App Loan", category: "personal_loan", principal: 35000, interestRate: 32 },
+ { name: "Business Loan", category: "business_loan", principal: 1700000 },
+ { name: "Working Capital Loan", category: "business_loan", principal: 500000 },
+ { name: "Co-signed Sibling's Loan", category: "personal_loan", principal: 250000 },
+ { name: "NBFC Instant App Loan", category: "personal_loan", principal: 35000 },
  ],
  expenses: [
  { name: "Office Rent", category: "rent", monthlyAmount: 25000, essential: true },
@@ -296,7 +294,6 @@ export const createInitialGameState = (
  name: "Starter Personal Loan",
  category: "personal_loan" as const,
  principal: 300000,
- interestRate: 9,
  },
  ...profile.liabilities.map((l, i) => ({
  ...l,
