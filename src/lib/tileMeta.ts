@@ -34,7 +34,7 @@ export const TILE_META: Record<TileType, TileMeta> = {
   electricity_bill:    { category: "ELECTRICITY",    subtitle: "BILL",       icon: "⚡", neonHsl: "50 95% 55%" },
   rent_hike:           { category: "RENT HIKE",      subtitle: "+RENT",      icon: "🏠", neonHsl: "0 70% 45%" },
   vehicle_breakdown:   { category: "VEHICLE",        subtitle: "REPAIR",     icon: "🚗", neonHsl: "210 5% 55%" },
-  loan_interest_spike: { category: "INTEREST",       subtitle: "SPIKE",      icon: "🏦", neonHsl: "20 60% 35%" },
+  loan_interest_spike: { category: "LATE FEE",       subtitle: "+PRINCIPAL", icon: "🏦", neonHsl: "20 60% 35%" },
   society_maintenance: { category: "SOCIETY",        subtitle: "MAINT.",     icon: "🏢", neonHsl: "205 70% 40%" },
   gold_loan_offer:     { category: "GOLD LOAN",      subtitle: "PAWN",       icon: "🪙", neonHsl: "45 95% 55%" },
   wedding_in_family:   { category: "WEDDING",        subtitle: "BIG SPEND",  icon: "💍", neonHsl: "0 75% 55%" },

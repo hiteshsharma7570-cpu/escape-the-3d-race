@@ -14,7 +14,7 @@ const uid = (prefix: string) => `${prefix}-${Date.now().toString(36)}-${(_uid++)
 
 const addLiability = (
   state: GameState,
-  data: { name: string; category: LiabilityCategory; principal: number; interestRate: number }
+  data: { name: string; category: LiabilityCategory; principal: number }
 ): Liability => {
   const l: Liability = { id: uid("liab"), ...data };
   state.liabilities.push(l);
@@ -330,9 +330,8 @@ export const handleTileEffect = (state: GameState, tile: Tile): GameState => {
           name: "Medical Debt",
           category: "medical_debt",
           principal: cost,
-          interestRate: 13,
         });
-        logMessage = `🏥 Medical Emergency! ₹${cost.toLocaleString()} added as Medical Debt @ 13% p.a.`;
+        logMessage = `🏥 Medical Emergency! ₹${cost.toLocaleString()} added as Medical Debt.`;
       }
       break;
     }
@@ -440,14 +439,20 @@ export const handleTileEffect = (state: GameState, tile: Tile): GameState => {
     }
 
     case "rate_hike": {
-      const hikePct = 10 + Math.floor(Math.random() * 11);
-      newState.liabilities = newState.liabilities.map(l => ({
-        ...l,
-        interestRate: Math.round((l.interestRate + l.interestRate * hikePct / 100) * 10) / 10,
-      }));
-      logMessage = newState.liabilities.length
-        ? `📈 RBI hikes rates! Interest rates on all your loans are up ${hikePct}% (informational).`
-        : `📈 RBI hikes rates by ${hikePct}% — but you have no loans. Phew.`;
+      if (newState.liabilities.length === 0) {
+        logMessage = `📈 RBI hikes rates — but you have no loans. Phew.`;
+      } else {
+        // Convert "rate hike" into a one-time fixed principal add-on
+        // (refinancing / restructuring fee) so debt stays principal-only.
+        const pct = 3 + Math.floor(Math.random() * 5); // 3-7%
+        let added = 0;
+        newState.liabilities = newState.liabilities.map(l => {
+          const bump = Math.round(l.principal * pct / 100);
+          added += bump;
+          return { ...l, principal: l.principal + bump };
+        });
+        logMessage = `📈 RBI tightens! Restructuring fees added ₹${added.toLocaleString()} to your outstanding debts.`;
+      }
       break;
     }
 
@@ -484,15 +489,13 @@ export const handleTileEffect = (state: GameState, tile: Tile): GameState => {
             name: "Home Renovation Loan",
             category: "home_loan",
             principal,
-            interestRate: 10.5,
           });
-          logMessage = `🔧 Home Renovation Loan taken — ₹${principal.toLocaleString()} outstanding @ 10.5% p.a.`;
+          logMessage = `🔧 Home Renovation Loan taken — ₹${principal.toLocaleString()} outstanding.`;
         } else {
           addLiability(newState, {
             name: "Home Repair Loan",
             category: "personal_loan",
             principal: repairCost,
-            interestRate: 14,
           });
           logMessage = `🔧 Home Repair! Couldn't afford it — added ₹${repairCost.toLocaleString()} as personal loan.`;
         }
@@ -525,10 +528,9 @@ export const handleTileEffect = (state: GameState, tile: Tile): GameState => {
             name: "Credit Card",
             category: "credit_card",
             principal: bill,
-            interestRate: 36,
           });
         }
-        logMessage = `💳 Credit Card Bill! Added ₹${bill.toLocaleString()} to outstanding card debt @ 36% p.a.`;
+        logMessage = `💳 Credit Card Bill! Added ₹${bill.toLocaleString()} to outstanding card debt.`;
       }
       break;
     }
@@ -565,7 +567,6 @@ export const handleTileEffect = (state: GameState, tile: Tile): GameState => {
           name: "Chit Fund Default",
           category: "personal_loan",
           principal,
-          interestRate: 18,
         });
         logMessage += ` Chit fund payout missed — ₹${principal.toLocaleString()} now owed to the group.`;
       }
@@ -609,9 +610,8 @@ export const handleTileEffect = (state: GameState, tile: Tile): GameState => {
           name: "Vehicle Repair Loan",
           category: "vehicle_loan",
           principal: repairCost,
-          interestRate: 13,
         });
-        logMessage = `🚗 Vehicle Breakdown! Added ₹${repairCost.toLocaleString()} repair loan @ 13% p.a.`;
+        logMessage = `🚗 Vehicle Breakdown! Added ₹${repairCost.toLocaleString()} repair loan.`;
       }
       break;
     }
@@ -621,12 +621,17 @@ export const handleTileEffect = (state: GameState, tile: Tile): GameState => {
         l => l.category === "home_loan" || l.category === "personal_loan"
       );
       if (floatingLoans.length > 0) {
-        const spikePct = 1 + Math.floor(Math.random() * 3); // +1 to +3 percentage points
+        // No interest in this game — express the "spike" as a one-time
+        // fixed late-payment fee added to those loans' principal.
         const ids = new Set(floatingLoans.map(l => l.id));
-        newState.liabilities = newState.liabilities.map(l =>
-          ids.has(l.id) ? { ...l, interestRate: l.interestRate + spikePct } : l
-        );
-        logMessage = `🏦 Floating rate spike! Home/personal loan interest rates up by ${spikePct}% (informational).`;
+        const fee = 4000 + Math.floor(Math.random() * 6000); // ₹4k-₹10k per loan
+        let total = 0;
+        newState.liabilities = newState.liabilities.map(l => {
+          if (!ids.has(l.id)) return l;
+          total += fee;
+          return { ...l, principal: l.principal + fee };
+        });
+        logMessage = `🏦 Late-payment penalty! ₹${total.toLocaleString()} added across your home/personal loans.`;
       } else {
         const penalty = 5000 + Math.floor(Math.random() * 10000);
         newState.cash -= penalty;
@@ -662,9 +667,8 @@ export const handleTileEffect = (state: GameState, tile: Tile): GameState => {
         name: "Gold Loan",
         category: "gold_loan",
         principal,
-        interestRate: 12,
       });
-      logMessage = `🪙 Gold Loan! Pawned family gold — +₹${principal.toLocaleString()} cash, added as debt @ 12% p.a.`;
+      logMessage = `🪙 Gold Loan! Pawned family gold — +₹${principal.toLocaleString()} cash, added as debt.`;
       break;
     }
 
@@ -681,9 +685,8 @@ export const handleTileEffect = (state: GameState, tile: Tile): GameState => {
           name: "Wedding Loan",
           category: "personal_loan",
           principal: shortfall,
-          interestRate: 15,
         });
-        logMessage = `💍 Wedding! Paid ₹${paid.toLocaleString()}, rest ₹${shortfall.toLocaleString()} financed @ 15% p.a.`;
+        logMessage = `💍 Wedding! Paid ₹${paid.toLocaleString()}, rest ₹${shortfall.toLocaleString()} financed.`;
       }
       break;
     }
@@ -745,7 +748,6 @@ export const handleTileEffect = (state: GameState, tile: Tile): GameState => {
           name: "Parents Medical Debt",
           category: "medical_debt",
           principal: cost,
-          interestRate: 12,
         });
         logMessage = `👴 Parents medical emergency! ₹${cost.toLocaleString()} added as debt (₹4,000/mo).`;
       }
@@ -797,7 +799,6 @@ export const handleTileEffect = (state: GameState, tile: Tile): GameState => {
         name: `BNPL: ${item}`,
         category: "bnpl",
         principal,
-        interestRate: 24,
       });
       logMessage = `🛍️ BNPL Trap! "${item}" financed — ₹${principal.toLocaleString()} added to outstanding debt.`;
       lessonMessage = "💡 Even 'no-cost' financing adds real principal you'll have to pay back.";
@@ -811,7 +812,6 @@ export const handleTileEffect = (state: GameState, tile: Tile): GameState => {
         name: "Solar Rooftop Loan",
         category: "personal_loan",
         principal,
-        interestRate: 9,
       });
       const elec = newState.expenses.find(e => e.category === "utilities" && /electric/i.test(e.name));
       let saved = 0;
@@ -836,7 +836,6 @@ export const handleTileEffect = (state: GameState, tile: Tile): GameState => {
         name: "EV Auto Loan",
         category: "vehicle_loan",
         principal,
-        interestRate: 8.5,
       });
       let fuelCut = 0;
       newState.expenses = newState.expenses.map(e => {
@@ -914,18 +913,16 @@ export const handleTileEffect = (state: GameState, tile: Tile): GameState => {
       const principal = isApp
         ? 15000 + Math.floor(Math.random() * 35000)
         : 40000 + Math.floor(Math.random() * 60000);
-      const apr = isApp ? 28 + Math.floor(Math.random() * 9) : 48;
       newState.cash += principal;
       newState.loansTaken += 1;
       addLiability(newState, {
         name: isApp ? "NBFC Instant App Loan" : "Payday Loan",
         category: "payday_loan",
         principal,
-        interestRate: apr,
       });
       logMessage = isApp
-        ? `📱 NBFC Instant App Loan! +₹${principal.toLocaleString()} in seconds @ ${apr}% APR.`
-        : `💸 Payday Loan! +₹${principal.toLocaleString()} cash now @ 48% APR.`;
+        ? `📱 NBFC Instant App Loan! +₹${principal.toLocaleString()} cash in seconds.`
+        : `💸 Payday Loan! +₹${principal.toLocaleString()} cash now.`;
       lessonMessage = "💡 Quick-cash loans compound viciously — avoid unless truly desperate.";
       break;
     }
@@ -940,7 +937,6 @@ export const handleTileEffect = (state: GameState, tile: Tile): GameState => {
           name: isLAS ? "Loan Against Securities" : "Margin Loan",
           category: "margin_loan",
           principal,
-          interestRate: isLAS ? 11 : 18,
         });
         logMessage = `📞 Margin Call! Broker financed your high-risk losses — ₹${principal.toLocaleString()} added to outstanding debt.`;
         lessonMessage = "💡 Leveraged investing magnifies losses. Margin loans survive even when the trade dies.";
@@ -959,9 +955,8 @@ export const handleTileEffect = (state: GameState, tile: Tile): GameState => {
         name: "Tax Arrears (IT Dept)",
         category: "tax_arrears",
         principal: arrears,
-        interestRate: 12,
       });
-      logMessage = `🧾 Tax Arrears! IT Dept demands ₹${arrears.toLocaleString()} from past filings — added as debt @ 12% p.a.`;
+      logMessage = `🧾 Tax Arrears! IT Dept demands ₹${arrears.toLocaleString()} from past filings — added as debt.`;
       break;
     }
   }

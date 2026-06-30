@@ -4,9 +4,10 @@ import { z } from "zod";
  * Schema contract for ANY AI-generated game effect that may be applied to GameState.
  *
  * Hard rules enforced here (never relaxed):
- *  - Liabilities carry ONLY principal + interestRate. No monthlyEMI, no
- *    monthlyPayment, no servicing, no emi — anywhere, ever.
- *  - Principals must be >= 0. Interest rate must be a finite number.
+ *  - Liabilities carry ONLY a principal. No interestRate, no monthlyEMI,
+ *    no monthlyPayment, no servicing, no emi — anywhere, ever. Debts must
+ *    feel like a fixed outstanding amount, never a rate.
+ *  - Principals must be >= 0.
  *  - Cash deltas / expense amounts must be finite numbers.
  *
  * Any AI response that fails .parse() MUST be discarded by the caller and
@@ -23,6 +24,11 @@ const FORBIDDEN_LIABILITY_KEYS = [
   "monthly_payment",
   "monthlyDebtServicing",
   "debtServicing",
+  "interestRate",
+  "interest_rate",
+  "interest",
+  "apr",
+  "rate",
 ];
 
 export const aiLiabilitySchema = z
@@ -30,7 +36,6 @@ export const aiLiabilitySchema = z
     name: z.string().min(1).max(120),
     category: z.string().min(1).max(60),
     principal: z.number().finite().min(0),
-    interestRate: z.number().finite().min(0).max(200),
   })
   .strict()
   .refine(
