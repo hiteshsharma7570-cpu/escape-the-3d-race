@@ -3,11 +3,14 @@ import { motion } from "framer-motion";
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { GameState } from "@/types/game";
 import { getTileMeta } from "@/lib/tileMeta";
+import { DiceRoll } from "./HudPanels";
 
 interface GameBoard2DProps {
   currentPosition: number;
   diceValue: number | null;
   gameState?: GameState;
+  isRolling?: boolean;
+  onRollDice?: () => void;
 }
 
 // NxN perimeter ring, clockwise from top-left. 10x10 -> 36 cells.
@@ -21,7 +24,7 @@ function buildPerimeter(n: number = BOARD_SIZE): Array<[number, number]> {
   return cells;
 }
 
-export const GameBoard2D = ({ currentPosition, diceValue, gameState }: GameBoard2DProps) => {
+export const GameBoard2D = ({ currentPosition, diceValue, gameState, isRolling, onRollDice }: GameBoard2DProps) => {
   const [displayedPosition, setDisplayedPosition] = useState(currentPosition);
   const [visited, setVisited] = useState<Set<number>>(new Set([currentPosition]));
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -263,9 +266,13 @@ export const GameBoard2D = ({ currentPosition, diceValue, gameState }: GameBoard
               <span className="font-semibold">{currentMeta.icon} {currentMeta.category}</span>
             </div>
 
-            {diceValue !== null && (
-              <div className="mt-2 px-3 py-1 rounded-full text-[11px] font-bold" style={{ background: "hsla(45, 95%, 55%, 0.15)", border: "1px solid hsla(45, 95%, 55%, 0.5)", color: "hsl(45, 100%, 75%)" }}>
-                🎲 Rolled {diceValue}
+            {onRollDice && (
+              <div className="mt-4 pt-4 w-full border-t border-amber-500/20 flex justify-center">
+                <DiceRoll
+                  diceValue={diceValue}
+                  isRolling={!!isRolling}
+                  onRoll={onRollDice}
+                />
               </div>
             )}
           </div>

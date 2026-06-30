@@ -494,16 +494,11 @@ const Index = () => {
             currentPosition={gameState.position}
             diceValue={gameState.diceValue}
             gameState={gameState}
+            isRolling={gameState.isRolling}
+            onRollDice={rollDice}
           />
 
-          <div className="flex items-end justify-between w-full max-w-[820px] gap-4 flex-wrap">
-            <div className="flex-1 min-w-[200px] flex justify-center">
-              <DiceRoll
-                diceValue={gameState.diceValue}
-                isRolling={gameState.isRolling}
-                onRoll={rollDice}
-              />
-            </div>
+          <div className="flex items-end justify-center w-full max-w-[820px] gap-4 flex-wrap">
             <ActionBar
               onPortfolio={() => setOpenPanel("portfolio")}
               onAssets={() => setOpenPanel("assets")}
