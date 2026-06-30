@@ -41,7 +41,17 @@ export type TileType =
  | "elderly_care_hire"
  | "payday_loan"
  | "margin_call"
- | "tax_arrears";
+ | "tax_arrears"
+ // ---- Pool slots used directly on the 24-tile board.
+ // Each resolves at landing-time to one of several concrete TileTypes above.
+ | "quick_cash_trap"
+ | "tax_trouble"
+ | "bill_shock"
+ | "unexpected_repair"
+ | "life_event"
+ | "family_care"
+ | "monthly_bills"
+ | "green_upgrade";
 
 export interface Tile {
  id: number;
