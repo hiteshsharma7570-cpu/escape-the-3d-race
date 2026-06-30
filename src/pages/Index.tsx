@@ -481,23 +481,45 @@ const Index = () => {
 
   const handleDecisionAccept = () => {
     if (!gameState.pendingDecision) return;
-    
-    if (gameState.pendingDecision.type === "charity") {
-      playSound("charity");
-      setGameState((prev) => applyCharityDecision(prev, true));
-    } else if (gameState.pendingDecision.type === "opportunity") {
-      playSound("opportunity");
-      setGameState((prev) => applyOpportunityDecision(prev, true));
+    const decision = gameState.pendingDecision;
+    try {
+      if (decision.type === "charity") {
+        playSound("charity");
+        setGameState((prev) => applyCharityDecision(prev, true));
+      } else if (decision.type === "opportunity") {
+        playSound("opportunity");
+        setGameState((prev) => applyOpportunityDecision(prev, true));
+      }
+    } catch (err) {
+      void logMaintenanceError({
+        errorType: "decision_apply",
+        error: err,
+        context: { decisionType: decision.type, accepted: true, turnCount: gameState.turnCount },
+        gameState,
+      });
+      toast("Recovered from a hiccup, your progress is safe");
+      setGameState((prev) => ({ ...prev, pendingDecision: null }));
     }
   };
 
   const handleDecisionDecline = () => {
     if (!gameState.pendingDecision) return;
-    
-    if (gameState.pendingDecision.type === "charity") {
-      setGameState((prev) => applyCharityDecision(prev, false));
-    } else if (gameState.pendingDecision.type === "opportunity") {
-      setGameState((prev) => applyOpportunityDecision(prev, false));
+    const decision = gameState.pendingDecision;
+    try {
+      if (decision.type === "charity") {
+        setGameState((prev) => applyCharityDecision(prev, false));
+      } else if (decision.type === "opportunity") {
+        setGameState((prev) => applyOpportunityDecision(prev, false));
+      }
+    } catch (err) {
+      void logMaintenanceError({
+        errorType: "decision_apply",
+        error: err,
+        context: { decisionType: decision.type, accepted: false, turnCount: gameState.turnCount },
+        gameState,
+      });
+      toast("Recovered from a hiccup, your progress is safe");
+      setGameState((prev) => ({ ...prev, pendingDecision: null }));
     }
   };
 
