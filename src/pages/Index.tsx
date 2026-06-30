@@ -62,8 +62,11 @@ const normalizeSavedGame = (saved: GameState, fallbackPlayerName: string, fallba
         }))
       : [],
     liabilities: Array.isArray(saved.liabilities)
-      ? saved.liabilities.map((liability) => ({
+      ? saved.liabilities.map((liability, idx) => ({
           ...liability,
+          // Guarantee unique ids — duplicates would make repayments
+          // collapse multiple liabilities at once.
+          id: liability.id ?? `liability-${idx}-${Date.now()}`,
           category: liability.category ?? "personal_loan",
           principal: liability.principal ?? 0,
           monthlyEMI: liability.monthlyEMI ?? 0,
@@ -380,15 +383,38 @@ const Index = () => {
   };
 
   const handleRepaySpecific = (liabilityId: string, amount: number) => {
-    const result = repayLiability(gameState, liabilityId, amount);
-    if (!result.ok) {
-      playSound("loseMoney");
-      toast.error(result.error ?? "Could not repay loan.");
-      return;
-    }
-    playSound("earnMoney");
-    setGameState(result.state);
-    toast.success("Loan payment applied!");
+    // Use a functional updater so we always operate on the latest state —
+    // prevents stale-closure bugs where the wrong liability gets reduced
+    // (or cash/net-worth lag behind) when other updates are in flight.
+    let outcome: { ok: boolean; error?: string; name?: string; pay?: number } = { ok: false };
+    setGameState((prev) => {
+      const result = repayLiability(prev, liabilityId, amount);
+      if (!result.ok) {
+        outcome = { ok: false, error: result.error };
+        return prev;
+      }
+      const target = prev.liabilities.find((l) => l.id === liabilityId);
+      outcome = {
+        ok: true,
+        name: target?.name,
+        pay: Math.min(Math.floor(amount), target?.principal ?? 0),
+      };
+      return result.state;
+    });
+    // Defer toast/sound to after the state has been queued so UI reflects the change first.
+    queueMicrotask(() => {
+      if (!outcome.ok) {
+        playSound("loseMoney");
+        toast.error(outcome.error ?? "Could not repay loan.");
+      } else {
+        playSound("earnMoney");
+        toast.success(
+          outcome.name
+            ? `Paid ₹${(outcome.pay ?? 0).toLocaleString()} towards ${outcome.name}.`
+            : "Loan payment applied!"
+        );
+      }
+    });
   };
 
   const payOffDebts = () => {
