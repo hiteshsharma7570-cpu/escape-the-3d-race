@@ -84,9 +84,9 @@ export const GameBoard2D = ({ currentPosition, diceValue, gameState, isRolling, 
         }}
       />
 
-      {/* perimeter grid */}
+      {/* 7x7 grid */}
       <div
-        className="relative grid h-full w-full p-2 sm:p-3 gap-1 sm:gap-1.5"
+        className="relative grid h-full w-full p-3 gap-1.5"
         style={{ gridTemplateColumns: `repeat(${BOARD_SIZE}, 1fr)`, gridTemplateRows: `repeat(${BOARD_SIZE}, 1fr)` }}
       >
         {BOARD_TILES.map((tile, index) => {
@@ -228,14 +228,14 @@ export const GameBoard2D = ({ currentPosition, diceValue, gameState, isRolling, 
             }}
           />
 
-          {/* Glass dashboard — fills the island, scales with board */}
-          <div className="relative glass-card gold-border rounded-2xl w-full h-full p-[clamp(10px,2.2%,22px)] flex flex-col items-center justify-between gap-[clamp(6px,1.6%,16px)]">
-            <div className="font-display text-[clamp(10px,1.4%,13px)] tracking-[0.3em] text-gold font-bold">
+          {/* Glass dashboard */}
+          <div className="relative glass-card gold-border rounded-2xl px-6 py-5 w-[94%] h-[92%] max-w-[560px] flex flex-col items-center justify-between">
+            <div className="font-display text-[12px] tracking-[0.3em] text-gold font-bold">
               FINANCIAL DASHBOARD
             </div>
 
             {gameState ? (
-              <div className="grid grid-cols-2 gap-x-[clamp(12px,4%,32px)] gap-y-[clamp(6px,1.6%,14px)] text-slate-200 w-full">
+              <div className="grid grid-cols-2 gap-x-8 gap-y-3 text-xs text-slate-200 w-full mt-2">
                 <Stat label="Cash"          value={`₹${(gameState.cash ?? 0).toLocaleString()}`}          tone="green" />
                 <Stat label="Expenses"      value={`₹${(totalExpenses ?? 0).toLocaleString()} /m`}        tone="red" />
                 <Stat label="Salary"        value={`₹${(gameState.salary ?? 0).toLocaleString()} /m`} />
@@ -255,21 +255,21 @@ export const GameBoard2D = ({ currentPosition, diceValue, gameState, isRolling, 
               <div className="text-slate-400 text-xs">Awaiting game state…</div>
             )}
 
-            <div className="w-full px-3 py-1.5 rounded-md border text-center" style={{ borderColor: "hsla(140, 90%, 55%, 0.4)", background: "hsla(140, 90%, 55%, 0.08)" }}>
+            <div className="w-full px-3 py-2 rounded-md border text-center" style={{ borderColor: "hsla(140, 90%, 55%, 0.4)", background: "hsla(140, 90%, 55%, 0.08)" }}>
               <div className="text-[10px] tracking-[0.25em] text-gold-deep font-bold">GOAL</div>
-              <div className="text-[10px] sm:text-[11px] text-slate-300 mt-0.5">Passive Income &gt; Monthly Expenses</div>
-              <div className="text-[12px] sm:text-sm font-display font-bold mt-0.5" style={{ color: "hsl(140, 90%, 65%)", textShadow: "0 0 10px hsla(140, 90%, 55%, 0.6)" }}>
+              <div className="text-[11px] text-slate-300 mt-0.5">Passive Income &gt; Monthly Expenses</div>
+              <div className="text-sm font-display font-bold mt-0.5" style={{ color: "hsl(140, 90%, 65%)", textShadow: "0 0 10px hsla(140, 90%, 55%, 0.6)" }}>
                 Escape The Rat Race!
               </div>
             </div>
 
-            <div className="text-[11px] text-slate-300 text-center">
+            <div className="text-[11px] text-slate-300">
               <span className="text-slate-500">On Tile: </span>
               <span className="font-semibold">{currentMeta.icon} {currentMeta.category}</span>
             </div>
 
             {(onRollDice || onPayOffDebts) && (
-              <div className="pt-2 w-full border-t border-amber-500/20 flex flex-wrap items-center justify-center gap-3">
+              <div className="pt-3 w-full border-t border-amber-500/20 flex items-center justify-center gap-4">
                 {onRollDice && (
                   <DiceRoll
                     diceValue={diceValue}
@@ -280,7 +280,7 @@ export const GameBoard2D = ({ currentPosition, diceValue, gameState, isRolling, 
                 {onPayOffDebts && (
                   <button
                     onClick={onPayOffDebts}
-                    className="glass-card rounded-xl px-4 py-2 text-[11px] font-display font-bold tracking-wider text-slate-200 hover:text-gold hover:border-amber-500/50 transition-all hover:scale-105 whitespace-nowrap"
+                    className="glass-card rounded-xl px-5 py-2.5 text-[11px] font-display font-bold tracking-wider text-slate-200 hover:text-gold hover:border-amber-500/50 transition-all hover:scale-105"
                   >
                     PAY OFF DEBTS
                   </button>
