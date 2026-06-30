@@ -62,7 +62,7 @@ const G = {
   inheritance:          { color: "#11998e", gradient: "linear-gradient(135deg,#11998e,#38ef7d)", icon: "🎁" },
   real_estate_boom:     { color: "#134e5e", gradient: "linear-gradient(135deg,#134e5e,#71b280)", icon: "🏠" },
   stock_market_crash:   { color: "#1a1a2e", gradient: "linear-gradient(135deg,#1a1a2e,#e94560)", icon: "📉" },
-  emi_hike:             { color: "#c0392b", gradient: "linear-gradient(135deg,#c0392b,#e74c3c)", icon: "📈" },
+  rate_hike:            { color: "#c0392b", gradient: "linear-gradient(135deg,#c0392b,#e74c3c)", icon: "📈" },
   insurance_premium:    { color: "#8e44ad", gradient: "linear-gradient(135deg,#8e44ad,#9b59b6)", icon: "🛡️" },
   home_repair:          { color: "#d35400", gradient: "linear-gradient(135deg,#d35400,#e67e22)", icon: "🔧" },
   traffic_fine:         { color: "#e74c3c", gradient: "linear-gradient(135deg,#e74c3c,#c0392b)", icon: "🚦" },
@@ -118,7 +118,7 @@ export const BOARD_TILES: Tile[] = [
   t(17, "pet_adoption",        "Pet Adopt"),
   t(18, "inheritance",         "Inheritance"),
   t(19, "tax_refund",          "Tax Refund"),
-  t(20, "emi_hike",            "EMI Hike"),
+  t(20, "rate_hike",           "Rate Hike"),
   t(21, "real_estate_boom",    "RE Boom"),
   t(22, "wedding_in_family",   "Wedding"),
   t(23, "insurance_premium",   "Insurance"),
@@ -149,13 +149,9 @@ export const calculateMonthlyCashFlow = (state: GameState): number => {
 };
 
 export const calculateTotalExpenses = (state: GameState): number => {
-  // EMI system removed — liabilities are outstanding debts only, not monthly outflows.
-  const recurring = (state.expenses ?? []).reduce((sum, e) => sum + (e.monthlyAmount ?? 0), 0);
-  return recurring;
+  // Liabilities are outstanding debts only — they affect net worth, never monthly outflow.
+  return (state.expenses ?? []).reduce((sum, e) => sum + (e.monthlyAmount ?? 0), 0);
 };
-
-/** Debt servicing removed — liabilities no longer create monthly EMI outflows. */
-export const calculateDebtServicing = (_state: GameState): number => 0;
 
 /** Sum of all outstanding debt principal across liabilities. */
 export const calculateOutstandingDebt = (state: GameState): number =>
