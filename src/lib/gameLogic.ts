@@ -106,51 +106,58 @@ const t = (id: number, type: keyof typeof G, label: string): Tile => ({
   id, type: type as Tile["type"], label, color: G[type].color, gradient: G[type].gradient, icon: G[type].icon,
 });
 
+// 24-tile perimeter ring (7x7 board: 4*7 - 4 = 24).
+// The 36 underlying tile types still exist; pool slots resolve to one of
+// them at landing-time via resolvePoolTile(), so repeat visits feel different.
 export const BOARD_TILES: Tile[] = [
   t(0,  "payday",              "Pay Day"),
   t(1,  "opportunity",         "Opportunity"),
-  t(2,  "electricity_bill",    "Electricity Bill"),
-  t(3,  "market",              "Market"),
-  t(4,  "tax_audit",           "Tax Audit"),
-  t(5,  "credit_card_bill",    "Credit Card Bill"),
-  t(6,  "bonus",               "Bonus!"),
-  t(7,  "baby",                "Baby!"),
-  t(8,  "school_fees",         "School Fees"),
-  t(9,  "medical_emergency",   "Medical"),
-  t(10, "gold_loan_offer",     "Gold Loan"),
-  t(11, "traffic_fine",        "Traffic Fine"),
-  t(12, "side_hustle",         "Side Hustle"),
-  t(13, "bnpl_trap",           "BNPL Trap"),
-  t(14, "society_maintenance", "Society Fee"),
-  t(15, "payday_loan",         "Payday Loan"),
-  t(16, "downsized",           "Downsized!"),
-  t(17, "pet_adoption",        "Pet Adopt"),
-  t(18, "inheritance",         "Inheritance"),
-  t(19, "tax_refund",          "Tax Refund"),
-  t(20, "rate_hike",           "Rate Hike"),
-  t(21, "real_estate_boom",    "RE Boom"),
-  t(22, "wedding_in_family",   "Wedding"),
-  t(23, "insurance_premium",   "Insurance"),
-  t(24, "stock_market_crash",  "Crash"),
-  t(25, "margin_call",         "Margin Call"),
-  t(26, "tax_arrears",         "Tax Arrears"),
-  t(27, "ev_switch",           "Go EV"),
-  t(28, "charity",             "Charity"),
-  t(29, "rent_hike",           "Rent Hike"),
-  t(30, "parents_medical",     "Parents Care"),
-  t(31, "streaming_audit",     "OTT Audit"),
-  t(32, "vehicle_breakdown",   "Vehicle Repair"),
-  t(33, "solar_install",       "Go Solar"),
-  t(34, "elderly_care_hire",   "Elder Care"),
-  t(35, "loan_interest_spike", "Interest Spike"),
-  t(36, "vacation",            "Vacation"),
-  t(37, "dinner",              "Dinner Out"),
-  t(38, "home_repair",         "Home Repair"),
-  t(39, "festival_expense",    "Festival"),
-  t(40, "fuel_price_hike",     "Fuel Hike"),
-  t(41, "gst_notice",          "GST Notice"),
-  t(42, "subscription_creep",  "Subscription"),
+  t(2,  "bill_shock",          "Bill Shock"),
+  t(3,  "quick_cash_trap",     "Quick Cash Trap"),
+  t(4,  "bonus",               "Bonus!"),
+  t(5,  "life_event",          "Life Event"),
+  t(6,  "market",              "Market"),
+  t(7,  "credit_card_bill",    "Credit Card Bill"),
+  t(8,  "side_hustle",         "Side Hustle"),
+  t(9,  "monthly_bills",       "Monthly Bills"),
+  t(10, "medical_emergency",   "Medical"),
+  t(11, "charity",             "Charity"),
+  t(12, "tax_refund",          "Tax Refund"),
+  t(13, "unexpected_repair",   "Unexpected Repair"),
+  t(14, "bnpl_trap",           "BNPL Trap"),
+  t(15, "downsized",           "Downsized!"),
+  t(16, "inheritance",         "Inheritance"),
+  t(17, "family_care",         "Family Care"),
+  t(18, "rate_hike",           "Rate Hike"),
+  t(19, "real_estate_boom",    "RE Boom"),
+  t(20, "wedding_in_family",   "Wedding"),
+  t(21, "stock_market_crash",  "Crash"),
+  t(22, "tax_trouble",         "Tax Trouble"),
+  t(23, "green_upgrade",       "Green Upgrade"),
 ];
+
+// Pool definitions: each board slot above maps to a set of underlying
+// concrete tile types. Resolved at landing-time so the same board cell
+// can produce different flavors on repeat visits.
+const TILE_POOLS: Partial<Record<Tile["type"], Tile["type"][]>> = {
+  quick_cash_trap:   ["gold_loan_offer", "payday_loan", "margin_call"],
+  tax_trouble:       ["tax_audit", "tax_arrears", "gst_notice"],
+  bill_shock:        ["rent_hike", "fuel_price_hike", "insurance_premium", "loan_interest_spike", "subscription_creep"],
+  unexpected_repair: ["vehicle_breakdown", "home_repair", "traffic_fine"],
+  life_event:        ["baby", "school_fees", "festival_expense", "vacation", "dinner"],
+  family_care:       ["parents_medical", "elderly_care_hire", "pet_adoption"],
+  monthly_bills:     ["electricity_bill", "society_maintenance"],
+  green_upgrade:     ["ev_switch", "solar_install"],
+};
+
+/** If `tile` is a pool slot, return a synthetic Tile of a randomly-picked
+ *  underlying type. Otherwise returns the tile unchanged. */
+export const resolvePoolTile = (tile: Tile): Tile => {
+  const pool = TILE_POOLS[tile.type];
+  if (!pool || pool.length === 0) return tile;
+  const pickedType = pool[Math.floor(Math.random() * pool.length)];
+  return { ...tile, type: pickedType };
+};
 
 export const calculateMonthlyCashFlow = (state: GameState): number => {
   const totalIncome = (state.salary ?? 0) + (state.passiveIncome ?? 0);
