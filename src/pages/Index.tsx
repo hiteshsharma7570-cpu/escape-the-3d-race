@@ -31,7 +31,7 @@ import {
 } from "@/components/ui/tooltip";
 import {
   PlayerPanel, MarketStatusPanel, PlayersPanel, GameLogPanel,
-  TopCenterHud, ActionBar,
+  TopCenterHud,
 } from "@/components/game/HudPanels";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { AchievementsPanel } from "@/components/game/AchievementsPanel";
