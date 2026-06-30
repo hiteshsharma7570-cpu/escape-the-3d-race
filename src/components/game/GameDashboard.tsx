@@ -266,9 +266,9 @@ export const GameDashboard = ({
                     </div>
                     <div className="flex items-center gap-2 shrink-0">
                       <span className="text-success text-right">
-                        ₹{asset.value.toLocaleString()}
-                        {asset.monthlyIncome > 0 && (
-                          <span className="text-xs ml-1">+₹{asset.monthlyIncome.toLocaleString()}/mo</span>
+                        ₹{(asset.value ?? 0).toLocaleString()}
+                        {(asset.monthlyIncome ?? 0) > 0 && (
+                          <span className="text-xs ml-1">+₹{(asset.monthlyIncome ?? 0).toLocaleString()}/mo</span>
                         )}
                       </span>
                       <Button
