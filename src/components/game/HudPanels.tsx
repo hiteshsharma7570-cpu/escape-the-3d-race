@@ -307,25 +307,22 @@ export const DiceRoll = ({
 }: { diceValue: number | null; isRolling: boolean; onRoll: () => void }) => {
   return (
     <div className="flex flex-col items-center gap-3">
-      <div className="flex gap-3 h-14 items-center">
-        {[0, 1].map((i) => (
-          <motion.div
-            key={i}
-            className="w-12 h-12 rounded-xl flex items-center justify-center font-display font-black text-2xl text-slate-900"
-            style={{
-              background: "linear-gradient(160deg, #fff 0%, #d8dde6 100%)",
-              boxShadow: "0 6px 16px hsla(0,0%,0%,0.5), inset 0 -3px 6px hsla(0,0%,0%,0.15), inset 0 1px 0 hsla(0,0%,100%,0.9)",
-            }}
-            animate={
-              isRolling
-                ? { rotate: [0, 360, 720], scale: [1, 1.1, 1], y: [0, -8, 0] }
-                : { rotate: 0, scale: 1, y: 0 }
-            }
-            transition={{ duration: 0.5, delay: i * 0.05 }}
-          >
-            {isRolling ? "?" : (diceValue ?? (i === 0 ? 3 : 4))}
-          </motion.div>
-        ))}
+      <div className="flex gap-3 h-14 items-center justify-center">
+        <motion.div
+          className="w-12 h-12 rounded-xl flex items-center justify-center font-display font-black text-2xl text-slate-900"
+          style={{
+            background: "linear-gradient(160deg, #fff 0%, #d8dde6 100%)",
+            boxShadow: "0 6px 16px hsla(0,0%,0%,0.5), inset 0 -3px 6px hsla(0,0%,0%,0.15), inset 0 1px 0 hsla(0,0%,100%,0.9)",
+          }}
+          animate={
+            isRolling
+              ? { rotate: [0, 360, 720], scale: [1, 1.1, 1], y: [0, -8, 0] }
+              : { rotate: 0, scale: 1, y: 0 }
+          }
+          transition={{ duration: 0.5 }}
+        >
+          {isRolling ? "?" : (diceValue ?? 1)}
+        </motion.div>
       </div>
       <button
         onClick={onRoll}
