@@ -150,6 +150,10 @@ export const calculateTotalExpenses = (state: GameState): number => {
 /** Debt servicing removed — liabilities no longer create monthly EMI outflows. */
 export const calculateDebtServicing = (_state: GameState): number => 0;
 
+/** Sum of all outstanding debt principal across liabilities. */
+export const calculateOutstandingDebt = (state: GameState): number =>
+  (state.liabilities ?? []).reduce((sum, l) => sum + (l.principal ?? 0), 0);
+
 /** Sum of all recurring expenses (rent, bills, subscriptions). */
 export const calculateRecurringExpenses = (state: GameState): number =>
   (state.expenses ?? []).reduce((sum, e) => sum + (e.monthlyAmount ?? 0), 0);
