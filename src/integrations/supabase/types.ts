@@ -47,6 +47,45 @@ export type Database = {
         }
         Relationships: []
       }
+      ai_maintenance_log: {
+        Row: {
+          ai_diagnosis: string | null
+          ai_suggested_fix: string | null
+          context: Json
+          created_at: string
+          diagnosed_at: string | null
+          error_message: string | null
+          error_type: string
+          game_state: Json | null
+          id: string
+          stack: string | null
+        }
+        Insert: {
+          ai_diagnosis?: string | null
+          ai_suggested_fix?: string | null
+          context?: Json
+          created_at?: string
+          diagnosed_at?: string | null
+          error_message?: string | null
+          error_type: string
+          game_state?: Json | null
+          id?: string
+          stack?: string | null
+        }
+        Update: {
+          ai_diagnosis?: string | null
+          ai_suggested_fix?: string | null
+          context?: Json
+          created_at?: string
+          diagnosed_at?: string | null
+          error_message?: string | null
+          error_type?: string
+          game_state?: Json | null
+          id?: string
+          stack?: string | null
+        }
+        Relationships: []
+      }
       daily_results: {
         Row: {
           achieved_at: string
