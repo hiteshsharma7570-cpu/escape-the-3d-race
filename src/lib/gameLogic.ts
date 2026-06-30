@@ -134,6 +134,13 @@ export const BOARD_TILES: Tile[] = [
   t(33, "solar_install",       "Go Solar"),
   t(34, "elderly_care_hire",   "Elder Care"),
   t(35, "loan_interest_spike", "Interest Spike"),
+  t(36, "vacation",            "Vacation"),
+  t(37, "dinner",              "Dinner Out"),
+  t(38, "home_repair",         "Home Repair"),
+  t(39, "festival_expense",    "Festival"),
+  t(40, "fuel_price_hike",     "Fuel Hike"),
+  t(41, "gst_notice",          "GST Notice"),
+  t(42, "subscription_creep",  "Subscription"),
 ];
 
 export const calculateMonthlyCashFlow = (state: GameState): number => {
@@ -459,14 +466,26 @@ export const handleTileEffect = (state: GameState, tile: Tile): GameState => {
         newState.cash -= repairCost;
         logMessage = `🔧 Home Repair! Paid ₹${repairCost.toLocaleString()} for urgent repairs.`;
       } else {
-        addLiability(newState, {
-          name: "Home Repair Loan",
-          category: "personal_loan",
-          principal: repairCost,
-          monthlyEMI: 5000,
-          interestRate: 14,
-        });
-        logMessage = `🔧 Home Repair! Can't afford it — added ₹${repairCost.toLocaleString()} as loan (₹5,000/mo).`;
+        if (repairCost >= 60000) {
+          const principal = repairCost + 50000;
+          addLiability(newState, {
+            name: "Home Renovation Loan",
+            category: "home_loan",
+            principal,
+            monthlyEMI: Math.round(principal / 60),
+            interestRate: 10.5,
+          });
+          logMessage = `🔧 Home Renovation Loan taken — ₹${principal.toLocaleString()} outstanding @ 10.5% p.a.`;
+        } else {
+          addLiability(newState, {
+            name: "Home Repair Loan",
+            category: "personal_loan",
+            principal: repairCost,
+            monthlyEMI: 5000,
+            interestRate: 14,
+          });
+          logMessage = `🔧 Home Repair! Couldn't afford it — added ₹${repairCost.toLocaleString()} as personal loan.`;
+        }
       }
       break;
     }
@@ -521,6 +540,27 @@ export const handleTileEffect = (state: GameState, tile: Tile): GameState => {
       const festCost = 10000 + Math.floor(Math.random() * 40000);
       newState.cash -= festCost;
       logMessage = `🪔 Festival season! Spent ₹${festCost.toLocaleString()} on celebrations and gifts.`;
+      const hasFestFund = newState.expenses.some(e => /festival fund/i.test(e.name));
+      if (!hasFestFund && Math.random() < 0.6) {
+        addExpense(newState, {
+          name: "Society Festival Fund (Ganpati/Diwali)",
+          category: "maintenance",
+          monthlyAmount: 600,
+          essential: false,
+        });
+        lessonMessage = "💡 Society collections feel small but add up — they're a real recurring expense.";
+      }
+      if (Math.random() < 0.2) {
+        const principal = 60000 + Math.floor(Math.random() * 90000);
+        addLiability(newState, {
+          name: "Chit Fund Default",
+          category: "personal_loan",
+          principal,
+          monthlyEMI: Math.round(principal / 24),
+          interestRate: 18,
+        });
+        logMessage += ` Chit fund payout missed — ₹${principal.toLocaleString()} now owed to the group.`;
+      }
       break;
     }
 
@@ -657,6 +697,15 @@ export const handleTileEffect = (state: GameState, tile: Tile): GameState => {
       });
       logMessage = `📺 Subscription Creep! You signed up for ${name} — ₹${monthly.toLocaleString()}/mo on auto-debit.`;
       lessonMessage = "💡 Small recurring charges silently inflate your monthly burn. Audit them quarterly.";
+      const hasCloud = newState.expenses.some(e => /cloud storage/i.test(e.name));
+      if (!hasCloud && Math.random() < 0.5) {
+        addExpense(newState, {
+          name: "Cloud Storage & App Subscriptions",
+          category: "subscription",
+          monthlyAmount: 350,
+          essential: false,
+        });
+      }
       break;
     }
 
@@ -864,35 +913,42 @@ export const handleTileEffect = (state: GameState, tile: Tile): GameState => {
     }
 
     case "payday_loan": {
-      // Predatory short-term loan — instant cash, brutal EMI for 4 months.
-      const principal = 40000 + Math.floor(Math.random() * 60000);
+      // Half the time it's a sketchy NBFC instant-app loan flavor.
+      const isApp = Math.random() < 0.5;
+      const principal = isApp
+        ? 15000 + Math.floor(Math.random() * 35000)
+        : 40000 + Math.floor(Math.random() * 60000);
+      const apr = isApp ? 28 + Math.floor(Math.random() * 9) : 48;
       const emi = Math.round(principal / 4 * 1.15);
       newState.cash += principal;
       newState.loansTaken += 1;
       addLiability(newState, {
-        name: "Payday Loan",
+        name: isApp ? "NBFC Instant App Loan" : "Payday Loan",
         category: "payday_loan",
         principal,
         monthlyEMI: emi,
-        interestRate: 48,
+        interestRate: apr,
       });
-      logMessage = `💸 Payday Loan! +₹${principal.toLocaleString()} cash now, but ₹${emi.toLocaleString()}/mo for 4 months @ 48% APR.`;
-      lessonMessage = "💡 Payday loans look small but compound viciously — avoid unless truly desperate.";
+      logMessage = isApp
+        ? `📱 NBFC Instant App Loan! +₹${principal.toLocaleString()} in seconds @ ${apr}% APR.`
+        : `💸 Payday Loan! +₹${principal.toLocaleString()} cash now @ 48% APR.`;
+      lessonMessage = "💡 Quick-cash loans compound viciously — avoid unless truly desperate.";
       break;
     }
 
     case "margin_call": {
-      // Broker calls in margin loan if you hold high-risk assets; otherwise minor fee.
       const hasHighRisk = newState.assets.some(a => a.risk === "high");
-      if (hasHighRisk) {
+      const hasStocks = newState.assets.some(a => /stock|equity|mutual|crypto|startup/i.test(a.name));
+      if (hasHighRisk || hasStocks) {
         const principal = 200000 + Math.floor(Math.random() * 300000);
         const emi = Math.round(principal * 0.03);
+        const isLAS = hasStocks && !hasHighRisk;
         addLiability(newState, {
-          name: "Margin Loan",
+          name: isLAS ? "Loan Against Securities" : "Margin Loan",
           category: "margin_loan",
           principal,
           monthlyEMI: emi,
-          interestRate: 18,
+          interestRate: isLAS ? 11 : 18,
         });
         logMessage = `📞 Margin Call! Broker financed your high-risk losses — ₹${principal.toLocaleString()} debt, ₹${emi.toLocaleString()}/mo.`;
         lessonMessage = "💡 Leveraged investing magnifies losses. Margin loans survive even when the trade dies.";

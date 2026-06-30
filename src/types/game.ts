@@ -165,6 +165,7 @@ export const PROFESSION_PROFILES: Record<string, ProfessionProfile> = {
     liabilities: [
       { name: "Two-Wheeler Loan", category: "vehicle_loan",   principal: 80000,  monthlyEMI: 1800, interestRate: 8.5 },
       { name: "Mobile EMI",       category: "personal_loan",  principal: 15000,  monthlyEMI: 700,  interestRate: 10 },
+      { name: "Family Loan (No Interest)", category: "personal_loan", principal: 50000, monthlyEMI: 2000, interestRate: 0 },
     ],
     expenses: [
       { name: "Home Rent",          category: "rent",         monthlyAmount: 9000, essential: true  },
@@ -172,6 +173,9 @@ export const PROFESSION_PROFILES: Record<string, ProfessionProfile> = {
       { name: "Mobile + Broadband", category: "utilities",    monthlyAmount: 900,  essential: true  },
       { name: "Health Insurance",   category: "insurance",    monthlyAmount: 1200, essential: true  },
       { name: "Parents' Allowance", category: "lifestyle",    monthlyAmount: 3000, essential: false },
+      { name: "Kids' Tuition / Coaching Classes", category: "childcare", monthlyAmount: 2500, essential: false },
+      { name: "Cab / Auto Commute",  category: "transport",   monthlyAmount: 1800, essential: true  },
+      { name: "Recurring Temple/Charity Offering", category: "lifestyle", monthlyAmount: 500, essential: false },
     ],
   },
   Engineer: {
@@ -181,6 +185,7 @@ export const PROFESSION_PROFILES: Record<string, ProfessionProfile> = {
       { name: "Home Loan",     category: "home_loan",     principal: 2500000, monthlyEMI: 16000, interestRate: 6.5 },
       { name: "Car Loan",      category: "vehicle_loan",  principal: 400000,  monthlyEMI: 6000,  interestRate: 7.0 },
       { name: "Education Loan",category: "education_loan",principal: 250000,  monthlyEMI: 3500,  interestRate: 5.5 },
+      { name: "Furniture & Appliance Financing", category: "bnpl", principal: 90000, monthlyEMI: 7500, interestRate: 18 },
     ],
     expenses: [
       { name: "Society Maintenance",category: "maintenance",  monthlyAmount: 3000, essential: true  },
@@ -189,6 +194,9 @@ export const PROFESSION_PROFILES: Record<string, ProfessionProfile> = {
       { name: "Fuel",               category: "transport",    monthlyAmount: 4000, essential: true  },
       { name: "Parents' Allowance", category: "lifestyle",    monthlyAmount: 6000, essential: false },
       { name: "Term + Health Ins.", category: "insurance",    monthlyAmount: 3000, essential: true  },
+      { name: "WiFi + DTH Bundle",  category: "utilities",    monthlyAmount: 1400, essential: true  },
+      { name: "Gym / Yoga Membership", category: "lifestyle", monthlyAmount: 1500, essential: false },
+      { name: "Cloud Storage & App Subscriptions", category: "subscription", monthlyAmount: 350, essential: false },
     ],
   },
   Doctor: {
@@ -198,6 +206,7 @@ export const PROFESSION_PROFILES: Record<string, ProfessionProfile> = {
       { name: "Medical Education Loan", category: "education_loan", principal: 1400000, monthlyEMI: 12000, interestRate: 7.0 },
       { name: "Car Loan",               category: "vehicle_loan",   principal: 800000,  monthlyEMI: 9000,  interestRate: 7.0 },
       { name: "Clinic Equipment Loan",  category: "business_loan",  principal: 500000,  monthlyEMI: 5000,  interestRate: 8 },
+      { name: "Home Renovation Loan",   category: "home_loan",      principal: 600000,  monthlyEMI: 11000, interestRate: 10.5 },
     ],
     expenses: [
       { name: "Home Rent",            category: "rent",         monthlyAmount: 18000, essential: true  },
@@ -208,6 +217,9 @@ export const PROFESSION_PROFILES: Record<string, ProfessionProfile> = {
       { name: "Clinic Consumables",   category: "professional", monthlyAmount: 5000,  essential: true  },
       { name: "Fuel",                 category: "transport",    monthlyAmount: 5000,  essential: true  },
       { name: "Parents' Allowance",   category: "lifestyle",    monthlyAmount: 8000,  essential: false },
+      { name: "Domestic Help & Cook", category: "lifestyle",    monthlyAmount: 7000,  essential: false },
+      { name: "Elderly Parents' Medicines", category: "eldercare", monthlyAmount: 3500, essential: true },
+      { name: "Salon / Personal Grooming",  category: "lifestyle", monthlyAmount: 1800, essential: false },
     ],
   },
   Lawyer: {
@@ -216,6 +228,7 @@ export const PROFESSION_PROFILES: Record<string, ProfessionProfile> = {
     liabilities: [
       { name: "Education Loan", category: "education_loan", principal: 700000, monthlyEMI: 6000, interestRate: 6.0 },
       { name: "Car Loan",       category: "vehicle_loan",   principal: 500000, monthlyEMI: 6500, interestRate: 7.0 },
+      { name: "Loan Against Securities", category: "margin_loan", principal: 200000, monthlyEMI: 6000, interestRate: 11 },
     ],
     expenses: [
       { name: "Office Rent",          category: "rent",         monthlyAmount: 14000, essential: true  },
@@ -226,6 +239,9 @@ export const PROFESSION_PROFILES: Record<string, ProfessionProfile> = {
       { name: "Electricity Bill",     category: "utilities",    monthlyAmount: 3000,  essential: true  },
       { name: "Fuel",                 category: "transport",    monthlyAmount: 5000,  essential: true  },
       { name: "Parents' Allowance",   category: "lifestyle",    monthlyAmount: 6000,  essential: false },
+      { name: "Vehicle Servicing & Maintenance", category: "transport", monthlyAmount: 1500, essential: true },
+      { name: "Co-working Space Membership",     category: "professional", monthlyAmount: 8000, essential: false },
+      { name: "Pet Grooming & Vet Visits",       category: "pet",       monthlyAmount: 2000, essential: false },
     ],
   },
   "Business Owner": {
@@ -234,6 +250,8 @@ export const PROFESSION_PROFILES: Record<string, ProfessionProfile> = {
     liabilities: [
       { name: "Business Loan",           category: "business_loan", principal: 1700000, monthlyEMI: 15000, interestRate: 8.5 },
       { name: "Working Capital Loan",    category: "business_loan", principal: 500000,  monthlyEMI: 6500,  interestRate: 10 },
+      { name: "Co-signed Sibling's Loan", category: "personal_loan", principal: 250000, monthlyEMI: 5500, interestRate: 12 },
+      { name: "NBFC Instant App Loan",   category: "personal_loan", principal: 35000,   monthlyEMI: 3500,  interestRate: 32 },
     ],
     expenses: [
       { name: "Office Rent",            category: "rent",         monthlyAmount: 25000, essential: true  },
@@ -243,6 +261,9 @@ export const PROFESSION_PROFILES: Record<string, ProfessionProfile> = {
       { name: "Business Insurance",     category: "insurance",    monthlyAmount: 6000,  essential: true  },
       { name: "Fuel + Logistics",       category: "transport",    monthlyAmount: 10000, essential: true  },
       { name: "Parents' Allowance",     category: "lifestyle",    monthlyAmount: 9000,  essential: false },
+      { name: "Co-working Space Membership", category: "professional", monthlyAmount: 6000, essential: false },
+      { name: "Society Festival Fund (Ganpati/Diwali collection)", category: "maintenance", monthlyAmount: 800, essential: false },
+      { name: "WiFi + DTH Bundle",      category: "utilities",    monthlyAmount: 1600, essential: true  },
     ],
   },
 };
