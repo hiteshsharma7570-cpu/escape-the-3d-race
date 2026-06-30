@@ -363,7 +363,7 @@ const Index = () => {
         },
       ],
       gameLog: [
-        `[Turn ${prev.turnCount}] Took a loan of ₹${loanAmount.toLocaleString()}. Monthly EMI: ₹${monthlyEMI.toLocaleString()}`,
+        `[Turn ${prev.turnCount}] Took a loan of ₹${loanAmount.toLocaleString()}. Outstanding debt added.`,
         ...prev.gameLog.slice(0, 19),
       ],
     }));
