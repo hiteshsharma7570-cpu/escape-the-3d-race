@@ -276,6 +276,12 @@ export const GameBoard2D = ({ currentPosition, diceValue, gameState, isRolling, 
                 />
               </div>
             )}
+
+            {actionBar && (
+              <div className="mt-4 pt-4 w-full border-t border-amber-500/20 flex justify-center">
+                {actionBar}
+              </div>
+            )}
           </div>
         </div>
       </div>
