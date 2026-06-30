@@ -73,7 +73,7 @@ export const Leaderboard = ({ players, currentPlayerId }: LeaderboardProps) => {
 
                     <div className="text-right">
                       <p className="font-bold text-success">
-                        ₹{player.net_worth.toLocaleString()}
+                        ₹{(player.net_worth ?? 0).toLocaleString()}
                       </p>
                       <p className="text-xs text-muted-foreground">Net Worth</p>
                     </div>
@@ -82,11 +82,11 @@ export const Leaderboard = ({ players, currentPlayerId }: LeaderboardProps) => {
                   <div className="mt-3 grid grid-cols-3 gap-2 text-xs">
                     <div>
                       <p className="text-muted-foreground">Cash</p>
-                      <p className="font-semibold">₹{player.cash.toLocaleString()}</p>
+                      <p className="font-semibold">₹{(player.cash ?? 0).toLocaleString()}</p>
                     </div>
                     <div>
                       <p className="text-muted-foreground">Passive</p>
-                      <p className="font-semibold">₹{player.passive_income.toLocaleString()}</p>
+                      <p className="font-semibold">₹{(player.passive_income ?? 0).toLocaleString()}</p>
                     </div>
                     <div>
                       <p className="text-muted-foreground">Position</p>

@@ -23,11 +23,11 @@ export const RepayLoanDialog = ({ open, onOpenChange, gameState, onRepay }: Repa
   );
 
   const amountNum = Number(amountStr.replace(/[^0-9]/g, "")) || 0;
-  const canAfford = amountNum > 0 && amountNum <= gameState.cash && selected && amountNum <= selected.principal;
+  const canAfford = amountNum > 0 && amountNum <= (gameState.cash ?? 0) && selected && amountNum <= (selected.principal ?? 0);
 
   const handleSelect = (l: Liability) => {
     setSelectedId(l.id);
-    const max = Math.min(l.principal, gameState.cash);
+    const max = Math.min(l.principal ?? 0, gameState.cash ?? 0);
     setAmountStr(String(max));
   };
 
@@ -46,7 +46,7 @@ export const RepayLoanDialog = ({ open, onOpenChange, gameState, onRepay }: Repa
           <DialogTitle>Repay a Loan</DialogTitle>
           <DialogDescription>
             Pick any outstanding debt and choose how much principal to pay down.
-            Cash available: <span className="font-semibold text-success">₹{gameState.cash.toLocaleString()}</span>
+            Cash available: <span className="font-semibold text-success">₹{(gameState.cash ?? 0).toLocaleString()}</span>
           </DialogDescription>
         </DialogHeader>
 
@@ -104,29 +104,29 @@ export const RepayLoanDialog = ({ open, onOpenChange, gameState, onRepay }: Repa
                     <Button
                       size="sm"
                       variant="outline"
-                      onClick={() => setAmountStr(String(Math.min(selected.principal, gameState.cash)))}
+                      onClick={() => setAmountStr(String(Math.min(selected.principal ?? 0, gameState.cash ?? 0)))}
                     >
                       Max payable
                     </Button>
                     <Button
                       size="sm"
                       variant="outline"
-                      onClick={() => setAmountStr(String(Math.floor(Math.min(selected.principal, gameState.cash) / 2)))}
+                      onClick={() => setAmountStr(String(Math.floor(Math.min(selected.principal ?? 0, gameState.cash ?? 0) / 2)))}
                     >
                       Half
                     </Button>
                     <Button
                       size="sm"
                       variant="outline"
-                      onClick={() => setAmountStr(String(selected.principal))}
+                      onClick={() => setAmountStr(String(selected.principal ?? 0))}
                     >
-                      Full ₹{selected.principal.toLocaleString()}
+                      Full ₹{(selected.principal ?? 0).toLocaleString()}
                     </Button>
                   </div>
-                  {amountNum > gameState.cash && (
+                  {amountNum > (gameState.cash ?? 0) && (
                     <p className="text-xs text-destructive mt-1">Not enough cash.</p>
                   )}
-                  {selected && amountNum > selected.principal && (
+                  {selected && amountNum > (selected.principal ?? 0) && (
                     <p className="text-xs text-destructive mt-1">Amount exceeds remaining principal.</p>
                   )}
                 </div>

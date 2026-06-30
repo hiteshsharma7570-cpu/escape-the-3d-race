@@ -30,9 +30,9 @@ const readEntries = (): Entry[] => {
           playerName: state.playerName,
           profession: state.profession,
           netWorth: calculateNetWorth(state),
-          cash: state.cash,
-          passiveIncome: state.passiveIncome,
-          hasEscapedRatRace: state.hasEscapedRatRace,
+          cash: state.cash ?? 0,
+          passiveIncome: state.passiveIncome ?? 0,
+          hasEscapedRatRace: state.hasEscapedRatRace ?? false,
         });
       } catch {
         // ignore malformed save
@@ -124,10 +124,10 @@ export const LocalLeaderboard = ({ currentPlayerName, limit = 5 }: LocalLeaderbo
                 </div>
                 <div className="text-right">
                   <p className="text-sm font-bold text-success">
-                    ₹{entry.netWorth.toLocaleString()}
+                    ₹{(entry.netWorth ?? 0).toLocaleString()}
                   </p>
                   <p className="text-[10px] text-muted-foreground">
-                    Passive ₹{entry.passiveIncome.toLocaleString()}
+                    Passive ₹{(entry.passiveIncome ?? 0).toLocaleString()}
                   </p>
                 </div>
               </li>
