@@ -91,6 +91,15 @@ const G = {
   payday_loan:          { color: "#922b50", gradient: "linear-gradient(135deg,#922b50,#e84393)", icon: "💸" },
   margin_call:          { color: "#7b1f1f", gradient: "linear-gradient(135deg,#7b1f1f,#e74c3c)", icon: "📞" },
   tax_arrears:          { color: "#7e5109", gradient: "linear-gradient(135deg,#7e5109,#b9770e)", icon: "🧾" },
+  // ---- Pool slots (the only tile types actually placed on the 24-tile board)
+  quick_cash_trap:      { color: "#8e0e3a", gradient: "linear-gradient(135deg,#8e0e3a,#e84393)", icon: "💸" },
+  tax_trouble:          { color: "#7e5109", gradient: "linear-gradient(135deg,#7e5109,#c0392b)", icon: "🧾" },
+  bill_shock:           { color: "#b03a2e", gradient: "linear-gradient(135deg,#b03a2e,#f1948a)", icon: "💥" },
+  unexpected_repair:    { color: "#a04000", gradient: "linear-gradient(135deg,#a04000,#e67e22)", icon: "🛠️" },
+  life_event:           { color: "#a93268", gradient: "linear-gradient(135deg,#a93268,#fbc2eb)", icon: "🎈" },
+  family_care:          { color: "#5d3a8e", gradient: "linear-gradient(135deg,#5d3a8e,#8e44ad)", icon: "👨‍👩‍👧" },
+  monthly_bills:        { color: "#1a5276", gradient: "linear-gradient(135deg,#1a5276,#5dade2)", icon: "🧾" },
+  green_upgrade:        { color: "#117a3e", gradient: "linear-gradient(135deg,#117a3e,#27ae60)", icon: "🌱" },
 } as const;
 
 const t = (id: number, type: keyof typeof G, label: string): Tile => ({
