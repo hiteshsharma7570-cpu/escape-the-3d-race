@@ -69,7 +69,6 @@ const normalizeSavedGame = (saved: GameState, fallbackPlayerName: string, fallba
           id: liability.id ?? `liability-${idx}-${Date.now()}`,
           category: liability.category ?? "personal_loan",
           principal: liability.principal ?? 0,
-          monthlyEMI: liability.monthlyEMI ?? 0,
           interestRate: liability.interestRate ?? 0,
         }))
       : [],
@@ -347,8 +346,7 @@ const Index = () => {
       return;
     }
     const loanAmount = 100000;
-    const monthlyEMI = 5000;
-    
+
     playSound("earnMoney");
     setGameState((prev) => ({
       ...prev,
@@ -361,7 +359,6 @@ const Index = () => {
           name: "Bank Loan",
           category: "personal_loan" as const,
           principal: loanAmount,
-          monthlyEMI,
           interestRate: 12,
         },
       ],

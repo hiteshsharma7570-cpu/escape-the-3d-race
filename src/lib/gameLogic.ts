@@ -14,7 +14,7 @@ const uid = (prefix: string) => `${prefix}-${Date.now().toString(36)}-${(_uid++)
 
 const addLiability = (
   state: GameState,
-  data: { name: string; category: LiabilityCategory; principal: number; monthlyEMI: number; interestRate: number }
+  data: { name: string; category: LiabilityCategory; principal: number; interestRate: number }
 ): Liability => {
   const l: Liability = { id: uid("liab"), ...data };
   state.liabilities.push(l);
@@ -62,7 +62,7 @@ const G = {
   inheritance:          { color: "#11998e", gradient: "linear-gradient(135deg,#11998e,#38ef7d)", icon: "🎁" },
   real_estate_boom:     { color: "#134e5e", gradient: "linear-gradient(135deg,#134e5e,#71b280)", icon: "🏠" },
   stock_market_crash:   { color: "#1a1a2e", gradient: "linear-gradient(135deg,#1a1a2e,#e94560)", icon: "📉" },
-  emi_hike:             { color: "#c0392b", gradient: "linear-gradient(135deg,#c0392b,#e74c3c)", icon: "📈" },
+  rate_hike:            { color: "#c0392b", gradient: "linear-gradient(135deg,#c0392b,#e74c3c)", icon: "📈" },
   insurance_premium:    { color: "#8e44ad", gradient: "linear-gradient(135deg,#8e44ad,#9b59b6)", icon: "🛡️" },
   home_repair:          { color: "#d35400", gradient: "linear-gradient(135deg,#d35400,#e67e22)", icon: "🔧" },
   traffic_fine:         { color: "#e74c3c", gradient: "linear-gradient(135deg,#e74c3c,#c0392b)", icon: "🚦" },
@@ -118,7 +118,7 @@ export const BOARD_TILES: Tile[] = [
   t(17, "pet_adoption",        "Pet Adopt"),
   t(18, "inheritance",         "Inheritance"),
   t(19, "tax_refund",          "Tax Refund"),
-  t(20, "emi_hike",            "EMI Hike"),
+  t(20, "rate_hike",           "Rate Hike"),
   t(21, "real_estate_boom",    "RE Boom"),
   t(22, "wedding_in_family",   "Wedding"),
   t(23, "insurance_premium",   "Insurance"),
@@ -149,13 +149,9 @@ export const calculateMonthlyCashFlow = (state: GameState): number => {
 };
 
 export const calculateTotalExpenses = (state: GameState): number => {
-  // EMI system removed — liabilities are outstanding debts only, not monthly outflows.
-  const recurring = (state.expenses ?? []).reduce((sum, e) => sum + (e.monthlyAmount ?? 0), 0);
-  return recurring;
+  // Liabilities are outstanding debts only — they affect net worth, never monthly outflow.
+  return (state.expenses ?? []).reduce((sum, e) => sum + (e.monthlyAmount ?? 0), 0);
 };
-
-/** Debt servicing removed — liabilities no longer create monthly EMI outflows. */
-export const calculateDebtServicing = (_state: GameState): number => 0;
 
 /** Sum of all outstanding debt principal across liabilities. */
 export const calculateOutstandingDebt = (state: GameState): number =>
@@ -315,10 +311,9 @@ export const handleTileEffect = (state: GameState, tile: Tile): GameState => {
           name: "Medical Debt",
           category: "medical_debt",
           principal: cost,
-          monthlyEMI: 8000,
           interestRate: 13,
         });
-        logMessage = `🏥 Medical Emergency! ₹${cost.toLocaleString()} added as Medical Debt (₹8,000/mo).`;
+        logMessage = `🏥 Medical Emergency! ₹${cost.toLocaleString()} added as Medical Debt @ 13% p.a.`;
       }
       break;
     }
@@ -425,16 +420,14 @@ export const handleTileEffect = (state: GameState, tile: Tile): GameState => {
       break;
     }
 
-    case "emi_hike": {
+    case "rate_hike": {
       const hikePct = 10 + Math.floor(Math.random() * 11);
-      let extra = 0;
-      newState.liabilities = newState.liabilities.map(l => {
-        const bump = Math.round(l.monthlyEMI * hikePct / 100);
-        extra += bump;
-        return { ...l, monthlyEMI: l.monthlyEMI + bump };
-      });
+      newState.liabilities = newState.liabilities.map(l => ({
+        ...l,
+        interestRate: Math.round((l.interestRate + l.interestRate * hikePct / 100) * 10) / 10,
+      }));
       logMessage = newState.liabilities.length
-        ? `📈 RBI hikes rates! All loan EMIs increased by ${hikePct}%. Monthly burden up by ₹${extra.toLocaleString()}.`
+        ? `📈 RBI hikes rates! Interest rates on all your loans are up ${hikePct}% (informational).`
         : `📈 RBI hikes rates by ${hikePct}% — but you have no loans. Phew.`;
       break;
     }
@@ -472,7 +465,6 @@ export const handleTileEffect = (state: GameState, tile: Tile): GameState => {
             name: "Home Renovation Loan",
             category: "home_loan",
             principal,
-            monthlyEMI: Math.round(principal / 60),
             interestRate: 10.5,
           });
           logMessage = `🔧 Home Renovation Loan taken — ₹${principal.toLocaleString()} outstanding @ 10.5% p.a.`;
@@ -481,7 +473,6 @@ export const handleTileEffect = (state: GameState, tile: Tile): GameState => {
             name: "Home Repair Loan",
             category: "personal_loan",
             principal: repairCost,
-            monthlyEMI: 5000,
             interestRate: 14,
           });
           logMessage = `🔧 Home Repair! Couldn't afford it — added ₹${repairCost.toLocaleString()} as personal loan.`;
@@ -507,7 +498,7 @@ export const handleTileEffect = (state: GameState, tile: Tile): GameState => {
         if (existing) {
           newState.liabilities = newState.liabilities.map(l =>
             l.id === existing.id
-              ? { ...l, principal: l.principal + bill, monthlyEMI: l.monthlyEMI + 2000 }
+              ? { ...l, principal: l.principal + bill }
               : l
           );
         } else {
@@ -515,11 +506,10 @@ export const handleTileEffect = (state: GameState, tile: Tile): GameState => {
             name: "Credit Card",
             category: "credit_card",
             principal: bill,
-            monthlyEMI: 4000,
             interestRate: 36,
           });
         }
-        logMessage = `💳 Credit Card Bill! Added ₹${bill.toLocaleString()} to card debt (+₹4,000/mo minimum).`;
+        logMessage = `💳 Credit Card Bill! Added ₹${bill.toLocaleString()} to outstanding card debt @ 36% p.a.`;
       }
       break;
     }
@@ -556,7 +546,6 @@ export const handleTileEffect = (state: GameState, tile: Tile): GameState => {
           name: "Chit Fund Default",
           category: "personal_loan",
           principal,
-          monthlyEMI: Math.round(principal / 24),
           interestRate: 18,
         });
         logMessage += ` Chit fund payout missed — ₹${principal.toLocaleString()} now owed to the group.`;
@@ -601,10 +590,9 @@ export const handleTileEffect = (state: GameState, tile: Tile): GameState => {
           name: "Vehicle Repair Loan",
           category: "vehicle_loan",
           principal: repairCost,
-          monthlyEMI: 3000,
           interestRate: 13,
         });
-        logMessage = `🚗 Vehicle Breakdown! Added ₹${repairCost.toLocaleString()} repair loan (₹3,000/mo).`;
+        logMessage = `🚗 Vehicle Breakdown! Added ₹${repairCost.toLocaleString()} repair loan @ 13% p.a.`;
       }
       break;
     }
@@ -614,12 +602,12 @@ export const handleTileEffect = (state: GameState, tile: Tile): GameState => {
         l => l.category === "home_loan" || l.category === "personal_loan"
       );
       if (floatingLoans.length > 0) {
-        const spike = 1500 + Math.floor(Math.random() * 3500);
+        const spikePct = 1 + Math.floor(Math.random() * 3); // +1 to +3 percentage points
         const ids = new Set(floatingLoans.map(l => l.id));
         newState.liabilities = newState.liabilities.map(l =>
-          ids.has(l.id) ? { ...l, monthlyEMI: l.monthlyEMI + spike } : l
+          ids.has(l.id) ? { ...l, interestRate: l.interestRate + spikePct } : l
         );
-        logMessage = `🏦 Floating rate spike! Home/personal loan payments up by ₹${spike.toLocaleString()}/mo.`;
+        logMessage = `🏦 Floating rate spike! Home/personal loan interest rates up by ${spikePct}% (informational).`;
       } else {
         const penalty = 5000 + Math.floor(Math.random() * 10000);
         newState.cash -= penalty;
@@ -649,17 +637,15 @@ export const handleTileEffect = (state: GameState, tile: Tile): GameState => {
     case "gold_loan_offer": {
       // Pawn family gold for fast cash.
       const principal = 80000 + Math.floor(Math.random() * 170000);
-      const emi = Math.round(principal * 0.025); // ~2.5% / month
       newState.cash += principal;
       newState.loansTaken += 1;
       addLiability(newState, {
         name: "Gold Loan",
         category: "gold_loan",
         principal,
-        monthlyEMI: emi,
         interestRate: 12,
       });
-      logMessage = `🪙 Gold Loan! Pawned family gold — +₹${principal.toLocaleString()} cash, EMI ₹${emi.toLocaleString()}/mo (12% p.a.).`;
+      logMessage = `🪙 Gold Loan! Pawned family gold — +₹${principal.toLocaleString()} cash, added as debt @ 12% p.a.`;
       break;
     }
 
@@ -672,15 +658,13 @@ export const handleTileEffect = (state: GameState, tile: Tile): GameState => {
         const paid = Math.max(0, newState.cash);
         const shortfall = cost - paid;
         newState.cash -= paid;
-        const emi = Math.max(6000, Math.round(shortfall / 60));
         addLiability(newState, {
           name: "Wedding Loan",
           category: "personal_loan",
           principal: shortfall,
-          monthlyEMI: emi,
           interestRate: 15,
         });
-        logMessage = `💍 Wedding! Paid ₹${paid.toLocaleString()}, rest ₹${shortfall.toLocaleString()} financed (₹${emi.toLocaleString()}/mo @ 15%).`;
+        logMessage = `💍 Wedding! Paid ₹${paid.toLocaleString()}, rest ₹${shortfall.toLocaleString()} financed @ 15% p.a.`;
       }
       break;
     }
@@ -742,7 +726,6 @@ export const handleTileEffect = (state: GameState, tile: Tile): GameState => {
           name: "Parents Medical Debt",
           category: "medical_debt",
           principal: cost,
-          monthlyEMI: 4000,
           interestRate: 12,
         });
         logMessage = `👴 Parents medical emergency! ₹${cost.toLocaleString()} added as debt (₹4,000/mo).`;
@@ -787,32 +770,28 @@ export const handleTileEffect = (state: GameState, tile: Tile): GameState => {
     }
 
     case "bnpl_trap": {
-      // Buy Now Pay Later — adds 0% headline but real EMI hit for 6 months.
+      // Buy Now Pay Later — adds debt to your liability stack with a 24% informational rate.
       const gadgets = ["iPhone", "OLED TV", "Gaming Laptop", "Smartwatch", "DSLR Camera", "Air Fryer Pro"];
       const item = gadgets[Math.floor(Math.random() * gadgets.length)];
       const principal = 30000 + Math.floor(Math.random() * 120000);
-      const emi = Math.round(principal / 6);
       addLiability(newState, {
         name: `BNPL: ${item}`,
         category: "bnpl",
         principal,
-        monthlyEMI: emi,
         interestRate: 24,
       });
-      logMessage = `🛍️ BNPL Trap! "${item}" on EMI — ₹${emi.toLocaleString()}/mo for 6 months on auto-debit.`;
-      lessonMessage = "💡 'No-cost EMI' still drains cash flow every single month. Read the fine print.";
+      logMessage = `🛍️ BNPL Trap! "${item}" financed — ₹${principal.toLocaleString()} added to outstanding debt.`;
+      lessonMessage = "💡 Even 'no-cost' financing adds real principal you'll have to pay back.";
       break;
     }
 
     case "solar_install": {
       // Rooftop solar — adds a personal loan but PERMANENTLY cuts the electricity bill.
       const principal = 150000;
-      const emi = 4000;
       addLiability(newState, {
         name: "Solar Rooftop Loan",
         category: "personal_loan",
         principal,
-        monthlyEMI: emi,
         interestRate: 9,
       });
       const elec = newState.expenses.find(e => e.category === "utilities" && /electric/i.test(e.name));
@@ -825,21 +804,19 @@ export const handleTileEffect = (state: GameState, tile: Tile): GameState => {
         );
       }
       logMessage = saved > 0
-        ? `☀️ Solar Installed! +₹${emi.toLocaleString()}/mo EMI, but electricity bill -₹${saved.toLocaleString()}/mo forever.`
-        : `☀️ Solar Installed! New loan ₹${emi.toLocaleString()}/mo (no electricity bill to offset yet).`;
-      lessonMessage = "💡 Smart liabilities can pay for themselves over time — net cash flow matters.";
+        ? `☀️ Solar Installed! +₹${principal.toLocaleString()} loan added, but electricity bill -₹${saved.toLocaleString()}/mo forever.`
+        : `☀️ Solar Installed! New ₹${principal.toLocaleString()} loan added (no electricity bill to offset yet).`;
+      lessonMessage = "💡 Smart liabilities can pay for themselves over time — recurring savings matter.";
       break;
     }
 
     case "ev_switch": {
       // Trade in petrol vehicle: new vehicle loan, but transport (fuel) expenses halved.
       const principal = 600000;
-      const emi = 11000;
       addLiability(newState, {
         name: "EV Auto Loan",
         category: "vehicle_loan",
         principal,
-        monthlyEMI: emi,
         interestRate: 8.5,
       });
       let fuelCut = 0;
@@ -852,8 +829,8 @@ export const handleTileEffect = (state: GameState, tile: Tile): GameState => {
         return e;
       });
       logMessage = fuelCut > 0
-        ? `🔋 Switched to EV! +₹${emi.toLocaleString()}/mo EMI, but transport costs -₹${fuelCut.toLocaleString()}/mo.`
-        : `🔋 Switched to EV! New ₹${emi.toLocaleString()}/mo EMI added.`;
+        ? `🔋 Switched to EV! +₹${principal.toLocaleString()} auto loan added, transport costs -₹${fuelCut.toLocaleString()}/mo.`
+        : `🔋 Switched to EV! New ₹${principal.toLocaleString()} auto loan added.`;
       break;
     }
 
@@ -919,14 +896,12 @@ export const handleTileEffect = (state: GameState, tile: Tile): GameState => {
         ? 15000 + Math.floor(Math.random() * 35000)
         : 40000 + Math.floor(Math.random() * 60000);
       const apr = isApp ? 28 + Math.floor(Math.random() * 9) : 48;
-      const emi = Math.round(principal / 4 * 1.15);
       newState.cash += principal;
       newState.loansTaken += 1;
       addLiability(newState, {
         name: isApp ? "NBFC Instant App Loan" : "Payday Loan",
         category: "payday_loan",
         principal,
-        monthlyEMI: emi,
         interestRate: apr,
       });
       logMessage = isApp
@@ -941,16 +916,14 @@ export const handleTileEffect = (state: GameState, tile: Tile): GameState => {
       const hasStocks = newState.assets.some(a => /stock|equity|mutual|crypto|startup/i.test(a.name));
       if (hasHighRisk || hasStocks) {
         const principal = 200000 + Math.floor(Math.random() * 300000);
-        const emi = Math.round(principal * 0.03);
         const isLAS = hasStocks && !hasHighRisk;
         addLiability(newState, {
           name: isLAS ? "Loan Against Securities" : "Margin Loan",
           category: "margin_loan",
           principal,
-          monthlyEMI: emi,
           interestRate: isLAS ? 11 : 18,
         });
-        logMessage = `📞 Margin Call! Broker financed your high-risk losses — ₹${principal.toLocaleString()} debt, ₹${emi.toLocaleString()}/mo.`;
+        logMessage = `📞 Margin Call! Broker financed your high-risk losses — ₹${principal.toLocaleString()} added to outstanding debt.`;
         lessonMessage = "💡 Leveraged investing magnifies losses. Margin loans survive even when the trade dies.";
       } else {
         const fee = 3000 + Math.floor(Math.random() * 5000);
@@ -963,15 +936,13 @@ export const handleTileEffect = (state: GameState, tile: Tile): GameState => {
     case "tax_arrears": {
       // Old returns flagged — owe past taxes as a structured debt.
       const arrears = 60000 + Math.floor(Math.random() * 140000);
-      const emi = Math.round(arrears / 24);
       addLiability(newState, {
         name: "Tax Arrears (IT Dept)",
         category: "tax_arrears",
         principal: arrears,
-        monthlyEMI: emi,
         interestRate: 12,
       });
-      logMessage = `🧾 Tax Arrears! IT Dept demands ₹${arrears.toLocaleString()} from past filings — installment ₹${emi.toLocaleString()}/mo.`;
+      logMessage = `🧾 Tax Arrears! IT Dept demands ₹${arrears.toLocaleString()} from past filings — added as debt @ 12% p.a.`;
       break;
     }
   }
@@ -1081,8 +1052,8 @@ export const sellAsset = (state: GameState, assetId: string): GameState => {
 
 /**
  * Repay a specific liability by `amount` rupees from cash.
- * Full repayment removes the liability entirely (EMI disappears).
- * Partial repayment shrinks principal proportionally and reduces the EMI pro-rata.
+ * Full repayment removes the liability entirely.
+ * Partial repayment shrinks the outstanding principal.
  */
 export const repayLiability = (
   state: GameState,
@@ -1119,7 +1090,7 @@ export const applyPeriodicMechanics = (
   const events: string[] = [];
   let next = { ...state, liabilities: [...state.liabilities], assets: [...state.assets] };
 
-  // Inflation every 5 turns: recurring expenses +3% (loan EMIs are fixed).
+  // Inflation every 5 turns: recurring expenses +3% (liabilities are principal-only and unaffected).
   if (next.turnCount > 0 && next.turnCount % 5 === 0) {
     next.expenses = next.expenses.map(e => ({
       ...e,
