@@ -409,8 +409,6 @@ const Index = () => {
     );
   };
 
-  // Modal state for bottom action buttons
-  const [openPanel, setOpenPanel] = useState<null | "portfolio" | "assets" | "leaderboard" | "achievements">(null);
 
   if (gameMode === "setup") {
     return (
@@ -494,15 +492,9 @@ const Index = () => {
             gameState={gameState}
             isRolling={gameState.isRolling}
             onRollDice={rollDice}
-            actionBar={
-              <ActionBar
-                onPortfolio={() => setOpenPanel("portfolio")}
-                onAssets={() => setOpenPanel("assets")}
-                onLeaderboard={() => setOpenPanel("leaderboard")}
-                onAchievements={() => setOpenPanel("achievements")}
-              />
-            }
+            onPayOffDebts={payOffDebts}
           />
+
 
           {saveStatus.show && (
             <div className="text-[10px] text-slate-500 flex items-center gap-1">
@@ -518,27 +510,7 @@ const Index = () => {
         </div>
       </div>
 
-      {/* === Modals for action bar === */}
-      <Dialog open={openPanel === "portfolio" || openPanel === "assets"} onOpenChange={(o) => !o && setOpenPanel(null)}>
-        <DialogContent className="max-w-3xl glass-card gold-border">
-          <DialogHeader>
-            <DialogTitle className="font-display text-gold tracking-widest">
-              {openPanel === "portfolio" ? "PORTFOLIO" : "ASSETS & LIABILITIES"}
-            </DialogTitle>
-          </DialogHeader>
-          <div className="max-h-[70vh] overflow-y-auto">
-            <GameDashboard
-              gameState={gameState}
-              onRollDice={rollDice}
-              onTakeLoan={takeLoan}
-              onRepayLoan={repayLoan}
-              onPayOffDebts={payOffDebts}
-              onSellAsset={handleSellAsset}
-            />
-          </div>
-        </DialogContent>
-      </Dialog>
-
+      {/* === Repay loan dialog === */}
       <RepayLoanDialog
         open={repayOpen}
         onOpenChange={setRepayOpen}
@@ -546,36 +518,6 @@ const Index = () => {
         onRepay={handleRepaySpecific}
       />
 
-      <Dialog open={openPanel === "leaderboard"} onOpenChange={(o) => !o && setOpenPanel(null)}>
-        <DialogContent className="max-w-2xl glass-card gold-border">
-          <DialogHeader>
-            <DialogTitle className="font-display text-gold tracking-widest">LEADERBOARD</DialogTitle>
-          </DialogHeader>
-          <div className="max-h-[70vh] overflow-y-auto">
-            <LocalLeaderboard currentPlayerName={gameState.playerName} limit={10} />
-          </div>
-        </DialogContent>
-      </Dialog>
-
-      <Dialog open={openPanel === "achievements"} onOpenChange={(o) => !o && setOpenPanel(null)}>
-        <DialogContent className="max-w-2xl glass-card gold-border">
-          <DialogHeader>
-            <DialogTitle className="font-display text-gold tracking-widest">ACHIEVEMENTS</DialogTitle>
-          </DialogHeader>
-          <div className="max-h-[70vh] overflow-y-auto">
-            <AchievementsPanel
-              achievements={ACHIEVEMENTS.map((a) => ({ ...a, threshold: a.threshold ?? 0 })) as any}
-              isUnlocked={(id) => unlockedAchIds.includes(id)}
-              getProgress={(a: any) => {
-                if (meetsThreshold(a as any, gameState, gamesWon)) return 100;
-                return 0;
-              }}
-              gameState={gameState}
-              gamesWon={gamesWon}
-            />
-          </div>
-        </DialogContent>
-      </Dialog>
 
       <DecisionModal
         pendingDecision={gameState.pendingDecision}
