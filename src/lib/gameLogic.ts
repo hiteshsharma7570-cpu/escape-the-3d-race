@@ -315,7 +315,6 @@ export const handleTileEffect = (state: GameState, tile: Tile): GameState => {
           name: "Medical Debt",
           category: "medical_debt",
           principal: cost,
-          monthlyEMI: 8000,
           interestRate: 13,
         });
         logMessage = `🏥 Medical Emergency! ₹${cost.toLocaleString()} added as Medical Debt (₹8,000/mo).`;
@@ -472,7 +471,6 @@ export const handleTileEffect = (state: GameState, tile: Tile): GameState => {
             name: "Home Renovation Loan",
             category: "home_loan",
             principal,
-            monthlyEMI: Math.round(principal / 60),
             interestRate: 10.5,
           });
           logMessage = `🔧 Home Renovation Loan taken — ₹${principal.toLocaleString()} outstanding @ 10.5% p.a.`;
@@ -481,7 +479,6 @@ export const handleTileEffect = (state: GameState, tile: Tile): GameState => {
             name: "Home Repair Loan",
             category: "personal_loan",
             principal: repairCost,
-            monthlyEMI: 5000,
             interestRate: 14,
           });
           logMessage = `🔧 Home Repair! Couldn't afford it — added ₹${repairCost.toLocaleString()} as personal loan.`;
@@ -515,7 +512,6 @@ export const handleTileEffect = (state: GameState, tile: Tile): GameState => {
             name: "Credit Card",
             category: "credit_card",
             principal: bill,
-            monthlyEMI: 4000,
             interestRate: 36,
           });
         }
@@ -556,7 +552,6 @@ export const handleTileEffect = (state: GameState, tile: Tile): GameState => {
           name: "Chit Fund Default",
           category: "personal_loan",
           principal,
-          monthlyEMI: Math.round(principal / 24),
           interestRate: 18,
         });
         logMessage += ` Chit fund payout missed — ₹${principal.toLocaleString()} now owed to the group.`;
@@ -601,7 +596,6 @@ export const handleTileEffect = (state: GameState, tile: Tile): GameState => {
           name: "Vehicle Repair Loan",
           category: "vehicle_loan",
           principal: repairCost,
-          monthlyEMI: 3000,
           interestRate: 13,
         });
         logMessage = `🚗 Vehicle Breakdown! Added ₹${repairCost.toLocaleString()} repair loan (₹3,000/mo).`;
@@ -656,7 +650,6 @@ export const handleTileEffect = (state: GameState, tile: Tile): GameState => {
         name: "Gold Loan",
         category: "gold_loan",
         principal,
-        monthlyEMI: emi,
         interestRate: 12,
       });
       logMessage = `🪙 Gold Loan! Pawned family gold — +₹${principal.toLocaleString()} cash, EMI ₹${emi.toLocaleString()}/mo (12% p.a.).`;
@@ -677,7 +670,6 @@ export const handleTileEffect = (state: GameState, tile: Tile): GameState => {
           name: "Wedding Loan",
           category: "personal_loan",
           principal: shortfall,
-          monthlyEMI: emi,
           interestRate: 15,
         });
         logMessage = `💍 Wedding! Paid ₹${paid.toLocaleString()}, rest ₹${shortfall.toLocaleString()} financed (₹${emi.toLocaleString()}/mo @ 15%).`;
@@ -742,7 +734,6 @@ export const handleTileEffect = (state: GameState, tile: Tile): GameState => {
           name: "Parents Medical Debt",
           category: "medical_debt",
           principal: cost,
-          monthlyEMI: 4000,
           interestRate: 12,
         });
         logMessage = `👴 Parents medical emergency! ₹${cost.toLocaleString()} added as debt (₹4,000/mo).`;
@@ -796,7 +787,6 @@ export const handleTileEffect = (state: GameState, tile: Tile): GameState => {
         name: `BNPL: ${item}`,
         category: "bnpl",
         principal,
-        monthlyEMI: emi,
         interestRate: 24,
       });
       logMessage = `🛍️ BNPL Trap! "${item}" on EMI — ₹${emi.toLocaleString()}/mo for 6 months on auto-debit.`;
@@ -812,7 +802,6 @@ export const handleTileEffect = (state: GameState, tile: Tile): GameState => {
         name: "Solar Rooftop Loan",
         category: "personal_loan",
         principal,
-        monthlyEMI: emi,
         interestRate: 9,
       });
       const elec = newState.expenses.find(e => e.category === "utilities" && /electric/i.test(e.name));
@@ -839,7 +828,6 @@ export const handleTileEffect = (state: GameState, tile: Tile): GameState => {
         name: "EV Auto Loan",
         category: "vehicle_loan",
         principal,
-        monthlyEMI: emi,
         interestRate: 8.5,
       });
       let fuelCut = 0;
@@ -926,7 +914,6 @@ export const handleTileEffect = (state: GameState, tile: Tile): GameState => {
         name: isApp ? "NBFC Instant App Loan" : "Payday Loan",
         category: "payday_loan",
         principal,
-        monthlyEMI: emi,
         interestRate: apr,
       });
       logMessage = isApp
@@ -947,7 +934,6 @@ export const handleTileEffect = (state: GameState, tile: Tile): GameState => {
           name: isLAS ? "Loan Against Securities" : "Margin Loan",
           category: "margin_loan",
           principal,
-          monthlyEMI: emi,
           interestRate: isLAS ? 11 : 18,
         });
         logMessage = `📞 Margin Call! Broker financed your high-risk losses — ₹${principal.toLocaleString()} debt, ₹${emi.toLocaleString()}/mo.`;
@@ -968,7 +954,6 @@ export const handleTileEffect = (state: GameState, tile: Tile): GameState => {
         name: "Tax Arrears (IT Dept)",
         category: "tax_arrears",
         principal: arrears,
-        monthlyEMI: emi,
         interestRate: 12,
       });
       logMessage = `🧾 Tax Arrears! IT Dept demands ₹${arrears.toLocaleString()} from past filings — installment ₹${emi.toLocaleString()}/mo.`;
