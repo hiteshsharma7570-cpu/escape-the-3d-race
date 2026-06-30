@@ -505,22 +505,18 @@ const Index = () => {
         </div>
 
         {/* RIGHT column: market status + players list */}
-        <div className="flex flex-col gap-3 order-3">
+        <div className="flex flex-col gap-3 order-3 xl:w-[380px]">
           <MarketStatusPanel gameState={gameState} />
           <PlayersPanel currentPlayerName={gameState.playerName} currentNetWorth={netWorth} />
+          <GameDashboard
+            gameState={gameState}
+            onRollDice={rollDice}
+            onTakeLoan={takeLoan}
+            onRepayLoan={repayLoan}
+            onPayOffDebts={payOffDebts}
+            onSellAsset={handleSellAsset}
+          />
         </div>
-      </div>
-
-      {/* Portfolio dashboard displayed directly on the homepage */}
-      <div className="max-w-[1600px] mx-auto w-full px-3 md:px-5 pb-4">
-        <GameDashboard
-          gameState={gameState}
-          onRollDice={rollDice}
-          onTakeLoan={takeLoan}
-          onRepayLoan={repayLoan}
-          onPayOffDebts={payOffDebts}
-          onSellAsset={handleSellAsset}
-        />
       </div>
 
       {/* === Repay loan dialog === */}
