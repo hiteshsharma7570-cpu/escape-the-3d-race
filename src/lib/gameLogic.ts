@@ -137,7 +137,7 @@ export const BOARD_TILES: Tile[] = [
 ];
 
 export const calculateMonthlyCashFlow = (state: GameState): number => {
-  const totalIncome = state.salary + state.passiveIncome;
+  const totalIncome = (state.salary ?? 0) + (state.passiveIncome ?? 0);
   return totalIncome - calculateTotalExpenses(state);
 };
 
@@ -158,7 +158,7 @@ export const calculateRecurringExpenses = (state: GameState): number =>
 export const calculateNetWorth = (state: GameState): number => {
   const totalAssets = (state.assets ?? []).reduce((sum, a) => sum + (a.value ?? 0), 0);
   const totalLiabilities = (state.liabilities ?? []).reduce((sum, l) => sum + (l.principal ?? 0), 0);
-  return state.cash + totalAssets - totalLiabilities;
+  return (state.cash ?? 0) + totalAssets - totalLiabilities;
 };
 
 export const handleTileEffect = (state: GameState, tile: Tile): GameState => {

@@ -41,7 +41,7 @@ export const GameDashboard = ({
   const totalExpenses = calculateTotalExpenses(gameState);
   const netWorth = calculateNetWorth(gameState);
   const FIVE_CR = 50000000;
-  const fiveCrPct = Math.min((gameState.cash / FIVE_CR) * 100, 100);
+  const fiveCrPct = Math.min(((gameState.cash ?? 0) / FIVE_CR) * 100, 100);
   // Milestones on bar: 25L (0.5%), 1Cr (20%), 2.5Cr (50%), 5Cr (100%)
   // New scale: 5Cr = 100%
   const milestones = [
@@ -230,7 +230,7 @@ export const GameDashboard = ({
               <Separator className="my-2" />
               <div className="flex justify-between font-bold">
                 <span>Total Outflow:</span>
-                <span>₹{totalExpenses.toLocaleString()}</span>
+                <span>₹{(totalExpenses ?? 0).toLocaleString()}</span>
               </div>
             </div>
           </div>

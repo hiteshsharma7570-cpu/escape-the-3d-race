@@ -81,7 +81,7 @@ export const CashCertificateModal = ({ open, onClose, playerName, cash }: CashCe
     doc.setFont("times", "bold");
     doc.setFontSize(22);
     doc.setTextColor(120, 53, 15);
-    doc.text(`Rs. ${cash.toLocaleString("en-IN")}`, pageW / 2, 365, { align: "center" });
+    doc.text(`Rs. ${(cash ?? 0).toLocaleString("en-IN")}`, pageW / 2, 365, { align: "center" });
 
     // Footer signatures
     doc.setLineWidth(1);
@@ -138,7 +138,7 @@ export const CashCertificateModal = ({ open, onClose, playerName, cash }: CashCe
           </p>
 
           <p className="text-2xl font-bold text-amber-900 mb-6">
-            ₹{cash.toLocaleString("en-IN")}
+            ₹{(cash ?? 0).toLocaleString("en-IN")}
           </p>
 
           <div className="flex justify-between items-end px-8 mt-8">

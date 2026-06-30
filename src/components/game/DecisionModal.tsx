@@ -29,9 +29,10 @@ export const DecisionModal = ({
   const isCharity = pendingDecision.type === "charity";
   const isOpportunity = pendingDecision.type === "opportunity";
 
+  const safeCash = cash ?? 0;
   const canAfford = isCharity
-    ? cash >= (pendingDecision.charityAmount || 0)
-    : cash >= (pendingDecision.opportunity?.cost || 0);
+    ? safeCash >= (pendingDecision.charityAmount ?? 0)
+    : safeCash >= (pendingDecision.opportunity?.cost ?? 0);
 
   return (
     <AlertDialog open={!!pendingDecision}>
@@ -57,10 +58,10 @@ export const DecisionModal = ({
                 <p>Would you like to donate to charity?</p>
                 <div className="bg-accent p-4 rounded-lg">
                   <p className="text-lg font-semibold text-foreground">
-                    Donation Amount: ₹{pendingDecision.charityAmount?.toLocaleString()}
+                    Donation Amount: ₹{(pendingDecision.charityAmount ?? 0).toLocaleString()}
                   </p>
                   <p className="text-sm text-muted-foreground mt-1">
-                    Your current cash: ₹{cash.toLocaleString()}
+                    Your current cash: ₹{safeCash.toLocaleString()}
                   </p>
                 </div>
               </div>
@@ -92,24 +93,24 @@ export const DecisionModal = ({
                     <div>
                       <span className="text-muted-foreground">Cost:</span>
                       <span className="ml-2 font-medium text-destructive">
-                        ₹{pendingDecision.opportunity.cost.toLocaleString()}
+                        ₹{(pendingDecision.opportunity.cost ?? 0).toLocaleString()}
                       </span>
                     </div>
                     <div>
                       <span className="text-muted-foreground">Monthly Income:</span>
                       <span className="ml-2 font-medium text-success">
-                        +₹{pendingDecision.opportunity.income.toLocaleString()}
+                        +₹{(pendingDecision.opportunity.income ?? 0).toLocaleString()}
                       </span>
                     </div>
                     <div className="col-span-2">
                       <span className="text-muted-foreground">ROI:</span>
                       <span className="ml-2 font-medium text-info">
-                        {((pendingDecision.opportunity.income * 12 / pendingDecision.opportunity.cost) * 100).toFixed(1)}% per year
+                        {((((pendingDecision.opportunity.income ?? 0) * 12) / (pendingDecision.opportunity.cost || 1)) * 100).toFixed(1)}% per year
                       </span>
                     </div>
                   </div>
                   <p className="text-sm text-muted-foreground mt-2">
-                    Your current cash: ₹{cash.toLocaleString()}
+                    Your current cash: ₹{safeCash.toLocaleString()}
                   </p>
                   {!canAfford && (
                     <p className="text-sm text-destructive font-medium">

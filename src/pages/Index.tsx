@@ -42,6 +42,56 @@ const achKeyFor = (name: string) => `${ACH_KEY_PREFIX}${name.trim().toLowerCase(
 const GAMES_WON_KEY_PREFIX = "cashflow_games_won_v1:";
 const gamesWonKeyFor = (name: string) => `${GAMES_WON_KEY_PREFIX}${name.trim().toLowerCase()}`;
 
+const normalizeSavedGame = (saved: GameState, fallbackPlayerName: string, fallbackProfession: string): GameState => {
+  const fresh = createInitialGameState(fallbackPlayerName, fallbackProfession);
+
+  return {
+    ...fresh,
+    ...saved,
+    playerName: saved.playerName || fallbackPlayerName || fresh.playerName,
+    profession: saved.profession || fallbackProfession || fresh.profession,
+    cash: saved.cash ?? fresh.cash,
+    salary: saved.salary ?? fresh.salary,
+    passiveIncome: saved.passiveIncome ?? 0,
+    assets: Array.isArray(saved.assets)
+      ? saved.assets.map((asset) => ({
+          ...asset,
+          value: asset.value ?? 0,
+          monthlyIncome: asset.monthlyIncome ?? 0,
+          risk: asset.risk ?? "low",
+        }))
+      : [],
+    liabilities: Array.isArray(saved.liabilities)
+      ? saved.liabilities.map((liability) => ({
+          ...liability,
+          category: liability.category ?? "personal_loan",
+          principal: liability.principal ?? 0,
+          monthlyEMI: liability.monthlyEMI ?? 0,
+          interestRate: liability.interestRate ?? 0,
+        }))
+      : [],
+    expenses: Array.isArray(saved.expenses)
+      ? saved.expenses.map((expense) => ({
+          ...expense,
+          category: expense.category ?? "lifestyle",
+          monthlyAmount: expense.monthlyAmount ?? 0,
+          essential: expense.essential ?? false,
+        }))
+      : [],
+    position: saved.position ?? 0,
+    diceValue: saved.diceValue ?? null,
+    isRolling: saved.isRolling ?? false,
+    gameLog: Array.isArray(saved.gameLog) ? saved.gameLog : [],
+    marketCondition: saved.marketCondition ?? "normal",
+    hasEscapedRatRace: saved.hasEscapedRatRace ?? false,
+    hasReachedFiveCrore: saved.hasReachedFiveCrore ?? false,
+    pendingDecision: saved.pendingDecision ?? null,
+    marketHint: saved.marketHint ?? null,
+    turnCount: saved.turnCount ?? 0,
+    loansTaken: saved.loansTaken ?? 0,
+  };
+};
+
 const Index = () => {
   const [gameState, setGameState] = useState<GameState>(() => createInitialGameState());
   const [gameMode, setGameMode] = useState<"setup" | "playing">("setup");
@@ -179,21 +229,12 @@ const Index = () => {
     try {
       const saved = localStorage.getItem(saveKeyFor(playerName));
       if (saved) {
-        const parsed = JSON.parse(saved) as GameState;
-        // Backward compat: ensure new fields exist (preserve persisted flags — do not recompute from current cash)
-        if (parsed.turnCount === undefined) parsed.turnCount = 0;
-        if (parsed.loansTaken === undefined) parsed.loansTaken = 0;
-        if (parsed.hasReachedFiveCrore === undefined) parsed.hasReachedFiveCrore = false;
-        // Backfill new array fields (older saves may pre-date the expense/liability split).
-        if (!Array.isArray(parsed.assets)) parsed.assets = [];
-        if (!Array.isArray(parsed.liabilities)) parsed.liabilities = [];
-        if (!Array.isArray(parsed.expenses)) parsed.expenses = [];
-        if (!Array.isArray(parsed.gameLog)) parsed.gameLog = [];
+        const parsed = normalizeSavedGame(JSON.parse(saved) as GameState, playerName, profession);
         setGameState(parsed);
         // Suppress the milestone modals on resume — they fire once per achievement, not per session.
         setCertificateAwarded(true);
         setFiveCroreAwarded(parsed.hasReachedFiveCrore === true);
-        setWinRecorded(parsed.hasEscapedRatRace);
+        setWinRecorded(parsed.hasEscapedRatRace ?? false);
         setShowWelcome(false);
         setGameMode("playing");
         toast.success(`Welcome back, ${playerName}! Resuming your game.`);
@@ -531,7 +572,7 @@ const Index = () => {
 
       <DecisionModal
         pendingDecision={gameState.pendingDecision}
-        cash={gameState.cash}
+        cash={gameState.cash ?? 0}
         onAccept={handleDecisionAccept}
         onDecline={handleDecisionDecline}
       />
@@ -540,7 +581,7 @@ const Index = () => {
         open={showCertificate}
         onClose={() => setShowCertificate(false)}
         playerName={gameState.playerName}
-        cash={gameState.cash}
+        cash={gameState.cash ?? 0}
       />
 
       <FiveCroreCertificate

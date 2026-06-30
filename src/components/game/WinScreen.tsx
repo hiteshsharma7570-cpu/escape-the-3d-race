@@ -16,7 +16,7 @@ interface WinScreenProps {
 export const WinScreen = ({ open, gameState, onPlayAgain }: WinScreenProps) => {
   const netWorth = calculateNetWorth(gameState);
   const expenses = calculateTotalExpenses(gameState);
-  const best = [...gameState.assets].sort((a, b) => b.monthlyIncome - a.monthlyIncome)[0];
+  const best = [...(gameState.assets ?? [])].sort((a, b) => (b.monthlyIncome ?? 0) - (a.monthlyIncome ?? 0))[0];
   const report = useMemo(() => buildReportCard(gameState), [gameState]);
 
   const share = async () => {
@@ -27,9 +27,9 @@ export const WinScreen = ({ open, gameState, onPlayAgain }: WinScreenProps) => {
       `🎉 ${gameState.playerName} escaped the Rat Race!\n` +
       `Overall Grade: ${report.overall} (${report.overallScore}/100)\n` +
       `${grades}\n` +
-      `Turns: ${gameState.turnCount} · Net Worth: ₹${netWorth.toLocaleString()}\n` +
-      `Passive Income: ₹${gameState.passiveIncome.toLocaleString()}/mo` +
-      (best ? `\nBest investment: ${best.name} (₹${best.monthlyIncome.toLocaleString()}/mo)` : "");
+      `Turns: ${gameState.turnCount ?? 0} · Net Worth: ₹${(netWorth ?? 0).toLocaleString()}\n` +
+      `Passive Income: ₹${(gameState.passiveIncome ?? 0).toLocaleString()}/mo` +
+      (best ? `\nBest investment: ${best.name} (₹${(best.monthlyIncome ?? 0).toLocaleString()}/mo)` : "");
     try {
       await navigator.clipboard.writeText(text);
       toast.success("Score copied to clipboard!");
@@ -93,30 +93,30 @@ export const WinScreen = ({ open, gameState, onPlayAgain }: WinScreenProps) => {
           <div className="grid grid-cols-2 gap-3 text-sm">
             <div className="bg-accent/40 rounded-md p-3">
               <div className="text-muted-foreground text-xs">Total Turns</div>
-              <div className="text-lg font-bold">{gameState.turnCount}</div>
+              <div className="text-lg font-bold">{gameState.turnCount ?? 0}</div>
             </div>
             <div className="bg-accent/40 rounded-md p-3">
               <div className="text-muted-foreground text-xs">Final Net Worth</div>
-              <div className="text-lg font-bold text-success">₹{netWorth.toLocaleString()}</div>
+              <div className="text-lg font-bold text-success">₹{(netWorth ?? 0).toLocaleString()}</div>
             </div>
             <div className="bg-accent/40 rounded-md p-3">
               <div className="text-muted-foreground text-xs">Monthly Passive Income</div>
-              <div className="text-lg font-bold">₹{gameState.passiveIncome.toLocaleString()}</div>
+              <div className="text-lg font-bold">₹{(gameState.passiveIncome ?? 0).toLocaleString()}</div>
             </div>
             <div className="bg-accent/40 rounded-md p-3">
               <div className="text-muted-foreground text-xs">Assets Owned</div>
-              <div className="text-lg font-bold">{gameState.assets.length}</div>
+              <div className="text-lg font-bold">{gameState.assets?.length ?? 0}</div>
             </div>
           </div>
           {best && (
             <div className="bg-primary/10 border border-primary/40 rounded-md p-3 text-sm">
               <span className="font-semibold">Best investment:</span> {best.name} — ₹
-              {best.monthlyIncome.toLocaleString()}/mo
+              {(best.monthlyIncome ?? 0).toLocaleString()}/mo
             </div>
           )}
           <div className="bg-success/10 border border-success/40 rounded-md p-3 text-sm">
-            💡 You succeeded because your passive income of ₹{gameState.passiveIncome.toLocaleString()} now
-            covers your monthly expenses of ₹{expenses.toLocaleString()}. This is the core principle of
+            💡 You succeeded because your passive income of ₹{(gameState.passiveIncome ?? 0).toLocaleString()} now
+            covers your monthly expenses of ₹{(expenses ?? 0).toLocaleString()}. This is the core principle of
             financial freedom.
           </div>
           <div className="flex gap-2">

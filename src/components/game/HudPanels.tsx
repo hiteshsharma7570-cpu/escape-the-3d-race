@@ -10,7 +10,7 @@ export const PlayerPanel = ({ gameState }: { gameState: GameState }) => {
   const netWorth = calculateNetWorth(gameState);
   const totalExpenses = calculateTotalExpenses(gameState);
   const FIVE_CR = 50000000;
-  const freedomPct = Math.min((gameState.cash / FIVE_CR) * 100, 100);
+  const freedomPct = Math.min(((gameState.cash ?? 0) / FIVE_CR) * 100, 100);
   const initial = (gameState.playerName || "P").charAt(0).toUpperCase();
 
   return (
@@ -35,23 +35,23 @@ export const PlayerPanel = ({ gameState }: { gameState: GameState }) => {
       </div>
 
       <div className="space-y-1.5 mt-2.5 text-[12px]">
-        <StatRow label="Cash"          value={`₹${gameState.cash.toLocaleString()}`}          tone="green" />
-        <StatRow label="Salary"        value={`₹${gameState.salary.toLocaleString()} /m`} />
-        <StatRow label="Passive Income" value={`₹${gameState.passiveIncome.toLocaleString()} /m`} tone="green" />
-        <StatRow label="Expenses"      value={`₹${totalExpenses.toLocaleString()} /m`}        tone="red" />
-        <StatRow label="Net Worth"     value={`₹${netWorth.toLocaleString()}`} tone={netWorth >= 0 ? "white" : "red"} />
+        <StatRow label="Cash"          value={`₹${(gameState.cash ?? 0).toLocaleString()}`}          tone="green" />
+        <StatRow label="Salary"        value={`₹${(gameState.salary ?? 0).toLocaleString()} /m`} />
+        <StatRow label="Passive Income" value={`₹${(gameState.passiveIncome ?? 0).toLocaleString()} /m`} tone="green" />
+        <StatRow label="Expenses"      value={`₹${(totalExpenses ?? 0).toLocaleString()} /m`}        tone="red" />
+        <StatRow label="Net Worth"     value={`₹${(netWorth ?? 0).toLocaleString()}`} tone={(netWorth ?? 0) >= 0 ? "white" : "red"} />
       </div>
 
       <div className="mt-3">
         <div className="flex items-center justify-between text-[10px] text-slate-400 mb-1">
           <span className="tracking-wider uppercase">Financial Freedom</span>
-          <span className="font-mono-num text-emerald-400 font-bold">{freedomPct.toFixed(0)}%</span>
+        <span className="font-mono-num text-emerald-400 font-bold">{(freedomPct ?? 0).toFixed(0)}%</span>
         </div>
         <div className="h-1.5 rounded-full bg-slate-800 overflow-hidden">
           <motion.div
             className="h-full rounded-full"
             initial={{ width: 0 }}
-            animate={{ width: `${freedomPct}%` }}
+        animate={{ width: `${freedomPct ?? 0}%` }}
             transition={{ duration: 0.8 }}
             style={{
               background: "linear-gradient(90deg, hsl(140, 90%, 50%), hsl(170, 90%, 55%))",
@@ -153,7 +153,7 @@ const readPlayers = (): PlayerEntry[] => {
       if (!raw) continue;
       try {
         const s = JSON.parse(raw) as GameState;
-        out.push({ playerName: s.playerName, netWorth: calculateNetWorth(s) });
+        out.push({ playerName: s.playerName, netWorth: calculateNetWorth(s) ?? 0 });
       } catch {/*ignore*/}
     }
   } catch {/*ignore*/}
@@ -216,7 +216,7 @@ export const PlayersPanel = ({ currentPlayerName, currentNetWorth }: { currentPl
               </div>
               <div className="min-w-0 flex-1">
                 <div className="text-[12px] font-bold text-white truncate leading-tight">{p.playerName}</div>
-                <div className="text-[11px] font-mono-num text-gold leading-tight">₹{p.netWorth.toLocaleString()}</div>
+                <div className="text-[11px] font-mono-num text-gold leading-tight">₹{(p.netWorth ?? 0).toLocaleString()}</div>
               </div>
             </div>
           );
