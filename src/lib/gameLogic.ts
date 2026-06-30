@@ -685,6 +685,15 @@ export const handleTileEffect = (state: GameState, tile: Tile): GameState => {
       });
       logMessage = `📺 Subscription Creep! You signed up for ${name} — ₹${monthly.toLocaleString()}/mo on auto-debit.`;
       lessonMessage = "💡 Small recurring charges silently inflate your monthly burn. Audit them quarterly.";
+      const hasCloud = newState.expenses.some(e => /cloud storage/i.test(e.name));
+      if (!hasCloud && Math.random() < 0.5) {
+        addExpense(newState, {
+          name: "Cloud Storage & App Subscriptions",
+          category: "subscription",
+          monthlyAmount: 350,
+          essential: false,
+        });
+      }
       break;
     }
 
