@@ -1,8 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { GameBoard2D } from "@/components/game/GameBoard2D";
-import { GameDashboard } from "@/components/game/GameDashboard";
 import { PlayerSetup } from "@/components/game/PlayerSetup";
-import { LocalLeaderboard, LEADERBOARD_UPDATE_EVENT } from "@/components/game/LocalLeaderboard";
+import { LEADERBOARD_UPDATE_EVENT } from "@/components/game/LocalLeaderboard";
 import { DecisionModal } from "@/components/game/DecisionModal";
 import { CashCertificateModal } from "@/components/game/CashCertificateModal";
 import { FiveCroreCertificate } from "@/components/game/FiveCroreCertificate";
@@ -33,8 +32,7 @@ import {
   PlayerPanel, MarketStatusPanel, PlayersPanel, GameLogPanel,
   TopCenterHud,
 } from "@/components/game/HudPanels";
-import { RepayLoanDialog } from "@/components/game/RepayLoanDialog";
-import { WinScreen } from "@/components/game/WinScreen";
+
 
 const SAVE_KEY_PREFIX = "cashflow_game_save_v1:";
 const saveKeyFor = (name: string) => `${SAVE_KEY_PREFIX}${name.trim().toLowerCase()}`;
