@@ -11,8 +11,9 @@ interface GameBoard2DProps {
   gameState?: GameState;
   isRolling?: boolean;
   onRollDice?: () => void;
-  actionBar?: React.ReactNode;
+  onPayOffDebts?: () => void;
 }
+
 
 // NxN perimeter ring, clockwise from top-left. 10x10 -> 36 cells.
 const BOARD_SIZE = 10;
@@ -25,7 +26,7 @@ function buildPerimeter(n: number = BOARD_SIZE): Array<[number, number]> {
   return cells;
 }
 
-export const GameBoard2D = ({ currentPosition, diceValue, gameState, isRolling, onRollDice, actionBar }: GameBoard2DProps) => {
+export const GameBoard2D = ({ currentPosition, diceValue, gameState, isRolling, onRollDice, onPayOffDebts }: GameBoard2DProps) => {
   const [displayedPosition, setDisplayedPosition] = useState(currentPosition);
   const [visited, setVisited] = useState<Set<number>>(new Set([currentPosition]));
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -277,11 +278,17 @@ export const GameBoard2D = ({ currentPosition, diceValue, gameState, isRolling, 
               </div>
             )}
 
-            {actionBar && (
+            {onPayOffDebts && (
               <div className="mt-4 pt-4 w-full border-t border-amber-500/20 flex justify-center">
-                {actionBar}
+                <button
+                  onClick={onPayOffDebts}
+                  className="glass-card rounded-xl px-5 py-2.5 text-[11px] font-display font-bold tracking-wider text-slate-200 hover:text-gold hover:border-amber-500/50 transition-all hover:scale-105"
+                >
+                  PAY OFF DEBTS
+                </button>
               </div>
             )}
+
           </div>
         </div>
       </div>
