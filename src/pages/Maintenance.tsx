@@ -37,6 +37,25 @@ const Maintenance = () => {
       .select("id, created_at, error_type, error_message, stack, context, game_state, ai_diagnosis, ai_suggested_fix, diagnosed_at")
       .order("created_at", { ascending: false })
       .limit(50);
+    if (error) setError(error.message);
+    else setRows((data ?? []) as MaintenanceRow[]);
+    setLoading(false);
+  };
+
+  useEffect(() => {
+    if (allowed) void load();
+  }, [allowed]);
+
+  const triggerDiagnose = async (id: string) => {
+    setDiagnosing(id);
+    try {
+      await supabase.functions.invoke("ai-diagnose-error", { body: { id } });
+      await load();
+    } finally {
+      setDiagnosing(null);
+    }
+  };
+
   const num = (v: unknown) => (typeof v === "number" && Number.isFinite(v) ? v : null);
   const fmt = (v: number | null) => (v == null ? "—" : `₹${Math.round(v).toLocaleString()}`);
 
@@ -66,24 +85,6 @@ const Maintenance = () => {
       expenseCount: exps.length,
       monthlyOut,
     };
-  };
-    if (error) setError(error.message);
-    else setRows((data ?? []) as MaintenanceRow[]);
-    setLoading(false);
-  };
-
-  useEffect(() => {
-    if (allowed) void load();
-  }, [allowed]);
-
-  const triggerDiagnose = async (id: string) => {
-    setDiagnosing(id);
-    try {
-      await supabase.functions.invoke("ai-diagnose-error", { body: { id } });
-      await load();
-    } finally {
-      setDiagnosing(null);
-    }
   };
 
   if (!allowed) {
