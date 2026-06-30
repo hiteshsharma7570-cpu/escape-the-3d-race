@@ -1,7 +1,7 @@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { GameState } from "@/types/game";
-import { calculateNetWorth, calculateTotalExpenses } from "@/lib/gameLogic";
+import { calculateNetWorth, calculateTotalExpenses, calculateOutstandingDebt } from "@/lib/gameLogic";
 import { Trophy, Share2, RotateCcw } from "lucide-react";
 import { toast } from "sonner";
 import { buildReportCard, gradeColor } from "@/lib/reportCard";
@@ -16,6 +16,7 @@ interface WinScreenProps {
 export const WinScreen = ({ open, gameState, onPlayAgain }: WinScreenProps) => {
   const netWorth = calculateNetWorth(gameState);
   const expenses = calculateTotalExpenses(gameState);
+  const outstandingDebt = calculateOutstandingDebt(gameState);
   const best = [...(gameState.assets ?? [])].sort((a, b) => (b.monthlyIncome ?? 0) - (a.monthlyIncome ?? 0))[0];
   const report = useMemo(() => buildReportCard(gameState), [gameState]);
 
@@ -90,7 +91,7 @@ export const WinScreen = ({ open, gameState, onPlayAgain }: WinScreenProps) => {
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-3 text-sm">
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 text-sm">
             <div className="bg-accent/40 rounded-md p-3">
               <div className="text-muted-foreground text-xs">Total Turns</div>
               <div className="text-lg font-bold">{gameState.turnCount ?? 0}</div>
@@ -102,6 +103,14 @@ export const WinScreen = ({ open, gameState, onPlayAgain }: WinScreenProps) => {
             <div className="bg-accent/40 rounded-md p-3">
               <div className="text-muted-foreground text-xs">Monthly Passive Income</div>
               <div className="text-lg font-bold">₹{(gameState.passiveIncome ?? 0).toLocaleString()}</div>
+            </div>
+            <div className="bg-accent/40 rounded-md p-3">
+              <div className="text-muted-foreground text-xs">Monthly Outflow</div>
+              <div className="text-lg font-bold">₹{(expenses ?? 0).toLocaleString()}</div>
+            </div>
+            <div className="bg-accent/40 rounded-md p-3">
+              <div className="text-muted-foreground text-xs">Outstanding Debts</div>
+              <div className="text-lg font-bold">₹{(outstandingDebt ?? 0).toLocaleString()}</div>
             </div>
             <div className="bg-accent/40 rounded-md p-3">
               <div className="text-muted-foreground text-xs">Assets Owned</div>
