@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { GameBoard2D } from "@/components/game/GameBoard2D";
+import { GameDashboard } from "@/components/game/GameDashboard";
 import { PlayerSetup } from "@/components/game/PlayerSetup";
 import { LEADERBOARD_UPDATE_EVENT } from "@/components/game/LocalLeaderboard";
 import { DecisionModal } from "@/components/game/DecisionModal";
