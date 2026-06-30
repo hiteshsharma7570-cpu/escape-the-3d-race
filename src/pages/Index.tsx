@@ -511,7 +511,20 @@ const Index = () => {
         </div>
       </div>
 
+      {/* Portfolio dashboard displayed directly on the homepage */}
+      <div className="max-w-[1600px] mx-auto w-full px-3 md:px-5 pb-4">
+        <GameDashboard
+          gameState={gameState}
+          onRollDice={rollDice}
+          onTakeLoan={takeLoan}
+          onRepayLoan={repayLoan}
+          onPayOffDebts={payOffDebts}
+          onSellAsset={handleSellAsset}
+        />
+      </div>
+
       {/* === Repay loan dialog === */}
+
       <RepayLoanDialog
         open={repayOpen}
         onOpenChange={setRepayOpen}
