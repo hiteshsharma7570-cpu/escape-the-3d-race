@@ -134,6 +134,13 @@ export const BOARD_TILES: Tile[] = [
   t(33, "solar_install",       "Go Solar"),
   t(34, "elderly_care_hire",   "Elder Care"),
   t(35, "loan_interest_spike", "Interest Spike"),
+  t(36, "vacation",            "Vacation"),
+  t(37, "dinner",              "Dinner Out"),
+  t(38, "home_repair",         "Home Repair"),
+  t(39, "festival_expense",    "Festival"),
+  t(40, "fuel_price_hike",     "Fuel Hike"),
+  t(41, "gst_notice",          "GST Notice"),
+  t(42, "subscription_creep",  "Subscription"),
 ];
 
 export const calculateMonthlyCashFlow = (state: GameState): number => {
