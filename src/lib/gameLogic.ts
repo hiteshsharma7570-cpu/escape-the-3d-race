@@ -184,6 +184,9 @@ export const calculateNetWorth = (state: GameState): number => {
 };
 
 export const handleTileEffect = (state: GameState, tile: Tile): GameState => {
+  // Pool slots resolve to a random underlying tile type at landing-time.
+  // This is how 24 board slots cover 36+ flavors of event without losing variety.
+  tile = resolvePoolTile(tile);
   const newState: GameState = {
     ...state,
     liabilities: [...state.liabilities],
