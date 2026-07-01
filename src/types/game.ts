@@ -42,6 +42,9 @@ export type TileType =
  | "payday_loan"
  | "margin_call"
  | "tax_arrears"
+ | "college_admission_loan"
+ | "home_purchase_loan"
+ | "legal_settlement"
  // ---- Pool slots used directly on the 24-tile board.
  // Each resolves at landing-time to one of several concrete TileTypes above.
  | "quick_cash_trap"
