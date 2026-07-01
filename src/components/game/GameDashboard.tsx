@@ -1,6 +1,6 @@
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { GameState, calculateMonthlyCashFlow, calculateTotalExpenses, calculateNetWorth } from "@/lib/gameLogic";
+import { GameState, calculateMonthlyCashFlow, calculateNetWorth } from "@/lib/gameLogic";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
@@ -38,7 +38,6 @@ export const GameDashboard = ({
   onSellAsset,
 }: GameDashboardProps) => {
   const monthlyCashFlow = calculateMonthlyCashFlow(gameState);
-  const totalExpenses = calculateTotalExpenses(gameState);
   const netWorth = calculateNetWorth(gameState);
   const FIVE_CR = 50000000;
   const fiveCrPct = Math.min(((gameState.cash ?? 0) / FIVE_CR) * 100, 100);

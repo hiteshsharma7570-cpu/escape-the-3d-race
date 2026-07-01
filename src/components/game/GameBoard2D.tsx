@@ -1,4 +1,4 @@
-import { BOARD_TILES, calculateNetWorth, calculateTotalExpenses } from "@/lib/gameLogic";
+import { BOARD_TILES, calculateNetWorth } from "@/lib/gameLogic";
 import { motion } from "framer-motion";
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { GameState } from "@/types/game";
@@ -51,7 +51,6 @@ export const GameBoard2D = ({ currentPosition, diceValue, gameState, isRolling, 
   const currentTile = BOARD_TILES[displayedPosition];
   const currentMeta = getTileMeta(currentTile.type);
   const netWorth = gameState ? calculateNetWorth(gameState) : 0;
-  const totalExpenses = gameState ? calculateTotalExpenses(gameState) : 0;
 
   return (
     <div
