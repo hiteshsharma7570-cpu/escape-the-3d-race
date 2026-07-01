@@ -147,11 +147,11 @@ export const BOARD_TILES: Tile[] = [
 // concrete tile types. Resolved at landing-time so the same board cell
 // can produce different flavors on repeat visits.
 const TILE_POOLS: Partial<Record<Tile["type"], Tile["type"][]>> = {
-  quick_cash_trap:   ["gold_loan_offer", "payday_loan", "margin_call"],
+  quick_cash_trap:   ["gold_loan_offer", "payday_loan", "margin_call", "legal_settlement"],
   tax_trouble:       ["tax_audit", "tax_arrears", "gst_notice"],
   bill_shock:        ["rent_hike", "fuel_price_hike", "insurance_premium", "loan_interest_spike", "subscription_creep"],
   unexpected_repair: ["vehicle_breakdown", "home_repair", "traffic_fine"],
-  life_event:        ["baby", "school_fees", "festival_expense", "vacation", "dinner"],
+  life_event:        ["baby", "school_fees", "festival_expense", "vacation", "dinner", "college_admission_loan", "home_purchase_loan"],
   family_care:       ["parents_medical", "elderly_care_hire", "pet_adoption"],
   monthly_bills:     ["electricity_bill", "society_maintenance"],
   green_upgrade:     ["ev_switch", "solar_install"],
