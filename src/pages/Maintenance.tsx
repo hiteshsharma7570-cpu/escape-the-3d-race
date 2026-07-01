@@ -64,11 +64,9 @@ const Maintenance = () => {
     if (!gs) return null;
     const assets = Array.isArray(gs.assets) ? (gs.assets as Array<{ value?: number }>) : [];
     const liabs = Array.isArray(gs.liabilities) ? (gs.liabilities as Array<{ principal?: number }>) : [];
-    const exps = Array.isArray(gs.expenses) ? (gs.expenses as Array<{ monthlyAmount?: number }>) : [];
     const cash = num(gs.cash);
     const assetTotal = assets.reduce((s, a) => s + (a.value ?? 0), 0);
     const debtTotal = liabs.reduce((s, l) => s + (l.principal ?? 0), 0);
-    const monthlyOut = exps.reduce((s, e) => s + (e.monthlyAmount ?? 0), 0);
     return {
       playerName: typeof gs.playerName === "string" ? gs.playerName : null,
       profession: typeof gs.profession === "string" ? gs.profession : null,
@@ -82,8 +80,6 @@ const Maintenance = () => {
       assetTotal,
       liabilityCount: liabs.length,
       debtTotal,
-      expenseCount: exps.length,
-      monthlyOut,
     };
   };
 
@@ -214,7 +210,6 @@ const Maintenance = () => {
                     <div><span className="text-slate-500">net worth</span>{" "}<span className="text-amber-300">{fmt(gs.netWorth)}</span></div>
                     <div><span className="text-slate-500">assets</span>{" "}<span className="text-slate-200">{gs.assetCount} ({fmt(gs.assetTotal)})</span></div>
                     <div><span className="text-slate-500">debt</span>{" "}<span className="text-red-300">{gs.liabilityCount} ({fmt(gs.debtTotal)})</span></div>
-                    <div><span className="text-slate-500">expenses</span>{" "}<span className="text-slate-200">{gs.expenseCount} ({fmt(gs.monthlyOut)}/mo)</span></div>
                   </div>
                 );
               })()}

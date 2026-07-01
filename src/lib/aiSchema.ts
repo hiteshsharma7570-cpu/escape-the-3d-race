@@ -8,7 +8,9 @@ import { z } from "zod";
  *    no monthlyPayment, no servicing, no emi — anywhere, ever. Debts must
  *    feel like a fixed outstanding amount, never a rate.
  *  - Principals must be >= 0.
- *  - Cash deltas / expense amounts must be finite numbers.
+ *  - Cash deltas must be finite numbers.
+ *  - Recurring monthly expenses have been removed from the game — the
+ *    AI must never produce `addExpenses`.
  *
  * Any AI response that fails .parse() MUST be discarded by the caller and
  * deterministic static logic used as the fallback.
@@ -43,20 +45,10 @@ export const aiLiabilitySchema = z
     { message: "Liability must not carry any monthly payment / EMI field" },
   );
 
-export const aiExpenseSchema = z
-  .object({
-    name: z.string().min(1).max(120),
-    category: z.string().min(1).max(60),
-    monthlyAmount: z.number().finite().min(0),
-    essential: z.boolean().optional(),
-  })
-  .strict();
-
 export const aiTileResponseSchema = z.object({
   narrative: z.string().min(1).max(2000),
   cashDelta: z.number().finite().optional(),
   addLiabilities: z.array(aiLiabilitySchema).max(5).optional(),
-  addExpenses: z.array(aiExpenseSchema).max(5).optional(),
   lessons: z.array(z.string().max(500)).max(5).optional(),
 });
 

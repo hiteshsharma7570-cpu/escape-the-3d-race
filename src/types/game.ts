@@ -96,30 +96,6 @@ export interface Liability {
  principal: number;
 }
 
-/** Recurring monthly outflows with no principal — rent, bills, subscriptions. */
-export type ExpenseCategory =
- | "rent"
- | "utilities"
- | "insurance"
- | "subscription"
- | "childcare"
- | "lifestyle"
- | "professional"
- | "maintenance"
- | "transport"
- | "food"
- | "pet"
- | "eldercare";
-
-export interface Expense {
- id: string;
- name: string;
- category: ExpenseCategory;
- monthlyAmount: number;
- /** True = hard to cut (rent, utilities). False = discretionary. */
- essential: boolean;
-}
-
 export interface PendingDecision {
  type: "charity" | "opportunity";
  charityAmount?: number;
@@ -146,7 +122,6 @@ export interface GameState {
  passiveIncome: number;
  assets: Asset[];
  liabilities: Liability[];
- expenses: Expense[];
  position: number;
  diceValue: number | null;
  isRolling: boolean;
@@ -164,7 +139,6 @@ export interface ProfessionProfile {
  salary: number;
  cash: number;
  liabilities: Omit<Liability, "id">[];
- expenses: Omit<Expense, "id">[];
 }
 
 export const PROFESSION_PROFILES: Record<string, ProfessionProfile> = {
@@ -176,7 +150,6 @@ export const PROFESSION_PROFILES: Record<string, ProfessionProfile> = {
  { name: "Mobile Loan", category: "personal_loan", principal: 15000 },
  { name: "Family Loan", category: "personal_loan", principal: 50000 },
  ],
-  expenses: [],
  },
  Engineer: {
  salary: 90000,
@@ -187,7 +160,6 @@ export const PROFESSION_PROFILES: Record<string, ProfessionProfile> = {
  { name: "Education Loan",category: "education_loan",principal: 250000 },
  { name: "Furniture & Appliance Financing", category: "bnpl", principal: 90000 },
  ],
-  expenses: [],
  },
  Doctor: {
  salary: 150000,
@@ -198,7 +170,6 @@ export const PROFESSION_PROFILES: Record<string, ProfessionProfile> = {
  { name: "Clinic Equipment Loan", category: "business_loan", principal: 500000 },
  { name: "Home Renovation Loan", category: "home_loan", principal: 600000 },
  ],
-  expenses: [],
  },
  Lawyer: {
  salary: 120000,
@@ -208,7 +179,6 @@ export const PROFESSION_PROFILES: Record<string, ProfessionProfile> = {
  { name: "Car Loan", category: "vehicle_loan", principal: 500000 },
  { name: "Loan Against Securities", category: "margin_loan", principal: 200000 },
  ],
-  expenses: [],
  },
  "Business Owner": {
  salary: 60000,
@@ -219,7 +189,6 @@ export const PROFESSION_PROFILES: Record<string, ProfessionProfile> = {
  { name: "Co-signed Sibling's Loan", category: "personal_loan", principal: 250000 },
  { name: "NBFC Instant App Loan", category: "personal_loan", principal: 35000 },
  ],
-  expenses: [],
  },
 };
 
@@ -249,10 +218,6 @@ export const createInitialGameState = (
  id: `start-liability-${i}-${seed}`,
  })),
  ],
- expenses: profile.expenses.map((e, i) => ({
- ...e,
- id: `start-expense-${i}-${seed}`,
- })),
  position: 0,
  diceValue: null,
  isRolling: false,
