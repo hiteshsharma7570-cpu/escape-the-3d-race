@@ -1,4 +1,4 @@
-import { BOARD_TILES, calculateNetWorth, calculateTotalExpenses } from "@/lib/gameLogic";
+import { BOARD_TILES, calculateNetWorth } from "@/lib/gameLogic";
 import { motion } from "framer-motion";
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { GameState } from "@/types/game";
@@ -51,7 +51,6 @@ export const GameBoard2D = ({ currentPosition, diceValue, gameState, isRolling, 
   const currentTile = BOARD_TILES[displayedPosition];
   const currentMeta = getTileMeta(currentTile.type);
   const netWorth = gameState ? calculateNetWorth(gameState) : 0;
-  const totalExpenses = gameState ? calculateTotalExpenses(gameState) : 0;
 
   return (
     <div
@@ -239,17 +238,14 @@ export const GameBoard2D = ({ currentPosition, diceValue, gameState, isRolling, 
             {gameState ? (
               <div className="grid grid-cols-2 gap-x-8 gap-y-3 text-xs text-slate-200 w-full mt-2">
                 <Stat label="Cash"          value={`₹${(gameState.cash ?? 0).toLocaleString()}`}          tone="green" />
-                <Stat label="Expenses"      value={`₹${(totalExpenses ?? 0).toLocaleString()} /m`}        tone="red" />
                 <Stat label="Salary"        value={`₹${(gameState.salary ?? 0).toLocaleString()} /m`} />
-                <Stat label="Net Worth"     value={`₹${(netWorth ?? 0).toLocaleString()}`} tone={(netWorth ?? 0) >= 0 ? "green" : "red"} />
                 <Stat label="Passive"       value={`₹${(gameState.passiveIncome ?? 0).toLocaleString()} /m`} tone="gold" />
-                <Stat label="Assets / Debts / Bills" value={
+                <Stat label="Net Worth"     value={`₹${(netWorth ?? 0).toLocaleString()}`} tone={(netWorth ?? 0) >= 0 ? "green" : "red"} />
+                <Stat label="Assets / Debts" value={
                   <>
                     <span className="text-emerald-400">{gameState.assets.length}</span>
                     <span className="text-slate-500"> / </span>
                     <span className="text-rose-400">{gameState.liabilities.length}</span>
-                    <span className="text-slate-500"> / </span>
-                    <span className="text-amber-400">{gameState.expenses.length}</span>
                   </>
                 } />
               </div>
@@ -259,7 +255,7 @@ export const GameBoard2D = ({ currentPosition, diceValue, gameState, isRolling, 
 
             <div className="w-full px-3 py-2 rounded-md border text-center" style={{ borderColor: "hsla(140, 90%, 55%, 0.4)", background: "hsla(140, 90%, 55%, 0.08)" }}>
               <div className="text-[10px] tracking-[0.25em] text-gold-deep font-bold">GOAL</div>
-              <div className="text-[11px] text-slate-300 mt-0.5">Passive Income &gt; Monthly Expenses</div>
+              <div className="text-[11px] text-slate-300 mt-0.5">Grow Cash to ₹5 Crore</div>
               <div className="text-sm font-display font-bold mt-0.5" style={{ color: "hsl(140, 90%, 65%)", textShadow: "0 0 10px hsla(140, 90%, 55%, 0.6)" }}>
                 Escape The Rat Race!
               </div>
