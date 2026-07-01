@@ -96,30 +96,6 @@ export interface Liability {
  principal: number;
 }
 
-/** Recurring monthly outflows with no principal — rent, bills, subscriptions. */
-export type ExpenseCategory =
- | "rent"
- | "utilities"
- | "insurance"
- | "subscription"
- | "childcare"
- | "lifestyle"
- | "professional"
- | "maintenance"
- | "transport"
- | "food"
- | "pet"
- | "eldercare";
-
-export interface Expense {
- id: string;
- name: string;
- category: ExpenseCategory;
- monthlyAmount: number;
- /** True = hard to cut (rent, utilities). False = discretionary. */
- essential: boolean;
-}
-
 export interface PendingDecision {
  type: "charity" | "opportunity";
  charityAmount?: number;
@@ -146,7 +122,6 @@ export interface GameState {
  passiveIncome: number;
  assets: Asset[];
  liabilities: Liability[];
- expenses: Expense[];
  position: number;
  diceValue: number | null;
  isRolling: boolean;
@@ -164,7 +139,6 @@ export interface ProfessionProfile {
  salary: number;
  cash: number;
  liabilities: Omit<Liability, "id">[];
- expenses: Omit<Expense, "id">[];
 }
 
 export const PROFESSION_PROFILES: Record<string, ProfessionProfile> = {
