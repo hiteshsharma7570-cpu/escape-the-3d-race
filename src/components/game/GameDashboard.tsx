@@ -182,7 +182,7 @@ export const GameDashboard = ({
                 <span>₹{(gameState.salary ?? 0).toLocaleString()}</span>
               </div>
               <div className="flex justify-between">
-                <span><InfoLabel label="Passive Income" tip="Money you earn without actively working — rent, dividends, business profits. The goal is to make this exceed your expenses." /></span>
+                <span><InfoLabel label="Passive Income" tip="Money you earn without actively working — rent, dividends, business profits. The goal is to make this exceed your salary." /></span>
                 <span>₹{(gameState.passiveIncome ?? 0).toLocaleString()}</span>
               </div>
               <Separator className="my-2" />

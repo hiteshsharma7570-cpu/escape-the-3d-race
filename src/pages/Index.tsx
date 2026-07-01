@@ -514,7 +514,7 @@ const Index = () => {
 
   const showInstructions = () => {
     toast.info(
-      "Roll the dice to move around the board. Land on different tiles to trigger financial events. Your goal: Build passive income to exceed your expenses and escape the Rat Race!",
+      "Roll the dice to move around the board. Land on different tiles to trigger financial events. Your goal: Build passive income to exceed your salary and escape the Rat Race!",
       { duration: 6000 }
     );
   };
