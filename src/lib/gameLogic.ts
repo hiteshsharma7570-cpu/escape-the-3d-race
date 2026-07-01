@@ -333,12 +333,13 @@ export const handleTileEffect = (state: GameState, tile: Tile): GameState => {
         logMessage = `🏥 Medical Emergency! Paid ₹${cost.toLocaleString()} in full.`;
       } else {
         newState.cash = Math.max(0, newState.cash);
+        const debtName = cost > 250000 ? "Health-Crisis EMI" : "Medical Debt";
         addLiability(newState, {
-          name: "Medical Debt",
+          name: debtName,
           category: "medical_debt",
           principal: cost,
         });
-        logMessage = `🏥 Medical Emergency! ₹${cost.toLocaleString()} added as Medical Debt.`;
+        logMessage = `🏥 Medical Emergency! ₹${cost.toLocaleString()} added as ${debtName}.`;
       }
       break;
     }
@@ -776,10 +777,22 @@ export const handleTileEffect = (state: GameState, tile: Tile): GameState => {
         newState.profession === "Lawyer" ||
         newState.liabilities.some(l => l.category === "business_loan");
       const base = isBiz ? 25000 + Math.floor(Math.random() * 75000) : 5000 + Math.floor(Math.random() * 10000);
-      newState.cash -= base;
-      logMessage = isBiz
-        ? `🧾 GST Notice! Compliance shortfall — paid ₹${base.toLocaleString()} in dues + penalty.`
-        : `🧾 Tax notice! Filed late — penalty ₹${base.toLocaleString()}.`;
+      if (isBiz && newState.cash < base) {
+        const paid = Math.max(0, newState.cash);
+        const shortfall = base - paid;
+        newState.cash -= paid;
+        addLiability(newState, {
+          name: "GST Penalty Loan",
+          category: "business_loan",
+          principal: shortfall,
+        });
+        logMessage = `🧾 GST Notice! Paid ₹${paid.toLocaleString()}, financed ₹${shortfall.toLocaleString()} as GST Penalty Loan.`;
+      } else {
+        newState.cash -= base;
+        logMessage = isBiz
+          ? `🧾 GST Notice! Compliance shortfall — paid ₹${base.toLocaleString()} in dues + penalty.`
+          : `🧾 Tax notice! Filed late — penalty ₹${base.toLocaleString()}.`;
+      }
       break;
     }
 
@@ -798,16 +811,29 @@ export const handleTileEffect = (state: GameState, tile: Tile): GameState => {
     }
 
     case "bnpl_trap": {
-      // Buy Now Pay Later — adds debt to your liability stack with a 24% informational rate.
-      const gadgets = ["iPhone", "OLED TV", "Gaming Laptop", "Smartwatch", "DSLR Camera", "Air Fryer Pro"];
-      const item = gadgets[Math.floor(Math.random() * gadgets.length)];
-      const principal = 30000 + Math.floor(Math.random() * 120000);
-      addLiability(newState, {
-        name: `BNPL: ${item}`,
-        category: "bnpl",
-        principal,
-      });
-      logMessage = `🛍️ BNPL Trap! "${item}" financed — ₹${principal.toLocaleString()} added to outstanding debt.`;
+      // Buy Now Pay Later — split into gadgets and consumer durables, equal probability.
+      const isDurable = Math.random() < 0.5;
+      if (isDurable) {
+        const durables = ["AC", "Fridge", "Washing Machine", "TV"];
+        const item = durables[Math.floor(Math.random() * durables.length)];
+        const principal = 20000 + Math.floor(Math.random() * 40001);
+        addLiability(newState, {
+          name: `Consumer Durable Loan: ${item}`,
+          category: "bnpl",
+          principal,
+        });
+        logMessage = `🛍️ Consumer Durable Loan! "${item}" financed — ₹${principal.toLocaleString()} added to outstanding debt.`;
+      } else {
+        const gadgets = ["iPhone", "OLED TV", "Gaming Laptop", "Smartwatch", "DSLR Camera", "Air Fryer Pro"];
+        const item = gadgets[Math.floor(Math.random() * gadgets.length)];
+        const principal = 30000 + Math.floor(Math.random() * 90001);
+        addLiability(newState, {
+          name: `BNPL: ${item}`,
+          category: "bnpl",
+          principal,
+        });
+        logMessage = `🛍️ BNPL Trap! "${item}" financed — ₹${principal.toLocaleString()} added to outstanding debt.`;
+      }
       lessonMessage = "💡 Even 'no-cost' financing adds real principal you'll have to pay back.";
       break;
     }
@@ -938,10 +964,17 @@ export const handleTileEffect = (state: GameState, tile: Tile): GameState => {
       const hasHighRisk = newState.assets.some(a => a.risk === "high");
       const hasStocks = newState.assets.some(a => /stock|equity|mutual|crypto|startup/i.test(a.name));
       if (hasHighRisk || hasStocks) {
-        const principal = 200000 + Math.floor(Math.random() * 300000);
-        const isLAS = hasStocks && !hasHighRisk;
+        const cryptoAsset = newState.assets.find(a => /crypto/i.test(a.name));
+        const isCrypto = !!cryptoAsset;
+        const principal = isCrypto
+          ? 100000 + Math.floor(Math.random() * 200001)
+          : 200000 + Math.floor(Math.random() * 300000);
+        const isLAS = hasStocks && !hasHighRisk && !isCrypto;
+        const name = isCrypto
+          ? "Crypto Margin Loss Loan"
+          : isLAS ? "Loan Against Securities" : "Margin Loan";
         addLiability(newState, {
-          name: isLAS ? "Loan Against Securities" : "Margin Loan",
+          name,
           category: "margin_loan",
           principal,
         });
@@ -964,6 +997,56 @@ export const handleTileEffect = (state: GameState, tile: Tile): GameState => {
         principal: arrears,
       });
       logMessage = `🧾 Tax Arrears! IT Dept demands ₹${arrears.toLocaleString()} from past filings — added as debt.`;
+      break;
+    }
+
+    case "college_admission_loan": {
+      const cost = 200000 + Math.floor(Math.random() * 400001);
+      if (newState.cash >= cost) {
+        newState.cash -= cost;
+        logMessage = `🎓 College Admission! Paid ₹${cost.toLocaleString()} in fees from cash.`;
+      } else {
+        const paid = Math.max(0, newState.cash);
+        const shortfall = cost - paid;
+        newState.cash -= paid;
+        addLiability(newState, {
+          name: "Education Loan (Child)",
+          category: "education_loan",
+          principal: shortfall,
+        });
+        logMessage = `🎓 College Admission! Paid ₹${paid.toLocaleString()}, financed ₹${shortfall.toLocaleString()} as child's education loan.`;
+      }
+      break;
+    }
+
+    case "home_purchase_loan": {
+      const cost = 500000 + Math.floor(Math.random() * 1000001);
+      if (newState.cash >= cost) {
+        newState.cash -= cost;
+        logMessage = `🏡 Home Purchase! Paid ₹${cost.toLocaleString()} down payment in full.`;
+      } else {
+        const paid = Math.max(0, newState.cash);
+        const shortfall = cost - paid;
+        newState.cash -= paid;
+        addLiability(newState, {
+          name: "Home Purchase Loan",
+          category: "home_loan",
+          principal: shortfall,
+        });
+        logMessage = `🏡 Home Purchase! Paid ₹${paid.toLocaleString()}, financed ₹${shortfall.toLocaleString()} as home loan.`;
+      }
+      break;
+    }
+
+    case "legal_settlement": {
+      const principal = 50000 + Math.floor(Math.random() * 150001);
+      addLiability(newState, {
+        name: "Legal Settlement Loan",
+        category: "personal_loan",
+        principal,
+      });
+      logMessage = `⚖️ Legal Settlement! ₹${principal.toLocaleString()} added as debt to cover court fees & damages.`;
+      lessonMessage = "💡 Legal fights are expensive — mediation often costs less than litigation.";
       break;
     }
   }
