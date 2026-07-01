@@ -245,6 +245,24 @@ export const GameDashboard = ({
             </div>
           )}
 
+          {gameState.liabilities.length > 0 && (
+            <div>
+              <h3 className="text-destructive font-bold mb-2">
+                <InfoLabel label="Outstanding Debts" tip="Money you owe. Repay principal to reduce what you owe." />
+              </h3>
+              <div className="space-y-1 text-sm">
+                {gameState.liabilities.map((liability) => (
+                  <div key={liability.id} className="flex justify-between">
+                    <span className="truncate pr-2">{liability.name}</span>
+                    <span className="text-destructive shrink-0">
+                      ₹{(liability.principal ?? 0).toLocaleString()}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
           <div className="bg-primary/10 p-3 rounded-lg border border-primary">
             <div className="flex justify-between items-center">
               <span className="font-bold">
