@@ -25,9 +25,9 @@ const addExpense = (
   state: GameState,
   data: { name: string; category: ExpenseCategory; monthlyAmount: number; essential?: boolean }
 ): Expense => {
-  const e: Expense = { id: uid("exp"), essential: false, ...data };
-  state.expenses.push(e);
-  return e;
+  // Recurring expenses are disabled game-wide. Return a synthetic no-op
+  // expense so existing call sites keep type-checking without mutating state.
+  return { id: uid("exp"), essential: false, ...data };
 };
 
 export const INVESTMENT_OPPORTUNITIES = [
