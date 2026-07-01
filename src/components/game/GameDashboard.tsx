@@ -194,33 +194,6 @@ export const GameDashboard = ({
             </div>
           </div>
 
-          <div>
-            <h3 className="text-destructive font-bold mb-2">
-              <InfoLabel label="Monthly Outflow" tip="Every recurring expense that leaves your account each month. Outstanding debts are tracked separately and do not deduct monthly." />
-            </h3>
-            <div className="space-y-1 text-sm">
-              {gameState.expenses.length > 0 && (
-                <>
-                  <div className="text-[11px] uppercase tracking-wider text-muted-foreground mt-2">Recurring Expenses</div>
-                  {gameState.expenses.map((expense) => (
-                    <div key={expense.id} className="flex justify-between">
-                      <span className="truncate">
-                        {expense.name}
-                        <span className="text-[10px] text-muted-foreground ml-1">· {expense.category}</span>
-                      </span>
-                      <span>₹{(expense.monthlyAmount ?? 0).toLocaleString()}</span>
-                    </div>
-                  ))}
-                </>
-              )}
-              <Separator className="my-2" />
-              <div className="flex justify-between font-bold">
-                <span>Total Outflow:</span>
-                <span>₹{(totalExpenses ?? 0).toLocaleString()}</span>
-              </div>
-            </div>
-          </div>
-
           <div className="bg-accent p-3 rounded-lg">
             <h3 className="font-bold mb-2">
               <InfoLabel label="Monthly Cash Flow" tip="Salary + passive income minus all monthly liability payments. Negative means you're going backwards." />
