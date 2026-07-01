@@ -48,7 +48,8 @@ export const GameBoard2D = ({ currentPosition, diceValue, gameState, isRolling, 
   }, [displayedPosition, currentPosition]);
 
   const cells = useMemo(buildPerimeter, []);
-  const currentTile = BOARD_TILES[displayedPosition];
+  const safePosition = ((displayedPosition % BOARD_TILES.length) + BOARD_TILES.length) % BOARD_TILES.length;
+  const currentTile = BOARD_TILES[safePosition];
   const currentMeta = getTileMeta(currentTile.type);
   const netWorth = gameState ? calculateNetWorth(gameState) : 0;
 
