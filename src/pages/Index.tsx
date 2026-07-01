@@ -72,14 +72,6 @@ const normalizeSavedGame = (saved: GameState, fallbackPlayerName: string, fallba
           principal: liability.principal ?? 0,
         }))
       : [],
-    expenses: Array.isArray(saved.expenses)
-      ? saved.expenses.map((expense) => ({
-          ...expense,
-          category: expense.category ?? "lifestyle",
-          monthlyAmount: expense.monthlyAmount ?? 0,
-          essential: expense.essential ?? false,
-        }))
-      : [],
     position: saved.position ?? 0,
     diceValue: saved.diceValue ?? null,
     isRolling: saved.isRolling ?? false,
@@ -448,14 +440,13 @@ const Index = () => {
 
   const payOffDebts = () => {
     // Every liability now has an outstanding principal — all are clearable in a lump sum.
-    // Recurring expenses live in their own array and cannot be paid off this way.
     const clearable = gameState.liabilities.filter((l) => (l.principal ?? 0) > 0);
     if (clearable.length === 0) {
-      toast.error("No outstanding loans to clear. Recurring expenses can't be paid off in a lump sum.");
+      toast.error("No outstanding loans to clear.");
       return;
     }
     const totalDebt = clearable.reduce((sum, l) => sum + (l.principal ?? 0), 0);
-    if (!confirm(`Pay off ${clearable.length} loan(s) totaling ₹${totalDebt.toLocaleString()}? Recurring expenses (rent, bills, subscriptions) will remain.`)) {
+    if (!confirm(`Pay off ${clearable.length} loan(s) totaling ₹${totalDebt.toLocaleString()}?`)) {
       return;
     }
     if (gameState.cash >= totalDebt) {
@@ -470,7 +461,7 @@ const Index = () => {
           ...prev.gameLog.slice(0, 19),
         ],
       }));
-      toast.success("Loans cleared! Recurring expenses remain.");
+      toast.success("Loans cleared!");
     } else {
       playSound("loseMoney");
       toast.error("Insufficient funds to pay off all loans");
