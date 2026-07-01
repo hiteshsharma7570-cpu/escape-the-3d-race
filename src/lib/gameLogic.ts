@@ -890,11 +890,11 @@ export const handleTileEffect = (state: GameState, tile: Tile): GameState => {
   // Check win condition — only valid after at least one investment
   if (
     newState.assets.length > 0 &&
-    newState.passiveIncome >= calculateTotalExpenses(newState) &&
+    newState.passiveIncome >= newState.salary &&
     !newState.hasEscapedRatRace
   ) {
     newState.hasEscapedRatRace = true;
-    pushLog(newState, "🎉 You escaped the Rat Race! Passive income covers all expenses!");
+    pushLog(newState, "🎉 You escaped the Rat Race! Passive income now exceeds your salary!");
   }
 
   // Primary win: ₹5 Crore in cash
@@ -945,11 +945,11 @@ export const applyOpportunityDecision = (state: GameState, accept: boolean): Gam
   // Check win condition after investment (only after at least one asset exists)
   if (
     newState.assets.length > 0 &&
-    newState.passiveIncome >= calculateTotalExpenses(newState) &&
+    newState.passiveIncome >= newState.salary &&
     !newState.hasEscapedRatRace
   ) {
     newState.hasEscapedRatRace = true;
-    pushLog(newState, "🎉 You escaped the Rat Race! Passive income covers all expenses!");
+    pushLog(newState, "🎉 You escaped the Rat Race! Passive income now exceeds your salary!");
   }
   
   return newState;
@@ -1023,16 +1023,6 @@ export const applyPeriodicMechanics = (
 ): { state: GameState; events: string[] } => {
   const events: string[] = [];
   let next = { ...state, liabilities: [...state.liabilities], assets: [...state.assets] };
-
-  // Inflation every 5 turns: recurring expenses +3% (liabilities are principal-only and unaffected).
-  if (next.turnCount > 0 && next.turnCount % 5 === 0) {
-    next.expenses = next.expenses.map(e => ({
-      ...e,
-      monthlyAmount: Math.round(e.monthlyAmount * 1.03),
-    }));
-    events.push("📈 Inflation! Your recurring expenses just went up.");
-    pushLog(next, "📈 Inflation hit — all recurring expenses +3%.");
-  }
 
   // Salary review every 8 turns: +5–15%
   if (next.turnCount > 0 && next.turnCount % 8 === 0) {
