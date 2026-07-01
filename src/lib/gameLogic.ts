@@ -260,14 +260,9 @@ export const handleTileEffect = (state: GameState, tile: Tile): GameState => {
       break;
 
     case "baby": {
-      const babyExpense = 16000;
-      addExpense(newState, {
-        name: "Child Expenses",
-        category: "childcare",
-        monthlyAmount: babyExpense,
-        essential: true,
-      });
-      logMessage = `👶 Baby! Monthly expenses increased by ₹${babyExpense.toLocaleString()}.`;
+      const cost = 80000 + Math.floor(Math.random() * 40000);
+      newState.cash -= cost;
+      logMessage = `👶 Baby! Hospital, cot & first months of gear — spent ₹${cost.toLocaleString()}.`;
       break;
     }
 
@@ -304,9 +299,7 @@ export const handleTileEffect = (state: GameState, tile: Tile): GameState => {
 
     case "medical_emergency": {
       let cost = Math.floor(Math.random() * 250000) + 50000;
-      const hasInsurance =
-        newState.assets.some(a => /insurance/i.test(a.name)) ||
-        newState.expenses.some(e => e.category === "insurance" && /medical|health/i.test(e.name));
+      const hasInsurance = newState.assets.some(a => /insurance/i.test(a.name));
       if (hasInsurance) cost = Math.round(cost * 0.4);
       if (newState.cash >= cost) {
         newState.cash -= cost;
@@ -445,23 +438,9 @@ export const handleTileEffect = (state: GameState, tile: Tile): GameState => {
     }
 
     case "insurance_premium": {
-      const existing = newState.expenses.find(e => e.category === "insurance");
-      if (existing) {
-        const newAmt = Math.round(existing.monthlyAmount * 1.15);
-        newState.expenses = newState.expenses.map(e =>
-          e.id === existing.id ? { ...e, monthlyAmount: newAmt } : e
-        );
-        logMessage = `🛡️ Insurance renewal! ${existing.name} premium up 15% to ₹${newAmt.toLocaleString()}/mo.`;
-      } else {
-        const premium = 3000 + Math.floor(Math.random() * 4000);
-        addExpense(newState, {
-          name: "Insurance Premium",
-          category: "insurance",
-          monthlyAmount: premium,
-          essential: true,
-        });
-        logMessage = `🛡️ You need insurance! Added ₹${premium.toLocaleString()}/mo insurance premium.`;
-      }
+      const premium = 20000 + Math.floor(Math.random() * 30000);
+      newState.cash -= premium;
+      logMessage = `🛡️ Annual insurance premium due — paid ₹${premium.toLocaleString()}.`;
       break;
     }
 
@@ -524,14 +503,9 @@ export const handleTileEffect = (state: GameState, tile: Tile): GameState => {
     }
 
     case "school_fees": {
-      const hasChild = newState.expenses.some(e => e.category === "childcare" || /child/i.test(e.name));
-      if (hasChild) {
-        const fees = 25000 + Math.floor(Math.random() * 50000);
-        newState.cash -= fees;
-        logMessage = `🎒 School fees due! Paid ₹${fees.toLocaleString()} for the term.`;
-      } else {
-        logMessage = `🎒 School fees notice — but you have no children yet. Skipped.`;
-      }
+      const fees = 25000 + Math.floor(Math.random() * 50000);
+      newState.cash -= fees;
+      logMessage = `🎒 School fees due! Paid ₹${fees.toLocaleString()} for the term.`;
       break;
     }
 
@@ -539,16 +513,6 @@ export const handleTileEffect = (state: GameState, tile: Tile): GameState => {
       const festCost = 10000 + Math.floor(Math.random() * 40000);
       newState.cash -= festCost;
       logMessage = `🪔 Festival season! Spent ₹${festCost.toLocaleString()} on celebrations and gifts.`;
-      const hasFestFund = newState.expenses.some(e => /festival fund/i.test(e.name));
-      if (!hasFestFund && Math.random() < 0.6) {
-        addExpense(newState, {
-          name: "Society Festival Fund (Ganpati/Diwali)",
-          category: "maintenance",
-          monthlyAmount: 600,
-          essential: false,
-        });
-        lessonMessage = "💡 Society collections feel small but add up — they're a real recurring expense.";
-      }
       if (Math.random() < 0.2) {
         const principal = 60000 + Math.floor(Math.random() * 90000);
         addLiability(newState, {
@@ -569,22 +533,9 @@ export const handleTileEffect = (state: GameState, tile: Tile): GameState => {
     }
 
     case "rent_hike": {
-      const rentExpense = newState.expenses.find(e => e.category === "rent");
-      if (rentExpense) {
-        const hike = Math.round(rentExpense.monthlyAmount * 0.15);
-        newState.expenses = newState.expenses.map(e =>
-          e.id === rentExpense.id ? { ...e, monthlyAmount: e.monthlyAmount + hike } : e
-        );
-        logMessage = `🏠 Rent Hike! Landlord raised rent by ₹${hike.toLocaleString()}/mo.`;
-      } else {
-        addExpense(newState, {
-          name: "Home Rent",
-          category: "rent",
-          monthlyAmount: 15000,
-          essential: true,
-        });
-        logMessage = `🏠 Rent Hike! New rental added — ₹15,000/mo.`;
-      }
+      const hike = 8000 + Math.floor(Math.random() * 22000);
+      newState.cash -= hike;
+      logMessage = `🏠 Rent Hike! Landlord charged ₹${hike.toLocaleString()} in one-shot renewal costs.`;
       break;
     }
 
@@ -629,20 +580,9 @@ export const handleTileEffect = (state: GameState, tile: Tile): GameState => {
     }
 
     case "society_maintenance": {
-      const fee = 2500 + Math.floor(Math.random() * 5000);
-      const existing = newState.expenses.find(e => e.category === "maintenance");
-      if (!existing) {
-        addExpense(newState, {
-          name: "Society Maintenance",
-          category: "maintenance",
-          monthlyAmount: fee,
-          essential: true,
-        });
-        logMessage = `🏢 Society maintenance added — ₹${fee.toLocaleString()}/mo ongoing.`;
-      } else {
-        newState.cash -= fee;
-        logMessage = `🏢 Annual society maintenance paid — ₹${fee.toLocaleString()}.`;
-      }
+      const fee = 8000 + Math.floor(Math.random() * 12000);
+      newState.cash -= fee;
+      logMessage = `🏢 Annual society maintenance paid — ₹${fee.toLocaleString()}.`;
       break;
     }
 
@@ -682,52 +622,22 @@ export const handleTileEffect = (state: GameState, tile: Tile): GameState => {
     case "subscription_creep": {
       const apps = ["Netflix", "Spotify Premium", "Hotstar", "Prime Video", "iCloud+", "ChatGPT Plus", "YouTube Premium"];
       const name = apps[Math.floor(Math.random() * apps.length)];
-      const monthly = 200 + Math.floor(Math.random() * 1800);
-      addExpense(newState, {
-        name,
-        category: "subscription",
-        monthlyAmount: monthly,
-        essential: false,
-      });
-      logMessage = `📺 Subscription Creep! You signed up for ${name} — ₹${monthly.toLocaleString()}/mo on auto-debit.`;
-      lessonMessage = "💡 Small recurring charges silently inflate your monthly burn. Audit them quarterly.";
-      const hasCloud = newState.expenses.some(e => /cloud storage/i.test(e.name));
-      if (!hasCloud && Math.random() < 0.5) {
-        addExpense(newState, {
-          name: "Cloud Storage & App Subscriptions",
-          category: "subscription",
-          monthlyAmount: 350,
-          essential: false,
-        });
-      }
+      const hit = 3000 + Math.floor(Math.random() * 9000);
+      newState.cash -= hit;
+      logMessage = `📺 Subscription Creep! An old ${name} auto-debit surprise — ₹${hit.toLocaleString()} gone.`;
+      lessonMessage = "💡 Auto-debit surprises are one of the top leaks in personal cash flow.";
       break;
     }
 
     case "fuel_price_hike": {
-      const transport = newState.expenses.filter(e => e.category === "transport");
-      if (transport.length === 0) {
-        const penalty = 1500 + Math.floor(Math.random() * 2500);
-        newState.cash -= penalty;
-        logMessage = `⛽ Fuel price hike! You drove minimally — only ₹${penalty.toLocaleString()} extra this month.`;
-      } else {
-        const pct = 10 + Math.floor(Math.random() * 16);
-        let extra = 0;
-        newState.expenses = newState.expenses.map(e => {
-          if (e.category !== "transport") return e;
-          const bump = Math.round(e.monthlyAmount * pct / 100);
-          extra += bump;
-          return { ...e, monthlyAmount: e.monthlyAmount + bump };
-        });
-        logMessage = `⛽ Fuel price hike (+${pct}%)! Transport costs rose by ₹${extra.toLocaleString()}/mo.`;
-      }
+      const extra = 3000 + Math.floor(Math.random() * 7000);
+      newState.cash -= extra;
+      logMessage = `⛽ Fuel price hike! Pump costs jumped — ₹${extra.toLocaleString()} extra this month.`;
       break;
     }
 
     case "parents_medical": {
       const cost = 25000 + Math.floor(Math.random() * 75000);
-      const hasParentInsurance = newState.expenses.some(
-        e => e.category === "insurance" && /parent|senior/i.test(e.name)
-      );
       if (newState.cash >= cost) {
         newState.cash -= cost;
         logMessage = `👴 Parents needed medical care. Paid ₹${cost.toLocaleString()} from cash.`;
@@ -737,16 +647,7 @@ export const handleTileEffect = (state: GameState, tile: Tile): GameState => {
           category: "medical_debt",
           principal: cost,
         });
-        logMessage = `👴 Parents medical emergency! ₹${cost.toLocaleString()} added as debt (₹4,000/mo).`;
-      }
-      if (!hasParentInsurance && Math.random() < 0.5) {
-        addExpense(newState, {
-          name: "Parents' Health Insurance",
-          category: "insurance",
-          monthlyAmount: 3500,
-          essential: true,
-        });
-        lessonMessage = "💡 You bought parents' health cover — +₹3,500/mo, future hits will be softer.";
+        logMessage = `👴 Parents medical emergency! ₹${cost.toLocaleString()} added as medical debt.`;
       }
       break;
     }
@@ -819,104 +720,53 @@ export const handleTileEffect = (state: GameState, tile: Tile): GameState => {
     }
 
     case "solar_install": {
-      // Rooftop solar — adds a personal loan but PERMANENTLY cuts the electricity bill.
+      // Rooftop solar — adds a personal loan (recurring bill savings removed).
       const principal = 150000;
       addLiability(newState, {
         name: "Solar Rooftop Loan",
         category: "personal_loan",
         principal,
       });
-      const elec = newState.expenses.find(e => e.category === "utilities" && /electric/i.test(e.name));
-      let saved = 0;
-      if (elec) {
-        const cut = Math.round(elec.monthlyAmount * 0.6);
-        saved = cut;
-        newState.expenses = newState.expenses.map(e =>
-          e.id === elec.id ? { ...e, monthlyAmount: e.monthlyAmount - cut } : e
-        );
-      }
-      logMessage = saved > 0
-        ? `☀️ Solar Installed! +₹${principal.toLocaleString()} loan added, but electricity bill -₹${saved.toLocaleString()}/mo forever.`
-        : `☀️ Solar Installed! New ₹${principal.toLocaleString()} loan added (no electricity bill to offset yet).`;
-      lessonMessage = "💡 Smart liabilities can pay for themselves over time — recurring savings matter.";
+      logMessage = `☀️ Solar Installed! New ₹${principal.toLocaleString()} rooftop loan added.`;
+      lessonMessage = "💡 Financed upgrades add real debt — weigh the long-term payoff.";
       break;
     }
 
     case "ev_switch": {
-      // Trade in petrol vehicle: new vehicle loan, but transport (fuel) expenses halved.
+      // Trade in petrol vehicle: new vehicle loan.
       const principal = 600000;
       addLiability(newState, {
         name: "EV Auto Loan",
         category: "vehicle_loan",
         principal,
       });
-      let fuelCut = 0;
-      newState.expenses = newState.expenses.map(e => {
-        if (e.category === "transport") {
-          const cut = Math.round(e.monthlyAmount * 0.5);
-          fuelCut += cut;
-          return { ...e, monthlyAmount: e.monthlyAmount - cut };
-        }
-        return e;
-      });
-      logMessage = fuelCut > 0
-        ? `🔋 Switched to EV! +₹${principal.toLocaleString()} auto loan added, transport costs -₹${fuelCut.toLocaleString()}/mo.`
-        : `🔋 Switched to EV! New ₹${principal.toLocaleString()} auto loan added.`;
+      logMessage = `🔋 Switched to EV! New ₹${principal.toLocaleString()} auto loan added.`;
       break;
     }
 
     case "streaming_audit": {
-      // Audit your subscription stack — cut 40% off recurring subs.
-      const subs = newState.expenses.filter(e => e.category === "subscription");
-      if (subs.length === 0) {
-        logMessage = `✂️ Subscription audit — nothing to cut. Stay disciplined!`;
-      } else {
-        let saved = 0;
-        newState.expenses = newState.expenses.map(e => {
-          if (e.category !== "subscription") return e;
-          const cut = Math.round(e.monthlyAmount * 0.4);
-          saved += cut;
-          return { ...e, monthlyAmount: e.monthlyAmount - cut };
-        });
-        logMessage = `✂️ OTT Audit! Cancelled overlapping subscriptions — saved ₹${saved.toLocaleString()}/mo.`;
-        lessonMessage = "💡 Auditing subscriptions every quarter is one of the highest-ROI financial habits.";
-      }
+      // Audit / refund windfall — small one-time cash back.
+      const refund = 2000 + Math.floor(Math.random() * 6000);
+      newState.cash += refund;
+      logMessage = `✂️ Subscription audit paid off — reclaimed ₹${refund.toLocaleString()} in overcharges.`;
+      lessonMessage = "💡 Reviewing statements quarterly can quietly return real money.";
       break;
     }
 
     case "pet_adoption": {
-      // New family member — recurring pet expense + small one-time setup.
-      const setup = 8000 + Math.floor(Math.random() * 12000);
+      // New pet — one-time setup + first year of care lumped together.
+      const setup = 25000 + Math.floor(Math.random() * 25000);
       newState.cash -= setup;
-      addExpense(newState, {
-        name: "Pet Care",
-        category: "pet",
-        monthlyAmount: 3500,
-        essential: true,
-      });
-      logMessage = `🐶 You adopted a pet! Setup ₹${setup.toLocaleString()} + ₹3,500/mo for food, vet & grooming.`;
+      logMessage = `🐶 You adopted a pet! Setup + first-year care cost ₹${setup.toLocaleString()}.`;
       break;
     }
 
     case "elderly_care_hire": {
-      // Hire a caregiver — high recurring expense, but prevents future parents_medical hits.
-      const existing = newState.expenses.find(e => e.category === "eldercare");
-      if (existing) {
-        const bump = Math.round(existing.monthlyAmount * 0.1);
-        newState.expenses = newState.expenses.map(e =>
-          e.id === existing.id ? { ...e, monthlyAmount: e.monthlyAmount + bump } : e
-        );
-        logMessage = `🧓 Caregiver salary revision: +₹${bump.toLocaleString()}/mo (now ₹${(existing.monthlyAmount + bump).toLocaleString()}).`;
-      } else {
-        addExpense(newState, {
-          name: "Live-in Caregiver",
-          category: "eldercare",
-          monthlyAmount: 8000,
-          essential: true,
-        });
-        logMessage = `🧓 Hired a live-in caregiver for parents — ₹8,000/mo recurring.`;
-        lessonMessage = "💡 Eldercare is a long-tail expense that's often missed in retirement planning.";
-      }
+      // Hire a caregiver — one-time deposit + first month.
+      const cost = 40000 + Math.floor(Math.random() * 40000);
+      newState.cash -= cost;
+      logMessage = `🧓 Hired a live-in caregiver for parents — deposit + first month ₹${cost.toLocaleString()}.`;
+      lessonMessage = "💡 Eldercare costs come in big spikes — plan a cash cushion.";
       break;
     }
 
