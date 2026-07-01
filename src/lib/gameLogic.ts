@@ -158,22 +158,12 @@ export const resolvePoolTile = (tile: Tile): Tile => {
 };
 
 export const calculateMonthlyCashFlow = (state: GameState): number => {
-  const totalIncome = (state.salary ?? 0) + (state.passiveIncome ?? 0);
-  return totalIncome - calculateTotalExpenses(state);
-};
-
-export const calculateTotalExpenses = (state: GameState): number => {
-  // Liabilities are outstanding debts only — they affect net worth, never monthly outflow.
-  return (state.expenses ?? []).reduce((sum, e) => sum + (e.monthlyAmount ?? 0), 0);
+  return (state.salary ?? 0) + (state.passiveIncome ?? 0);
 };
 
 /** Sum of all outstanding debt principal across liabilities. */
 export const calculateOutstandingDebt = (state: GameState): number =>
   (state.liabilities ?? []).reduce((sum, l) => sum + (l.principal ?? 0), 0);
-
-/** Sum of all recurring expenses (rent, bills, subscriptions). */
-export const calculateRecurringExpenses = (state: GameState): number =>
-  (state.expenses ?? []).reduce((sum, e) => sum + (e.monthlyAmount ?? 0), 0);
 
 export const calculateNetWorth = (state: GameState): number => {
   const totalAssets = (state.assets ?? []).reduce((sum, a) => sum + (a.value ?? 0), 0);
@@ -188,7 +178,6 @@ export const handleTileEffect = (state: GameState, tile: Tile): GameState => {
   const newState: GameState = {
     ...state,
     liabilities: [...state.liabilities],
-    expenses: [...state.expenses],
     assets: [...state.assets],
   };
   let logMessage = "";
