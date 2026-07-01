@@ -1,6 +1,6 @@
 import { motion } from "framer-motion";
 import { GameState } from "@/types/game";
-import { calculateNetWorth, calculateTotalExpenses } from "@/lib/gameLogic";
+import { calculateNetWorth } from "@/lib/gameLogic";
 import { TrendingUp, TrendingDown, Minus, User } from "lucide-react";
 
 /* =============================================================================
@@ -8,7 +8,6 @@ import { TrendingUp, TrendingDown, Minus, User } from "lucide-react";
  * ============================================================================= */
 export const PlayerPanel = ({ gameState }: { gameState: GameState }) => {
   const netWorth = calculateNetWorth(gameState);
-  const totalExpenses = calculateTotalExpenses(gameState);
   const FIVE_CR = 50000000;
   const freedomPct = Math.min(((gameState.cash ?? 0) / FIVE_CR) * 100, 100);
   const initial = (gameState.playerName || "P").charAt(0).toUpperCase();
@@ -38,7 +37,6 @@ export const PlayerPanel = ({ gameState }: { gameState: GameState }) => {
         <StatRow label="Cash"          value={`₹${(gameState.cash ?? 0).toLocaleString()}`}          tone="green" />
         <StatRow label="Salary"        value={`₹${(gameState.salary ?? 0).toLocaleString()} /m`} />
         <StatRow label="Passive Income" value={`₹${(gameState.passiveIncome ?? 0).toLocaleString()} /m`} tone="green" />
-        <StatRow label="Expenses"      value={`₹${(totalExpenses ?? 0).toLocaleString()} /m`}        tone="red" />
         <StatRow label="Net Worth"     value={`₹${(netWorth ?? 0).toLocaleString()}`} tone={(netWorth ?? 0) >= 0 ? "white" : "red"} />
       </div>
 

@@ -1,5 +1,5 @@
 import { GameState } from "@/types/game";
-import { calculateNetWorth, calculateTotalExpenses } from "./gameLogic";
+import { calculateNetWorth } from "./gameLogic";
 
 export type Grade = "A+" | "A" | "B+" | "B" | "C+" | "C" | "D" | "F";
 
@@ -33,7 +33,6 @@ const clamp = (n: number, min = 0, max = 100) => Math.max(min, Math.min(max, n))
 
 export const buildReportCard = (state: GameState): ReportCard => {
   const netWorth = calculateNetWorth(state);
-  const expenses = calculateTotalExpenses(state);
   const totalLiabilityAmount = state.liabilities.reduce((s, l) => s + l.principal, 0);
   const assets = state.assets;
   const turns = Math.max(1, state.turnCount);
@@ -64,8 +63,8 @@ export const buildReportCard = (state: GameState): ReportCard => {
   // 2000/turn ~ A, 4000/turn ~ A+
   const timingScore = clamp(Math.sqrt(incomePerTurn / 4000) * 100);
 
-  // 4. Cash Flow — passive vs expenses coverage
-  const coverage = expenses > 0 ? state.passiveIncome / expenses : 1;
+  // 4. Cash Flow — passive income vs salary replacement
+  const coverage = state.salary > 0 ? state.passiveIncome / state.salary : 1;
   const cashFlowScore = clamp(coverage * 70 + (state.hasEscapedRatRace ? 30 : 0));
 
   // 5. Wealth Building — net worth growth
@@ -122,9 +121,9 @@ export const buildReportCard = (state: GameState): ReportCard => {
       score: cashFlowScore,
       grade: toGrade(cashFlowScore),
       summary: state.hasEscapedRatRace
-        ? "Passive income fully covers your expenses — escape achieved."
+        ? "Passive income now exceeds your salary — escape achieved."
         : coverage >= 0.5
-        ? "Passive income covers half your expenses. Almost there."
+        ? "Passive income covers half your salary. Almost there."
         : "Salary still funds most of your lifestyle.",
     },
     {
