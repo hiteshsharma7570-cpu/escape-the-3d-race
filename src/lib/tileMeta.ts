@@ -53,6 +53,9 @@ export const TILE_META: Record<TileType, TileMeta> = {
   payday_loan:         { category: "PAYDAY LOAN",    subtitle: "HIGH RATE",  icon: "💸", neonHsl: "350 85% 55%" },
   margin_call:         { category: "MARGIN CALL",    subtitle: "+DEBT",      icon: "📞", neonHsl: "0 90% 50%" },
   tax_arrears:         { category: "TAX ARREARS",    subtitle: "+DEBT",      icon: "🧾", neonHsl: "15 70% 45%" },
+  college_admission_loan: { category: "COLLEGE ADMIT", subtitle: "CHILD FEES", icon: "🎓", neonHsl: "220 80% 55%" },
+  home_purchase_loan:  { category: "HOME PURCHASE",  subtitle: "DOWN PAYMENT", icon: "🏡", neonHsl: "35 90% 55%" },
+  legal_settlement:    { category: "LEGAL SETTLE",   subtitle: "+DEBT",       icon: "⚖️", neonHsl: "260 60% 50%" },
   // ---- Pool slots on the 24-tile board ----
   quick_cash_trap:     { category: "QUICK CASH TRAP", subtitle: "+DEBT",       icon: "💸", neonHsl: "350 80% 55%" },
   tax_trouble:         { category: "TAX TROUBLE",     subtitle: "IT DEPT",     icon: "🧾", neonHsl: "20 70% 45%" },

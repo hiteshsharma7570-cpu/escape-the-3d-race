@@ -42,6 +42,9 @@ export type TileType =
  | "payday_loan"
  | "margin_call"
  | "tax_arrears"
+ | "college_admission_loan"
+ | "home_purchase_loan"
+ | "legal_settlement"
  // ---- Pool slots used directly on the 24-tile board.
  // Each resolves at landing-time to one of several concrete TileTypes above.
  | "quick_cash_trap"
@@ -172,8 +175,6 @@ export const PROFESSION_PROFILES: Record<string, ProfessionProfile> = {
  { name: "Two-Wheeler Loan", category: "vehicle_loan", principal: 80000 },
  { name: "Mobile Loan", category: "personal_loan", principal: 15000 },
  { name: "Family Loan", category: "personal_loan", principal: 50000 },
-   { name: "Wedding Loan", category: "personal_loan", principal: 400000 },
-   { name: "Consumer Durable Loan (AC/Fridge/TV)", category: "bnpl", principal: 40000 },
  ],
  expenses: [
  { name: "Home Rent", category: "rent", monthlyAmount: 9000, essential: true },
@@ -194,8 +195,6 @@ export const PROFESSION_PROFILES: Record<string, ProfessionProfile> = {
  { name: "Car Loan", category: "vehicle_loan", principal: 400000 },
  { name: "Education Loan",category: "education_loan",principal: 250000 },
  { name: "Furniture & Appliance Financing", category: "bnpl", principal: 90000 },
-   { name: "Child's Education Loan", category: "education_loan", principal: 400000 },
-   { name: "Second Home / Investment Property Loan", category: "home_loan", principal: 2500000 },
  ],
  expenses: [
  { name: "Society Maintenance",category: "maintenance", monthlyAmount: 3000, essential: true },
@@ -217,8 +216,6 @@ export const PROFESSION_PROFILES: Record<string, ProfessionProfile> = {
  { name: "Car Loan", category: "vehicle_loan", principal: 800000 },
  { name: "Clinic Equipment Loan", category: "business_loan", principal: 500000 },
  { name: "Home Renovation Loan", category: "home_loan", principal: 600000 },
-   { name: "Health-Crisis EMI", category: "medical_debt", principal: 250000 },
-   { name: "Second Home / Investment Property Loan", category: "home_loan", principal: 3000000 },
  ],
  expenses: [
  { name: "Home Rent", category: "rent", monthlyAmount: 18000, essential: true },
@@ -241,8 +238,6 @@ export const PROFESSION_PROFILES: Record<string, ProfessionProfile> = {
  { name: "Education Loan", category: "education_loan", principal: 700000 },
  { name: "Car Loan", category: "vehicle_loan", principal: 500000 },
  { name: "Loan Against Securities", category: "margin_loan", principal: 200000 },
-   { name: "Legal / Court Settlement Loan", category: "personal_loan", principal: 120000 },
-   { name: "Crypto Margin Loss Loan", category: "margin_loan", principal: 200000 },
  ],
  expenses: [
  { name: "Office Rent", category: "rent", monthlyAmount: 14000, essential: true },
@@ -266,8 +261,6 @@ export const PROFESSION_PROFILES: Record<string, ProfessionProfile> = {
  { name: "Working Capital Loan", category: "business_loan", principal: 500000 },
  { name: "Co-signed Sibling's Loan", category: "personal_loan", principal: 250000 },
  { name: "NBFC Instant App Loan", category: "personal_loan", principal: 35000 },
-   { name: "GST Penalty Loan", category: "business_loan", principal: 100000 },
-   { name: "Wedding Loan", category: "personal_loan", principal: 500000 },
  ],
  expenses: [
  { name: "Office Rent", category: "rent", monthlyAmount: 25000, essential: true },
