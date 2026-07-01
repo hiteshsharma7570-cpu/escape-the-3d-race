@@ -91,6 +91,9 @@ const G = {
   payday_loan:          { color: "#922b50", gradient: "linear-gradient(135deg,#922b50,#e84393)", icon: "💸" },
   margin_call:          { color: "#7b1f1f", gradient: "linear-gradient(135deg,#7b1f1f,#e74c3c)", icon: "📞" },
   tax_arrears:          { color: "#7e5109", gradient: "linear-gradient(135deg,#7e5109,#b9770e)", icon: "🧾" },
+  college_admission_loan: { color: "#1f4e8e", gradient: "linear-gradient(135deg,#1f4e8e,#4a90e2)", icon: "🎓" },
+  home_purchase_loan:   { color: "#a0522d", gradient: "linear-gradient(135deg,#a0522d,#e67e22)", icon: "🏡" },
+  legal_settlement:     { color: "#4a235a", gradient: "linear-gradient(135deg,#4a235a,#7d3c98)", icon: "⚖️" },
   // ---- Pool slots (the only tile types actually placed on the 24-tile board)
   quick_cash_trap:      { color: "#8e0e3a", gradient: "linear-gradient(135deg,#8e0e3a,#e84393)", icon: "💸" },
   tax_trouble:          { color: "#7e5109", gradient: "linear-gradient(135deg,#7e5109,#c0392b)", icon: "🧾" },
