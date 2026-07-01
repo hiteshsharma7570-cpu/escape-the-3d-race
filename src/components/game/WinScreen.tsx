@@ -105,10 +105,6 @@ export const WinScreen = ({ open, gameState, onPlayAgain }: WinScreenProps) => {
               <div className="text-lg font-bold">₹{(gameState.passiveIncome ?? 0).toLocaleString()}</div>
             </div>
             <div className="bg-accent/40 rounded-md p-3">
-              <div className="text-muted-foreground text-xs">Outstanding Debts</div>
-              <div className="text-lg font-bold">₹{(outstandingDebt ?? 0).toLocaleString()}</div>
-            </div>
-            <div className="bg-accent/40 rounded-md p-3">
               <div className="text-muted-foreground text-xs">Assets Owned</div>
               <div className="text-lg font-bold">{gameState.assets?.length ?? 0}</div>
             </div>
