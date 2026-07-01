@@ -1,6 +1,6 @@
-import { GameState, Tile, Asset, Liability, Expense, MarketHint, LiabilityCategory, ExpenseCategory } from "@/types/game";
+import { GameState, Tile, Asset, Liability, MarketHint, LiabilityCategory } from "@/types/game";
 
-export { type GameState, type Tile, type Asset, type Liability, type Expense };
+export { type GameState, type Tile, type Asset, type Liability };
 
 const LOG_LIMIT = 19;
 const prefix = (state: GameState, msg: string) => `[Turn ${state.turnCount}] ${msg}`;
@@ -8,7 +8,7 @@ const pushLog = (state: GameState, msg: string) => {
   state.gameLog = [prefix(state, msg), ...state.gameLog.slice(0, LOG_LIMIT)];
 };
 
-// ---------- liability / expense helpers ----------
+// ---------- liability helpers ----------
 let _uid = 0;
 const uid = (prefix: string) => `${prefix}-${Date.now().toString(36)}-${(_uid++).toString(36)}`;
 
@@ -19,15 +19,6 @@ const addLiability = (
   const l: Liability = { id: uid("liab"), ...data };
   state.liabilities.push(l);
   return l;
-};
-
-const addExpense = (
-  state: GameState,
-  data: { name: string; category: ExpenseCategory; monthlyAmount: number; essential?: boolean }
-): Expense => {
-  // Recurring expenses are disabled game-wide. Return a synthetic no-op
-  // expense so existing call sites keep type-checking without mutating state.
-  return { id: uid("exp"), essential: false, ...data };
 };
 
 export const INVESTMENT_OPPORTUNITIES = [
