@@ -110,29 +110,33 @@ const t = (id: number, type: keyof typeof G, label: string): Tile => ({
 // The 36 underlying tile types still exist; pool slots resolve to one of
 // them at landing-time via resolvePoolTile(), so repeat visits feel different.
 export const BOARD_TILES: Tile[] = [
+  // Arc 1 — Earning & Foundation (0–5)
   t(0,  "payday",              "Pay Day"),
   t(1,  "opportunity",         "Opportunity"),
-  t(2,  "bill_shock",          "Bill Shock"),
-  t(3,  "quick_cash_trap",     "Quick Cash Trap"),
-  t(4,  "bonus",               "Bonus!"),
-  t(5,  "life_event",          "Life Event"),
-  t(6,  "market",              "Market"),
-  t(7,  "credit_card_bill",    "Credit Card Bill"),
-  t(8,  "side_hustle",         "Side Hustle"),
-  t(9,  "monthly_bills",       "Monthly Bills"),
-  t(10, "medical_emergency",   "Medical"),
-  t(11, "charity",             "Charity"),
-  t(12, "tax_refund",          "Tax Refund"),
-  t(13, "unexpected_repair",   "Unexpected Repair"),
-  t(14, "bnpl_trap",           "BNPL Trap"),
-  t(15, "downsized",           "Downsized!"),
-  t(16, "inheritance",         "Inheritance"),
-  t(17, "family_care",         "Family Care"),
+  t(2,  "side_hustle",         "Side Hustle"),
+  t(3,  "monthly_bills",       "Monthly Bills"),
+  t(4,  "market",              "Market"),
+  t(5,  "bonus",               "Bonus!"),
+  // Arc 2 — Life & Family (6–11)
+  t(6,  "life_event",          "Life Event"),
+  t(7,  "charity",             "Charity"),
+  t(8,  "credit_card_bill",    "Credit Card Bill"),
+  t(9,  "wedding_in_family",   "Wedding"),
+  t(10, "family_care",         "Family Care"),
+  t(11, "tax_refund",          "Tax Refund"),
+  // Arc 3 — Shocks & Debt (12–17)
+  t(12, "bill_shock",          "Bill Shock"),
+  t(13, "bnpl_trap",           "BNPL Trap"),
+  t(14, "unexpected_repair",   "Unexpected Repair"),
+  t(15, "medical_emergency",   "Medical"),
+  t(16, "quick_cash_trap",     "Quick Cash Trap"),
+  t(17, "inheritance",         "Inheritance"),
+  // Arc 4 — Market & Recovery (18–23)
   t(18, "rate_hike",           "Rate Hike"),
   t(19, "real_estate_boom",    "RE Boom"),
-  t(20, "wedding_in_family",   "Wedding"),
+  t(20, "tax_trouble",         "Tax Trouble"),
   t(21, "stock_market_crash",  "Crash"),
-  t(22, "tax_trouble",         "Tax Trouble"),
+  t(22, "downsized",           "Downsized!"),
   t(23, "green_upgrade",       "Green Upgrade"),
 ];
 
