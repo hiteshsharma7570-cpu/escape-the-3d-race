@@ -637,21 +637,13 @@ export const handleTileEffect = (state: GameState, tile: Tile): GameState => {
         const durables = ["AC", "Fridge", "Washing Machine", "TV"];
         const item = durables[Math.floor(Math.random() * durables.length)];
         const principal = 20000 + Math.floor(Math.random() * 40001);
-        addLiability(newState, {
-          name: `Consumer Durable Loan: ${item}`,
-          category: "bnpl",
-          principal,
-        });
+        newState.cash -= principal;
         logMessage = `🛍️ Consumer Durable Loan! "${item}" financed — ₹${principal.toLocaleString()} added to outstanding debt.`;
       } else {
         const gadgets = ["iPhone", "OLED TV", "Gaming Laptop", "Smartwatch", "DSLR Camera", "Air Fryer Pro"];
         const item = gadgets[Math.floor(Math.random() * gadgets.length)];
         const principal = 30000 + Math.floor(Math.random() * 90001);
-        addLiability(newState, {
-          name: `BNPL: ${item}`,
-          category: "bnpl",
-          principal,
-        });
+        newState.cash -= principal;
         logMessage = `🛍️ BNPL Trap! "${item}" financed — ₹${principal.toLocaleString()} added to outstanding debt.`;
       }
       lessonMessage = "💡 Even 'no-cost' financing adds real principal you'll have to pay back.";
