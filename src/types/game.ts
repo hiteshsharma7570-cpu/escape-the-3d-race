@@ -1,151 +1,311 @@
-export type TileType = 
- | "payday" 
- | "opportunity" 
- | "market" 
- | "charity" 
- | "baby" 
- | "vacation" 
- | "dinner" 
- | "downsized"
- | "tax_audit"
- | "medical_emergency"
- | "side_hustle"
- | "inheritance"
- | "real_estate_boom"
- | "stock_market_crash"
-  | "rate_hike"
- | "insurance_premium"
- | "home_repair"
- | "traffic_fine"
- | "credit_card_bill"
- | "school_fees"
- | "festival_expense"
- | "electricity_bill"
- | "rent_hike"
- | "vehicle_breakdown"
- | "loan_interest_spike"
- | "society_maintenance"
- | "gold_loan_offer"
- | "wedding_in_family"
- | "subscription_creep"
- | "fuel_price_hike"
- | "parents_medical"
- | "gst_notice"
- | "bonus"
- | "tax_refund"
- | "bnpl_trap"
- | "solar_install"
- | "ev_switch"
- | "streaming_audit"
- | "pet_adoption"
- | "elderly_care_hire"
- | "payday_loan"
- | "margin_call"
- | "tax_arrears"
- | "college_admission_loan"
- | "home_purchase_loan"
- | "legal_settlement"
- // ---- Pool slots used directly on the 24-tile board.
- // Each resolves at landing-time to one of several concrete TileTypes above.
- | "quick_cash_trap"
- | "tax_trouble"
- | "bill_shock"
- | "unexpected_repair"
- | "life_event"
- | "family_care"
- | "monthly_bills"
- | "green_upgrade";
+// Rat Race + Fast Track — full game model
+// (rebuilt to match the uploaded Cashflow-style spec)
+
+export type TileType =
+  // ---- Rat Race tile types ----
+  | "payday"
+  | "opportunity"
+  | "doodad"
+  | "market"
+  | "charity"
+  | "baby"
+  | "downsized"
+  // ---- Fast Track tile types ----
+  | "ft_business"
+  | "ft_dream"
+  | "ft_cashflowday"
+  | "ft_charity"
+  | "ft_divorce"
+  | "ft_lawsuit";
 
 export interface Tile {
- id: number;
- type: TileType;
- label: string;
- color: string;
- gradient?: string;
- icon?: string;
+  id: number;
+  type: TileType;
+  label: string;
+  color: string;
+  gradient?: string;
+  icon?: string;
+  /** Cost for `doodad` tiles */
+  cost?: number;
+  /** For `ft_business` / `ft_dream`: purchase cost */
+  ftCost?: number;
+  /** For `ft_business`: monthly passive income added on purchase */
+  ftIncome?: number;
 }
+
+export type AssetType = "paper" | "real_estate" | "business" | "stock" | "land";
 
 export interface Asset {
- id: string;
- name: string;
- value: number;
- monthlyIncome: number;
- risk: "low" | "medium" | "high";
+  id: string;
+  name: string;
+  type: AssetType;
+  /** What the player paid — also used as the "value" for net-worth calcs. */
+  cost: number;
+  /** Monthly passive income. Negative means the asset is a monthly loss. */
+  income: number;
+  /** True for businesses/stocks that can turn negative via market cards. */
+  volatile?: boolean;
+  /** Stock-specific */
+  shares?: number;
+  company?: string;
+  // ---- Legacy aliases so older HUD/report code still works ----
+  /** Same as `cost`. Retained for backward compatibility. */
+  value: number;
+  /** Same as `income`. */
+  monthlyIncome: number;
+  /** Coarse risk bucket derived from asset type. */
+  risk: "low" | "medium" | "high";
 }
 
-export interface PendingDecision {
- type: "charity" | "opportunity";
- charityAmount?: number;
- opportunity?: {
- name: string;
- cost: number;
- income: number;
- value: number;
- risk: "low" | "medium" | "high";
- description: string;
- };
+export interface Liability {
+  principal: number;
+  emi: number;
+  /** Annual interest rate as % (e.g. 12 = 12% APR). */
+  interestRate: number;
 }
+
+export type LiabilityKey = string; // 'mortgage' | 'carLoan' | 'creditCard' | 'studentLoan' | 'bankLoan' | 'courseLoan' | ...
+export type ExpenseKey   = string; // 'taxes' | 'other' | 'children' | ...
+
+// ---- Opportunity / Market cards ----
+export type OpportunityCard =
+  | SimpleOpportunityCard
+  | StockOpportunityCard
+  | DecisionOpportunityCard;
+
+export interface SimpleOpportunityCard {
+  cardType: "simple";
+  name: string;
+  cost: number;
+  income: number;
+  type: AssetType;
+  description: string;
+  volatile?: boolean;
+}
+
+export interface StockOpportunityCard {
+  cardType: "stock";
+  name: string;
+  shares: number;
+  pricePerShare: number;
+  description: string;
+}
+
+export interface DecisionOpportunityCard {
+  cardType: "decision";
+  name: string;
+  description: string;
+  choices: Array<{
+    text: string;
+    cost: number;
+    reward: number;
+    successChance: number;
+    logText: string;
+  }>;
+}
+
+export interface MarketCard {
+  id: number;
+  text: string;
+}
+
+// ---- Pending UI decisions ----
+export type PendingDecision =
+  | { type: "charity"; donation: number }
+  | { type: "opportunity"; card: OpportunityCard; costAfterCycle: number }
+  | { type: "doodad"; cost: number; label: string }
+  | { type: "loan_for_asset"; card: OpportunityCard; totalCost: number; shortfall: number; loanAmount: number; newEMI: number; onAccept: "buy_simple" | "buy_stock" | "buy_decision"; decisionChoiceIndex?: number }
+  | { type: "bankruptcy"; debtOwed: number }
+  | { type: "course_offer" }
+  | { type: "market_card"; cardId: number };
 
 export interface MarketHint {
- sentiment: "bullish" | "bearish" | "neutral";
- headline: string;
+  sentiment: "bullish" | "bearish" | "neutral";
+  headline: string;
+}
+
+export type MarketCycle = "Normal" | "Boom" | "Recession";
+
+export interface ProfessionProfile {
+  name: string;
+  cash: number;
+  salary: number;
+  passiveIncome: number;
+  expenses: Record<ExpenseKey, number>;
+  liabilities: Record<LiabilityKey, Liability>;
 }
 
 export interface GameState {
- playerName: string;
- profession: string;
- cash: number;
- salary: number;
- passiveIncome: number;
- assets: Asset[];
- position: number;
- diceValue: number | null;
- isRolling: boolean;
- gameLog: string[];
- marketCondition: "normal" | "boom" | "crash";
- hasEscapedRatRace: boolean;
- hasReachedFiveCrore: boolean;
- pendingDecision: PendingDecision | null;
- marketHint: MarketHint | null;
- turnCount: number;
+  // identity
+  playerName: string;
+  profession: string;
+
+  // financials
+  cash: number;
+  salary: number;
+  passiveIncome: number;
+  /** 1.0 default; 1.2 after TBS Financial Course. Multiplies salary + passive income. */
+  efficiency: number;
+  cashFlow: number;
+  expenses: Record<ExpenseKey, number>;
+  liabilities: Record<LiabilityKey, Liability>;
+  assets: Asset[];
+
+  // board
+  position: number;
+  ftPosition: number;
+  onFastTrack: boolean;
+
+  // dice / animation
+  diceValue: number | null;
+  isRolling: boolean;
+
+  // flags
+  charityUsed: boolean;
+  skipTurns: number;
+  childrenCount: number;
+  missedEMIs: number;
+  bankruptcies: number;
+  hasTakenCourse: boolean;
+  isOut: boolean;
+  hasEscapedRatRace: boolean;
+  hasReachedFiveCrore: boolean;
+
+  // decks / cycle
+  opportunityCardIndex: number;
+  marketCardIndex: number;
+  marketCycle: MarketCycle;
+  turnsUntilCycleChange: number;
+
+  // UI
+  pendingDecision: PendingDecision | null;
+  marketHint: MarketHint | null;
+
+  // logs / history
+  gameLog: string[];
+  turnCount: number;
+  decisionHistory: Array<{ type: string; turn: number; [k: string]: unknown }>;
+
+  // legacy compatibility (kept so existing UI still renders):
+  marketCondition: "normal" | "boom" | "crash";
 }
 
-export interface ProfessionProfile {
- salary: number;
- cash: number;
-}
+// EMI utility used both in profession seed and at runtime.
+export const calculateEMI = (principal: number, interestRate: number, months = 60): number => {
+  if (principal <= 0) return 0;
+  const r = interestRate / 100 / 12;
+  if (r === 0) return Math.round(principal / months);
+  return Math.round(
+    (principal * r * Math.pow(1 + r, months)) / (Math.pow(1 + r, months) - 1),
+  );
+};
+
+const liab = (principal: number, interestRate: number): Liability => ({
+  principal,
+  emi: calculateEMI(principal, interestRate),
+  interestRate,
+});
 
 export const PROFESSION_PROFILES: Record<string, ProfessionProfile> = {
- Teacher:         { salary: 45000,  cash: 50000  },
- Engineer:        { salary: 90000,  cash: 80000  },
- Doctor:          { salary: 150000, cash: 100000 },
- Lawyer:          { salary: 120000, cash: 90000  },
- "Business Owner":{ salary: 60000,  cash: 150000 },
+  Engineer: {
+    name: "Engineer",
+    cash: 32000,
+    salary: 200000,
+    passiveIncome: 0,
+    expenses: { taxes: 40000, other: 48000 },
+    liabilities: {
+      mortgage: liab(4000000, 8.5),
+      carLoan: liab(400000, 10),
+      creditCard: liab(160000, 20),
+      bankLoan: { principal: 0, emi: 0, interestRate: 12 },
+    },
+  },
+  Doctor: {
+    name: "Doctor",
+    cash: 20000,
+    salary: 400000,
+    passiveIncome: 0,
+    expenses: { taxes: 100000, other: 80000 },
+    liabilities: {
+      mortgage: liab(6000000, 9),
+      carLoan: liab(800000, 11),
+      creditCard: liab(400000, 22),
+      studentLoan: liab(1500000, 7.5),
+      bankLoan: { principal: 0, emi: 0, interestRate: 12 },
+    },
+  },
+  Teacher: {
+    name: "Teacher",
+    cash: 40000,
+    salary: 80000,
+    passiveIncome: 0,
+    expenses: { taxes: 12000, other: 20000 },
+    liabilities: {
+      mortgage: liab(1200000, 8),
+      carLoan: liab(150000, 9.5),
+      creditCard: liab(50000, 18),
+      bankLoan: { principal: 0, emi: 0, interestRate: 12 },
+    },
+  },
+  Pilot: {
+    name: "Pilot",
+    cash: 25000,
+    salary: 350000,
+    passiveIncome: 0,
+    expenses: { taxes: 80000, other: 60000 },
+    liabilities: {
+      mortgage: liab(5000000, 9.2),
+      carLoan: liab(700000, 10.5),
+      creditCard: liab(500000, 21),
+      bankLoan: { principal: 0, emi: 0, interestRate: 12 },
+    },
+  },
 };
 
 export const createInitialGameState = (
- playerName = "Player",
- profession = "Teacher",
+  playerName = "Player",
+  profession = "Engineer",
 ): GameState => {
- const profile = PROFESSION_PROFILES[profession] ?? PROFESSION_PROFILES.Teacher;
- return {
- playerName,
- profession,
- cash: profile.cash,
- salary: profile.salary,
- passiveIncome: 0,
- assets: [],
- position: 0,
- diceValue: null,
- isRolling: false,
- gameLog: [`[Turn 0] Welcome, ${playerName}! Roll the dice to begin.`],
- marketCondition: "normal",
- hasEscapedRatRace: false,
- hasReachedFiveCrore: false,
- pendingDecision: null,
- marketHint: null,
- turnCount: 0,
- };
+  const profile =
+    PROFESSION_PROFILES[profession] ?? PROFESSION_PROFILES.Engineer;
+  return {
+    playerName,
+    profession: profile.name,
+    cash: profile.cash,
+    salary: profile.salary,
+    passiveIncome: profile.passiveIncome,
+    efficiency: 1,
+    cashFlow: 0,
+    expenses: { ...profile.expenses },
+    liabilities: Object.fromEntries(
+      Object.entries(profile.liabilities).map(([k, v]) => [k, { ...v }]),
+    ),
+    assets: [],
+    position: 0,
+    ftPosition: 0,
+    onFastTrack: false,
+    diceValue: null,
+    isRolling: false,
+    charityUsed: false,
+    skipTurns: 0,
+    childrenCount: 0,
+    missedEMIs: 0,
+    bankruptcies: 0,
+    hasTakenCourse: false,
+    isOut: false,
+    hasEscapedRatRace: false,
+    hasReachedFiveCrore: false,
+    opportunityCardIndex: 0,
+    marketCardIndex: 0,
+    marketCycle: "Normal",
+    turnsUntilCycleChange: 7,
+    pendingDecision: null,
+    marketHint: null,
+    gameLog: [`[Turn 0] Welcome, ${playerName}! Roll the dice to begin.`],
+    turnCount: 0,
+    decisionHistory: [],
+    marketCondition: "normal",
+  };
 };
 
 export const INITIAL_GAME_STATE: GameState = createInitialGameState();

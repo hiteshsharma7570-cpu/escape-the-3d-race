@@ -7,8 +7,7 @@ import {
   GraduationCap,
   Wrench,
   Stethoscope,
-  Scale,
-  Briefcase,
+  Plane,
   Sparkles,
   IndianRupee,
   TrendingUp,
@@ -23,16 +22,15 @@ interface PlayerSetupProps {
 }
 
 const professions = [
-  { name: "Teacher", icon: GraduationCap },
   { name: "Engineer", icon: Wrench },
-  { name: "Doctor", icon: Stethoscope },
-  { name: "Lawyer", icon: Scale },
-  { name: "Business Owner", icon: Briefcase },
+  { name: "Doctor",   icon: Stethoscope },
+  { name: "Teacher",  icon: GraduationCap },
+  { name: "Pilot",    icon: Plane },
 ] as const;
 
 export const PlayerSetup = ({ sessionName, onPlayerCreate }: PlayerSetupProps) => {
   const [playerName, setPlayerName] = useState("");
-  const [profession, setProfession] = useState<string>("Teacher");
+  const [profession, setProfession] = useState<string>("Engineer");
   const [errors, setErrors] = useState<{ playerName?: string; profession?: string }>({});
 
   const handleSubmit = () => {

@@ -10,6 +10,7 @@ import { WelcomeModal } from "@/components/game/WelcomeModal";
 import { createInitialGameState, GameState } from "@/types/game";
 import {
   BOARD_TILES,
+  FAST_TRACK_TILES,
   handleTileEffect,
   applyCharityDecision,
   applyOpportunityDecision,
@@ -17,6 +18,12 @@ import {
   sellAsset,
   applyPeriodicMechanics,
   calculateNetWorth,
+  takeBankLoan,
+  repayBankLoan,
+  payOffDebt,
+  applyLoanForAssetDecision,
+  checkEscapeRatRace,
+  tickMarketCycle,
 } from "@/lib/gameLogic";
 import { toast } from "sonner";
 import { logMaintenanceError } from "@/lib/maintenanceLog";
@@ -266,17 +273,36 @@ const Index = () => {
 
   const rollDice = () => {
     if (gameState.isRolling) return;
+    // Skip-turn (downsized) — roll consumed, no movement
+    if (gameState.skipTurns > 0) {
+      setGameState((prev) => ({
+        ...prev,
+        skipTurns: prev.skipTurns - 1,
+        turnCount: prev.turnCount + 1,
+        gameLog: [
+          `[Turn ${prev.turnCount + 1}] Skipped turn (${prev.skipTurns - 1} left).`,
+          ...prev.gameLog.slice(0, 19),
+        ],
+      }));
+      toast.info("You skipped this turn (Downsized).");
+      return;
+    }
     playSound("diceRoll");
-    const diceValue = Math.floor(Math.random() * 6) + 1;
+    const d1 = Math.floor(Math.random() * 6) + 1;
+    const d2 = gameState.charityUsed ? Math.floor(Math.random() * 6) + 1 : 0;
+    const diceValue = d1 + d2;
     setGameState((prev) => {
-      const newPosition = (prev.position + diceValue) % BOARD_TILES.length;
-      const landedTile = BOARD_TILES[newPosition];
+      const board = prev.onFastTrack ? FAST_TRACK_TILES : BOARD_TILES;
+      const posKey = prev.onFastTrack ? "ftPosition" : "position";
+      const newPos = ((prev as any)[posKey] + diceValue) % board.length;
+      const landedTile = board[newPos];
       let updated: GameState = {
         ...prev,
         diceValue,
-        position: newPosition,
+        [posKey]: newPos,
         isRolling: false,
         turnCount: prev.turnCount + 1,
+        charityUsed: false,
       };
       // --- Self-healing layer ---------------------------------------------
       // Tile resolution is the hottest source of "weird" runtime errors
@@ -316,6 +342,9 @@ const Index = () => {
         });
         setTimeout(() => toast("Recovered from a hiccup, your progress is safe"), 0);
       }
+      // Market cycle countdown & escape-check
+      updated = tickMarketCycle(updated);
+      updated = checkEscapeRatRace(updated);
       if (
         !updated.marketHint &&
         !updated.pendingDecision &&
@@ -336,7 +365,7 @@ const Index = () => {
         else if (landedTile.type === "charity") playSound("charity");
         else if (landedTile.type === "baby") playSound("baby");
         else if (landedTile.type === "downsized") playSound("downsized");
-        else if (landedTile.type === "dinner" || landedTile.type === "vacation")
+        else if (landedTile.type === "doodad")
           playSound("loseMoney");
       }, 100);
       return updated;
@@ -351,7 +380,7 @@ const Index = () => {
     toast.success("Asset sold!");
   };
 
-  const handleDecisionAccept = () => {
+  const handleDecisionAccept = (extra?: { decisionChoiceIndex?: number }) => {
     if (!gameState.pendingDecision) return;
     const decision = gameState.pendingDecision;
     try {
@@ -360,7 +389,11 @@ const Index = () => {
         setGameState((prev) => applyCharityDecision(prev, true));
       } else if (decision.type === "opportunity") {
         playSound("opportunity");
-        setGameState((prev) => applyOpportunityDecision(prev, true));
+        setGameState((prev) => applyOpportunityDecision(prev, true, extra));
+      } else if (decision.type === "loan_for_asset") {
+        setGameState((prev) => applyLoanForAssetDecision(prev, true));
+      } else if (decision.type === "market_card" || decision.type === "doodad") {
+        setGameState((prev) => ({ ...prev, pendingDecision: null }));
       }
     } catch (err) {
       void logMaintenanceError({
@@ -382,6 +415,10 @@ const Index = () => {
         setGameState((prev) => applyCharityDecision(prev, false));
       } else if (decision.type === "opportunity") {
         setGameState((prev) => applyOpportunityDecision(prev, false));
+      } else if (decision.type === "loan_for_asset") {
+        setGameState((prev) => applyLoanForAssetDecision(prev, false));
+      } else {
+        setGameState((prev) => ({ ...prev, pendingDecision: null }));
       }
     } catch (err) {
       void logMaintenanceError({
@@ -394,6 +431,10 @@ const Index = () => {
       setGameState((prev) => ({ ...prev, pendingDecision: null }));
     }
   };
+
+  const handleTakeLoan = (amount: number) => setGameState((prev) => takeBankLoan(prev, amount));
+  const handleRepayLoan = (amount: number) => setGameState((prev) => repayBankLoan(prev, amount));
+  const handlePayOffDebt = (key: string) => setGameState((prev) => payOffDebt(prev, key));
 
   const showInstructions = () => {
     toast.info(
@@ -500,6 +541,9 @@ const Index = () => {
               gameState={gameState}
               onRollDice={rollDice}
               onSellAsset={handleSellAsset}
+              onTakeLoan={handleTakeLoan}
+              onRepayLoan={handleRepayLoan}
+              onPayOffDebt={handlePayOffDebt}
             />
           </div>
         </div>
