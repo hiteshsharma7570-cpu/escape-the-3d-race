@@ -51,23 +51,54 @@ const gamesWonKeyFor = (name: string) => `${GAMES_WON_KEY_PREFIX}${name.trim().t
 const normalizeSavedGame = (saved: GameState, fallbackPlayerName: string, fallbackProfession: string): GameState => {
   const fresh = createInitialGameState(fallbackPlayerName, fallbackProfession);
 
+  // ?? only catches null/undefined — NOT NaN. A single NaN in a persisted save
+  // silently poisons every downstream calc (net worth, cash flow, etc.), so we
+  // sanitize every numeric field here explicitly.
+  const safeNum = (n: unknown, fallback = 0): number =>
+    typeof n === "number" && Number.isFinite(n) ? n : fallback;
+
+  const rawExpenses = (saved.expenses ?? {}) as Record<string, unknown>;
+  const cleanExpenses = { ...fresh.expenses } as Record<string, number>;
+  for (const k of Object.keys(rawExpenses)) {
+    cleanExpenses[k] = safeNum(rawExpenses[k]);
+  }
+
+  const rawLiab = (saved.liabilities ?? {}) as Record<string, { principal?: unknown; emi?: unknown; interestRate?: unknown }>;
+  const cleanLiab: Record<string, { principal: number; emi: number; interestRate: number }> = {};
+  for (const k of Object.keys(rawLiab)) {
+    const l = rawLiab[k] ?? {};
+    cleanLiab[k] = {
+      principal: safeNum(l.principal),
+      emi: safeNum(l.emi),
+      interestRate: safeNum(l.interestRate, 12),
+    };
+  }
+
   return {
     ...fresh,
     ...saved,
     playerName: saved.playerName || fallbackPlayerName || fresh.playerName,
     profession: saved.profession || fallbackProfession || fresh.profession,
-    cash: saved.cash ?? fresh.cash,
-    salary: saved.salary ?? fresh.salary,
-    passiveIncome: saved.passiveIncome ?? 0,
+    cash: safeNum(saved.cash, fresh.cash),
+    salary: safeNum(saved.salary, fresh.salary),
+    passiveIncome: safeNum(saved.passiveIncome),
+    efficiency: safeNum(saved.efficiency, fresh.efficiency ?? 1),
+    childrenCount: safeNum(saved.childrenCount),
+    turnsUntilCycleChange: safeNum(saved.turnsUntilCycleChange, fresh.turnsUntilCycleChange ?? 7),
+    skipTurns: safeNum(saved.skipTurns),
+    expenses: cleanExpenses as GameState["expenses"],
+    liabilities: cleanLiab as GameState["liabilities"],
     assets: Array.isArray(saved.assets)
       ? saved.assets.map((asset) => ({
           ...asset,
-          value: asset.value ?? 0,
-          monthlyIncome: asset.monthlyIncome ?? 0,
+          cost: safeNum(asset.cost),
+          income: safeNum(asset.income),
+          value: safeNum(asset.value),
+          monthlyIncome: safeNum(asset.monthlyIncome),
           risk: asset.risk ?? "low",
         }))
       : [],
-    position: saved.position ?? 0,
+    position: safeNum(saved.position),
     diceValue: saved.diceValue ?? null,
     isRolling: saved.isRolling ?? false,
     gameLog: Array.isArray(saved.gameLog) ? saved.gameLog : [],
@@ -76,7 +107,7 @@ const normalizeSavedGame = (saved: GameState, fallbackPlayerName: string, fallba
     hasReachedFiveCrore: saved.hasReachedFiveCrore ?? false,
     pendingDecision: saved.pendingDecision ?? null,
     marketHint: saved.marketHint ?? null,
-    turnCount: saved.turnCount ?? 0,
+    turnCount: safeNum(saved.turnCount),
   };
 };
 
