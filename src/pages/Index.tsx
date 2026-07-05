@@ -150,6 +150,9 @@ const Index = () => {
       playSound("payDay");
       toast.success("🏆 Crorepati! You crossed ₹1 Crore in cash!");
     }
+    // playSound is a stable ref from useSounds; excluded to avoid re-firing on
+    // every audio state change.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [gameState.cash, gameMode, certificateAwarded]);
 
   // Primary win: ₹5 Crore in cash
@@ -160,6 +163,8 @@ const Index = () => {
       playSound("payDay");
       toast.success("🏆 You reached ₹5 Crore! You've escaped the Rat Race!");
     }
+    // playSound is a stable ref from useSounds; excluded intentionally.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [gameState.cash, gameMode, fiveCroreAwarded]);
 
   // Show win screen on rat-race escape (once) and bump games_won
