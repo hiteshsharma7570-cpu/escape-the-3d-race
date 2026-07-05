@@ -159,9 +159,12 @@ export default function FriendsRoom() {
 
   const shareRoom = async () => {
     const text = `Join my Escape the Rat Race room! Code: ${roomCode}\n${shareUrl}`;
-    if (typeof navigator !== "undefined" && (navigator as any).share) {
+    const nav = navigator as Navigator & {
+      share?: (data: { title?: string; text?: string; url?: string }) => Promise<void>;
+    };
+    if (typeof navigator !== "undefined" && nav.share) {
       try {
-        await (navigator as any).share({
+        await nav.share({
           title: "Escape the Rat Race",
           text,
           url: shareUrl,
