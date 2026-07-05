@@ -73,29 +73,6 @@ export interface Asset {
  risk: "low" | "medium" | "high";
 }
 
-/** True debts with an outstanding principal that can be repaid. */
-export type LiabilityCategory =
- | "home_loan"
- | "vehicle_loan"
- | "education_loan"
- | "personal_loan"
- | "credit_card"
- | "business_loan"
- | "medical_debt"
- | "gold_loan"
- | "bnpl"
- | "payday_loan"
- | "margin_loan"
- | "tax_arrears";
-
-export interface Liability {
- id: string;
- name: string;
- category: LiabilityCategory;
- /** Outstanding principal in rupees — the only financial attribute of a debt. */
- principal: number;
-}
-
 export interface PendingDecision {
  type: "charity" | "opportunity";
  charityAmount?: number;
@@ -121,7 +98,6 @@ export interface GameState {
  salary: number;
  passiveIncome: number;
  assets: Asset[];
- liabilities: Liability[];
  position: number;
  diceValue: number | null;
  isRolling: boolean;
@@ -132,64 +108,19 @@ export interface GameState {
  pendingDecision: PendingDecision | null;
  marketHint: MarketHint | null;
  turnCount: number;
- loansTaken: number;
 }
 
 export interface ProfessionProfile {
  salary: number;
  cash: number;
- liabilities: Omit<Liability, "id">[];
 }
 
 export const PROFESSION_PROFILES: Record<string, ProfessionProfile> = {
- Teacher: {
- salary: 45000,
- cash: 50000,
- liabilities: [
- { name: "Two-Wheeler Loan", category: "vehicle_loan", principal: 80000 },
- { name: "Mobile Loan", category: "personal_loan", principal: 15000 },
- { name: "Family Loan", category: "personal_loan", principal: 50000 },
- ],
- },
- Engineer: {
- salary: 90000,
- cash: 80000,
- liabilities: [
- { name: "Home Loan", category: "home_loan", principal: 2500000 },
- { name: "Car Loan", category: "vehicle_loan", principal: 400000 },
- { name: "Education Loan",category: "education_loan",principal: 250000 },
- { name: "Furniture & Appliance Financing", category: "bnpl", principal: 90000 },
- ],
- },
- Doctor: {
- salary: 150000,
- cash: 100000,
- liabilities: [
- { name: "Medical Education Loan", category: "education_loan", principal: 1400000 },
- { name: "Car Loan", category: "vehicle_loan", principal: 800000 },
- { name: "Clinic Equipment Loan", category: "business_loan", principal: 500000 },
- { name: "Home Renovation Loan", category: "home_loan", principal: 600000 },
- ],
- },
- Lawyer: {
- salary: 120000,
- cash: 90000,
- liabilities: [
- { name: "Education Loan", category: "education_loan", principal: 700000 },
- { name: "Car Loan", category: "vehicle_loan", principal: 500000 },
- { name: "Loan Against Securities", category: "margin_loan", principal: 200000 },
- ],
- },
- "Business Owner": {
- salary: 60000,
- cash: 150000,
- liabilities: [
- { name: "Business Loan", category: "business_loan", principal: 1700000 },
- { name: "Working Capital Loan", category: "business_loan", principal: 500000 },
- { name: "Co-signed Sibling's Loan", category: "personal_loan", principal: 250000 },
- { name: "NBFC Instant App Loan", category: "personal_loan", principal: 35000 },
- ],
- },
+ Teacher:         { salary: 45000,  cash: 50000  },
+ Engineer:        { salary: 90000,  cash: 80000  },
+ Doctor:          { salary: 150000, cash: 100000 },
+ Lawyer:          { salary: 120000, cash: 90000  },
+ "Business Owner":{ salary: 60000,  cash: 150000 },
 };
 
 export const createInitialGameState = (
@@ -197,7 +128,6 @@ export const createInitialGameState = (
  profession = "Teacher",
 ): GameState => {
  const profile = PROFESSION_PROFILES[profession] ?? PROFESSION_PROFILES.Teacher;
- const seed = Date.now();
  return {
  playerName,
  profession,
@@ -205,19 +135,6 @@ export const createInitialGameState = (
  salary: profile.salary,
  passiveIncome: 0,
  assets: [],
- liabilities: [
- // Every player begins with a ₹5 lakh outstanding personal loan.
- {
- id: `start-liability-starter-${seed}`,
- name: "Starter Personal Loan",
- category: "personal_loan" as const,
- principal: 300000,
- },
- ...profile.liabilities.map((l, i) => ({
- ...l,
- id: `start-liability-${i}-${seed}`,
- })),
- ],
  position: 0,
  diceValue: null,
  isRolling: false,
@@ -228,7 +145,6 @@ export const createInitialGameState = (
  pendingDecision: null,
  marketHint: null,
  turnCount: 0,
- loansTaken: 0,
  };
 };
 
