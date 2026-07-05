@@ -177,21 +177,24 @@ export const generateMarketHint = (): MarketHint =>
 
 export const calculateTotalEMI = (state: GameState): number =>
   Object.values(state.liabilities).reduce(
-    (sum, l) => sum + (l.principal > 0 ? l.emi : 0),
+    (sum, l) => sum + (num(l?.principal) > 0 ? num(l?.emi) : 0),
     0,
   );
 
 export const calculateTotalExpenses = (state: GameState): number => {
-  const expensesTotal = Object.values(state.expenses).reduce((a, b) => a + b, 0);
+  const expensesTotal = Object.values(state.expenses ?? {}).reduce((a, b) => a + num(b), 0);
   return expensesTotal + calculateTotalEMI(state);
 };
 
 export const calculateEffectiveSalary = (state: GameState): number =>
-  Math.round((state.salary ?? 0) * (state.efficiency ?? 1));
+  Math.round(num(state.salary) * num(state.efficiency, 1));
 
 export const calculateEffectivePassiveIncome = (state: GameState): number =>
   (state.assets ?? []).reduce(
-    (sum, a) => sum + (a.income > 0 ? Math.round(a.income * (state.efficiency ?? 1)) : 0),
+    (sum, a) => {
+      const inc = num(a?.income);
+      return sum + (inc > 0 ? Math.round(inc * num(state.efficiency, 1)) : 0);
+    },
     0,
   );
 
@@ -199,15 +202,23 @@ export const calculateMonthlyCashFlow = (state: GameState): number =>
   calculateEffectiveSalary(state) + calculateEffectivePassiveIncome(state) - calculateTotalExpenses(state);
 
 export const calculateNetWorth = (state: GameState): number => {
-  const totalAssets = (state.assets ?? []).reduce((sum, a) => sum + (a.cost ?? 0), 0);
-  const totalDebt   = Object.values(state.liabilities ?? {}).reduce((s, l) => s + (l.principal ?? 0), 0);
-  return (state.cash ?? 0) + totalAssets - totalDebt;
+  const totalAssets = (state.assets ?? []).reduce((sum, a) => sum + num(a?.cost), 0);
+  const totalDebt   = Object.values(state.liabilities ?? {}).reduce((s, l) => s + num(l?.principal), 0);
+  return num(state.cash) + totalAssets - totalDebt;
 };
 
 /** Recomputes cashFlow + passiveIncome aggregate to keep state coherent. */
 export const recomputeDerived = (state: GameState): GameState => {
-  const passive = (state.assets ?? []).reduce((s, a) => s + (a.income > 0 ? a.income : 0), 0);
-  const next: GameState = { ...state, passiveIncome: passive };
+  const passive = (state.assets ?? []).reduce(
+    (s, a) => s + (num(a?.income) > 0 ? num(a.income) : 0),
+    0,
+  );
+  const next: GameState = {
+    ...state,
+    cash: num(state.cash),
+    salary: num(state.salary),
+    passiveIncome: passive,
+  };
   next.cashFlow = calculateMonthlyCashFlow(next);
   return next;
 };
