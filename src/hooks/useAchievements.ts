@@ -141,7 +141,9 @@ export const useAchievements = (playerId: string | null) => {
         break;
     }
 
-    return Math.min((current / achievement.threshold) * 100, 100);
+    if (!Number.isFinite(current) || !achievement.threshold) return 0;
+    const pct = (current / achievement.threshold) * 100;
+    return Number.isFinite(pct) ? Math.min(Math.max(0, pct), 100) : 0;
   };
 
   const isUnlocked = (achievementId: string): boolean => {
