@@ -32,7 +32,9 @@ export const getProgress = (a: LocalAchievement, state: GameState, gamesWon: num
     case "passive_income": current = state.passiveIncome; break;
     case "games_won": current = gamesWon; break;
   }
-  return Math.min((current / a.threshold) * 100, 100);
+  if (!Number.isFinite(current) || !a.threshold) return 0;
+  const pct = (current / a.threshold) * 100;
+  return Number.isFinite(pct) ? Math.min(Math.max(0, pct), 100) : 0;
 };
 
 export const meetsThreshold = (a: LocalAchievement, state: GameState, gamesWon: number): boolean => {
