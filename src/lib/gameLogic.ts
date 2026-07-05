@@ -430,8 +430,8 @@ export const handleTileEffect = (state: GameState, tile: Tile): GameState => {
     }
 
     case "baby": {
-      next.childrenCount += 1;
-      const childCost = Math.round((next.salary / 10) * next.childrenCount);
+      next.childrenCount = num(next.childrenCount) + 1;
+      const childCost = Math.round((num(next.salary) / 10) * next.childrenCount);
       next.expenses.children = childCost;
       pushLog(next, `👶 Baby! Monthly children expense is now ₹${childCost.toLocaleString()}.`);
       break;
@@ -648,10 +648,10 @@ export const checkEscapeRatRace = (state: GameState): GameState => {
 export const sellAsset = (state: GameState, assetId: string): GameState => {
   const asset = state.assets.find((a) => a.id === assetId);
   if (!asset) return state;
-  const salePrice = Math.round(asset.cost * 0.8);
+  const salePrice = Math.round(num(asset.cost) * 0.8);
   const next: GameState = {
     ...state,
-    cash: state.cash + salePrice,
+    cash: num(state.cash) + salePrice,
     assets: state.assets.filter((a) => a.id !== assetId),
   };
   pushLog(next, `Sold ${asset.name} for ₹${salePrice.toLocaleString()} (80% of cost).`);
