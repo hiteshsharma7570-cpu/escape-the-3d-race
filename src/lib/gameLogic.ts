@@ -396,20 +396,10 @@ export const handleTileEffect = (state: GameState, tile: Tile): GameState => {
     }
 
     case "rate_hike": {
-      if (newState.liabilities.length === 0) {
-        logMessage = `📈 RBI hikes rates — but you have no loans. Phew.`;
-      } else {
-        // Convert "rate hike" into a one-time fixed principal add-on
-        // (refinancing / restructuring fee) so debt stays principal-only.
-        const pct = 3 + Math.floor(Math.random() * 5); // 3-7%
-        let added = 0;
-        newState.liabilities = newState.liabilities.map(l => {
-          const bump = Math.round(l.principal * pct / 100);
-          added += bump;
-          return { ...l, principal: l.principal + bump };
-        });
-        logMessage = `📈 RBI tightens! Restructuring fees added ₹${added.toLocaleString()} to your outstanding debts.`;
-      }
+      // No liabilities in this build — reframe as an inflation nibble on cash.
+      const nibble = 4000 + Math.floor(Math.random() * 8000);
+      newState.cash -= nibble;
+      logMessage = `📈 RBI tightens! Higher borrowing costs across the economy — ₹${nibble.toLocaleString()} extra out this month.`;
       break;
     }
 
@@ -447,22 +437,8 @@ export const handleTileEffect = (state: GameState, tile: Tile): GameState => {
 
     case "credit_card_bill": {
       const bill = 15000 + Math.floor(Math.random() * 35000);
-      if (newState.cash >= bill) {
-        newState.cash -= bill;
-        logMessage = `💳 Credit Card Bill due! Paid ₹${bill.toLocaleString()}.`;
-      } else {
-        const existing = newState.liabilities.find(l => l.category === "credit_card");
-        if (existing) {
-          newState.liabilities = newState.liabilities.map(l =>
-            l.id === existing.id
-              ? { ...l, principal: l.principal + bill }
-              : l
-          );
-        } else {
-          newState.cash -= bill;
-        }
-        logMessage = `💳 Credit Card Bill! Added ₹${bill.toLocaleString()} to outstanding card debt.`;
-      }
+      newState.cash -= bill;
+      logMessage = `💳 Credit Card Bill due! Paid ₹${bill.toLocaleString()}.`;
       break;
     }
 
@@ -512,26 +488,9 @@ export const handleTileEffect = (state: GameState, tile: Tile): GameState => {
     }
 
     case "loan_interest_spike": {
-      const floatingLoans = newState.liabilities.filter(
-        l => l.category === "home_loan" || l.category === "personal_loan"
-      );
-      if (floatingLoans.length > 0) {
-        // No interest in this game — express the "spike" as a one-time
-        // fixed late-payment fee added to those loans' principal.
-        const ids = new Set(floatingLoans.map(l => l.id));
-        const fee = 4000 + Math.floor(Math.random() * 6000); // ₹4k-₹10k per loan
-        let total = 0;
-        newState.liabilities = newState.liabilities.map(l => {
-          if (!ids.has(l.id)) return l;
-          total += fee;
-          return { ...l, principal: l.principal + fee };
-        });
-        logMessage = `🏦 Late-payment penalty! ₹${total.toLocaleString()} added across your home/personal loans.`;
-      } else {
-        const penalty = 5000 + Math.floor(Math.random() * 10000);
-        newState.cash -= penalty;
-        logMessage = `🏦 Bank processing fee! Paid ₹${penalty.toLocaleString()} in charges.`;
-      }
+      const penalty = 5000 + Math.floor(Math.random() * 10000);
+      newState.cash -= penalty;
+      logMessage = `🏦 Bank processing fee! Paid ₹${penalty.toLocaleString()} in charges.`;
       break;
     }
 
@@ -598,21 +557,12 @@ export const handleTileEffect = (state: GameState, tile: Tile): GameState => {
     case "gst_notice": {
       const isBiz =
         newState.profession === "Business Owner" ||
-        newState.profession === "Lawyer" ||
-        newState.liabilities.some(l => l.category === "business_loan");
+        newState.profession === "Lawyer";
       const base = isBiz ? 25000 + Math.floor(Math.random() * 75000) : 5000 + Math.floor(Math.random() * 10000);
-      if (isBiz && newState.cash < base) {
-        const paid = Math.max(0, newState.cash);
-        const shortfall = base - paid;
-        newState.cash -= paid;
-        newState.cash -= shortfall;
-        logMessage = `🧾 GST Notice! Paid ₹${paid.toLocaleString()}, financed ₹${shortfall.toLocaleString()} as GST Penalty Loan.`;
-      } else {
-        newState.cash -= base;
-        logMessage = isBiz
-          ? `🧾 GST Notice! Compliance shortfall — paid ₹${base.toLocaleString()} in dues + penalty.`
-          : `🧾 Tax notice! Filed late — penalty ₹${base.toLocaleString()}.`;
-      }
+      newState.cash -= base;
+      logMessage = isBiz
+        ? `🧾 GST Notice! Compliance shortfall — paid ₹${base.toLocaleString()} in dues + penalty.`
+        : `🧾 Tax notice! Filed late — penalty ₹${base.toLocaleString()}.`;
       break;
     }
 
@@ -882,45 +832,12 @@ export const sellAsset = (state: GameState, assetId: string): GameState => {
   return newState;
 };
 
-/**
- * Repay a specific liability by `amount` rupees from cash.
- * Full repayment removes the liability entirely.
- * Partial repayment shrinks the outstanding principal.
- */
-export const repayLiability = (
-  state: GameState,
-  liabilityId: string,
-  amount: number,
-): { state: GameState; ok: boolean; error?: string } => {
-  const liability = state.liabilities.find(l => l.id === liabilityId);
-  if (!liability) return { state, ok: false, error: "Loan not found." };
-  const pay = Math.min(Math.max(0, Math.floor(amount)), liability.principal);
-  if (pay <= 0) return { state, ok: false, error: "Enter an amount greater than zero." };
-  if (state.cash < pay) return { state, ok: false, error: "Insufficient cash for this repayment." };
-
-  const next: GameState = { ...state, liabilities: [...state.liabilities] };
-  next.cash -= pay;
-
-  if (pay >= liability.principal) {
-    next.liabilities = next.liabilities.filter(l => l.id !== liabilityId);
-    pushLog(next, `✅ Fully repaid ${liability.name} (₹${pay.toLocaleString()}). Debt cleared.`);
-  } else {
-    next.liabilities = next.liabilities.map(l =>
-      l.id === liabilityId
-        ? { ...l, principal: l.principal - pay }
-        : l
-    );
-    pushLog(next, `💰 Part-paid ${liability.name} (₹${pay.toLocaleString()}). Outstanding: ₹${(liability.principal - pay).toLocaleString()}.`);
-  }
-  return { state: next, ok: true };
-};
-
 // Apply periodic mechanics based on turn number. Mutates a copy.
 export const applyPeriodicMechanics = (
   state: GameState
 ): { state: GameState; events: string[] } => {
   const events: string[] = [];
-  let next = { ...state, liabilities: [...state.liabilities], assets: [...state.assets] };
+  let next = { ...state, assets: [...state.assets] };
 
   // Salary review every 8 turns: +5–15%
   if (next.turnCount > 0 && next.turnCount % 8 === 0) {
