@@ -57,7 +57,8 @@ const Maintenance = () => {
   };
 
   const num = (v: unknown) => (typeof v === "number" && Number.isFinite(v) ? v : null);
-  const fmt = (v: number | null) => (v == null ? "—" : `₹${Math.round(v).toLocaleString()}`);
+  const fmt = (v: number | null) =>
+    v == null || !Number.isFinite(v) ? "—" : `₹${Math.round(v).toLocaleString()}`;
 
   /** Extract the key vitals from a GameState snapshot for at-a-glance triage. */
   const summarizeGameState = (gs: Record<string, unknown> | null) => {

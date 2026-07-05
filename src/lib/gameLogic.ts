@@ -17,6 +17,10 @@ import {
 
 export { type GameState, type Tile, type Asset, calculateEMI };
 
+/** Coerce anything to a finite number, otherwise fall back. Catches NaN, Infinity, undefined, null, non-numbers. */
+export const num = (n: unknown, fallback = 0): number =>
+  typeof n === "number" && Number.isFinite(n) ? n : fallback;
+
 const LOG_LIMIT = 19;
 const prefix = (state: GameState, msg: string) => `[Turn ${state.turnCount}] ${msg}`;
 export const pushLog = (state: GameState, msg: string) => {
@@ -173,21 +177,24 @@ export const generateMarketHint = (): MarketHint =>
 
 export const calculateTotalEMI = (state: GameState): number =>
   Object.values(state.liabilities).reduce(
-    (sum, l) => sum + (l.principal > 0 ? l.emi : 0),
+    (sum, l) => sum + (num(l?.principal) > 0 ? num(l?.emi) : 0),
     0,
   );
 
 export const calculateTotalExpenses = (state: GameState): number => {
-  const expensesTotal = Object.values(state.expenses).reduce((a, b) => a + b, 0);
+  const expensesTotal = Object.values(state.expenses ?? {}).reduce((a, b) => a + num(b), 0);
   return expensesTotal + calculateTotalEMI(state);
 };
 
 export const calculateEffectiveSalary = (state: GameState): number =>
-  Math.round((state.salary ?? 0) * (state.efficiency ?? 1));
+  Math.round(num(state.salary) * num(state.efficiency, 1));
 
 export const calculateEffectivePassiveIncome = (state: GameState): number =>
   (state.assets ?? []).reduce(
-    (sum, a) => sum + (a.income > 0 ? Math.round(a.income * (state.efficiency ?? 1)) : 0),
+    (sum, a) => {
+      const inc = num(a?.income);
+      return sum + (inc > 0 ? Math.round(inc * num(state.efficiency, 1)) : 0);
+    },
     0,
   );
 
@@ -195,15 +202,23 @@ export const calculateMonthlyCashFlow = (state: GameState): number =>
   calculateEffectiveSalary(state) + calculateEffectivePassiveIncome(state) - calculateTotalExpenses(state);
 
 export const calculateNetWorth = (state: GameState): number => {
-  const totalAssets = (state.assets ?? []).reduce((sum, a) => sum + (a.cost ?? 0), 0);
-  const totalDebt   = Object.values(state.liabilities ?? {}).reduce((s, l) => s + (l.principal ?? 0), 0);
-  return (state.cash ?? 0) + totalAssets - totalDebt;
+  const totalAssets = (state.assets ?? []).reduce((sum, a) => sum + num(a?.cost), 0);
+  const totalDebt   = Object.values(state.liabilities ?? {}).reduce((s, l) => s + num(l?.principal), 0);
+  return num(state.cash) + totalAssets - totalDebt;
 };
 
 /** Recomputes cashFlow + passiveIncome aggregate to keep state coherent. */
 export const recomputeDerived = (state: GameState): GameState => {
-  const passive = (state.assets ?? []).reduce((s, a) => s + (a.income > 0 ? a.income : 0), 0);
-  const next: GameState = { ...state, passiveIncome: passive };
+  const passive = (state.assets ?? []).reduce(
+    (s, a) => s + (num(a?.income) > 0 ? num(a.income) : 0),
+    0,
+  );
+  const next: GameState = {
+    ...state,
+    cash: num(state.cash),
+    salary: num(state.salary),
+    passiveIncome: passive,
+  };
   next.cashFlow = calculateMonthlyCashFlow(next);
   return next;
 };
@@ -415,8 +430,8 @@ export const handleTileEffect = (state: GameState, tile: Tile): GameState => {
     }
 
     case "baby": {
-      next.childrenCount += 1;
-      const childCost = Math.round((next.salary / 10) * next.childrenCount);
+      next.childrenCount = num(next.childrenCount) + 1;
+      const childCost = Math.round((num(next.salary) / 10) * next.childrenCount);
       next.expenses.children = childCost;
       pushLog(next, `👶 Baby! Monthly children expense is now ₹${childCost.toLocaleString()}.`);
       break;
@@ -633,10 +648,10 @@ export const checkEscapeRatRace = (state: GameState): GameState => {
 export const sellAsset = (state: GameState, assetId: string): GameState => {
   const asset = state.assets.find((a) => a.id === assetId);
   if (!asset) return state;
-  const salePrice = Math.round(asset.cost * 0.8);
+  const salePrice = Math.round(num(asset.cost) * 0.8);
   const next: GameState = {
     ...state,
-    cash: state.cash + salePrice,
+    cash: num(state.cash) + salePrice,
     assets: state.assets.filter((a) => a.id !== assetId),
   };
   pushLog(next, `Sold ${asset.name} for ₹${salePrice.toLocaleString()} (80% of cost).`);
