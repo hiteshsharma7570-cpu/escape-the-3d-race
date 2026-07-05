@@ -101,19 +101,19 @@ export const BOARD_TILES: Tile[] = [
   // Arc 2 — Life & Family (6–11)
   t(6,  "life_event",          "Life Event"),
   t(7,  "charity",             "Charity"),
-  t(8,  "credit_card_bill",    "Credit Card Bill"),
+  t(8,  "streaming_audit",     "Audit Refund"),
   t(9,  "wedding_in_family",   "Wedding"),
   t(10, "family_care",         "Family Care"),
   t(11, "tax_refund",          "Tax Refund"),
-  // Arc 3 — Shocks & Debt (12–17)
+  // Arc 3 — Shocks & Life (12–17)
   t(12, "bill_shock",          "Bill Shock"),
-  t(13, "bnpl_trap",           "BNPL Trap"),
+  t(13, "opportunity",         "Opportunity"),
   t(14, "unexpected_repair",   "Unexpected Repair"),
   t(15, "medical_emergency",   "Medical"),
-  t(16, "quick_cash_trap",     "Quick Cash Trap"),
+  t(16, "side_hustle",         "Side Hustle"),
   t(17, "inheritance",         "Inheritance"),
   // Arc 4 — Market & Recovery (18–23)
-  t(18, "rate_hike",           "Rate Hike"),
+  t(18, "bonus",               "Windfall"),
   t(19, "real_estate_boom",    "RE Boom"),
   t(20, "tax_trouble",         "Tax Trouble"),
   t(21, "stock_market_crash",  "Crash"),
@@ -125,11 +125,10 @@ export const BOARD_TILES: Tile[] = [
 // concrete tile types. Resolved at landing-time so the same board cell
 // can produce different flavors on repeat visits.
 const TILE_POOLS: Partial<Record<Tile["type"], Tile["type"][]>> = {
-  quick_cash_trap:   ["gold_loan_offer", "payday_loan", "margin_call", "legal_settlement"],
-  tax_trouble:       ["tax_audit", "tax_arrears", "gst_notice"],
-  bill_shock:        ["rent_hike", "fuel_price_hike", "insurance_premium", "loan_interest_spike", "subscription_creep"],
+  tax_trouble:       ["tax_audit", "gst_notice"],
+  bill_shock:        ["rent_hike", "fuel_price_hike", "insurance_premium", "subscription_creep"],
   unexpected_repair: ["vehicle_breakdown", "home_repair", "traffic_fine"],
-  life_event:        ["baby", "school_fees", "festival_expense", "vacation", "dinner", "college_admission_loan", "home_purchase_loan"],
+  life_event:        ["baby", "school_fees", "festival_expense", "vacation", "dinner"],
   family_care:       ["parents_medical", "elderly_care_hire", "pet_adoption"],
   monthly_bills:     ["electricity_bill", "society_maintenance"],
   green_upgrade:     ["ev_switch", "solar_install"],
@@ -148,14 +147,9 @@ export const calculateMonthlyCashFlow = (state: GameState): number => {
   return (state.salary ?? 0) + (state.passiveIncome ?? 0);
 };
 
-/** Sum of all outstanding debt principal across liabilities. */
-export const calculateOutstandingDebt = (state: GameState): number =>
-  (state.liabilities ?? []).reduce((sum, l) => sum + (l.principal ?? 0), 0);
-
 export const calculateNetWorth = (state: GameState): number => {
   const totalAssets = (state.assets ?? []).reduce((sum, a) => sum + (a.value ?? 0), 0);
-  const totalLiabilities = (state.liabilities ?? []).reduce((sum, l) => sum + (l.principal ?? 0), 0);
-  return (state.cash ?? 0) + totalAssets - totalLiabilities;
+  return (state.cash ?? 0) + totalAssets;
 };
 
 export const handleTileEffect = (state: GameState, tile: Tile): GameState => {
@@ -164,7 +158,6 @@ export const handleTileEffect = (state: GameState, tile: Tile): GameState => {
   tile = resolvePoolTile(tile);
   const newState: GameState = {
     ...state,
-    liabilities: [...state.liabilities],
     assets: [...state.assets],
   };
   let logMessage = "";
