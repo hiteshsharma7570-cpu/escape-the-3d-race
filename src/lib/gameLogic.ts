@@ -17,6 +17,10 @@ import {
 
 export { type GameState, type Tile, type Asset, calculateEMI };
 
+/** Coerce anything to a finite number, otherwise fall back. Catches NaN, Infinity, undefined, null, non-numbers. */
+export const num = (n: unknown, fallback = 0): number =>
+  typeof n === "number" && Number.isFinite(n) ? n : fallback;
+
 const LOG_LIMIT = 19;
 const prefix = (state: GameState, msg: string) => `[Turn ${state.turnCount}] ${msg}`;
 export const pushLog = (state: GameState, msg: string) => {
