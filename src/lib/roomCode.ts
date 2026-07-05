@@ -2,7 +2,7 @@ const ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"; // omit confusing I/O/0/1
 
 export function generateRoomCode(): string {
   let code = "";
-  const cryptoObj = (globalThis as any).crypto;
+  const cryptoObj = (globalThis as { crypto?: Crypto }).crypto;
   if (cryptoObj?.getRandomValues) {
     const bytes = new Uint8Array(6);
     cryptoObj.getRandomValues(bytes);
