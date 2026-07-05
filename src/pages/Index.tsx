@@ -17,6 +17,12 @@ import {
   sellAsset,
   applyPeriodicMechanics,
   calculateNetWorth,
+  takeBankLoan,
+  repayBankLoan,
+  payOffDebt,
+  applyLoanForAssetDecision,
+  checkEscapeRatRace,
+  tickMarketCycle,
 } from "@/lib/gameLogic";
 import { toast } from "sonner";
 import { logMaintenanceError } from "@/lib/maintenanceLog";
@@ -336,7 +342,7 @@ const Index = () => {
         else if (landedTile.type === "charity") playSound("charity");
         else if (landedTile.type === "baby") playSound("baby");
         else if (landedTile.type === "downsized") playSound("downsized");
-        else if (landedTile.type === "dinner" || landedTile.type === "vacation")
+        else if (landedTile.type === "doodad")
           playSound("loseMoney");
       }, 100);
       return updated;
@@ -361,6 +367,10 @@ const Index = () => {
       } else if (decision.type === "opportunity") {
         playSound("opportunity");
         setGameState((prev) => applyOpportunityDecision(prev, true));
+      } else if (decision.type === "loan_for_asset") {
+        setGameState((prev) => applyLoanForAssetDecision(prev, true));
+      } else if (decision.type === "market_card" || decision.type === "doodad") {
+        setGameState((prev) => ({ ...prev, pendingDecision: null }));
       }
     } catch (err) {
       void logMaintenanceError({
@@ -382,6 +392,10 @@ const Index = () => {
         setGameState((prev) => applyCharityDecision(prev, false));
       } else if (decision.type === "opportunity") {
         setGameState((prev) => applyOpportunityDecision(prev, false));
+      } else if (decision.type === "loan_for_asset") {
+        setGameState((prev) => applyLoanForAssetDecision(prev, false));
+      } else {
+        setGameState((prev) => ({ ...prev, pendingDecision: null }));
       }
     } catch (err) {
       void logMaintenanceError({
@@ -394,6 +408,10 @@ const Index = () => {
       setGameState((prev) => ({ ...prev, pendingDecision: null }));
     }
   };
+
+  const handleTakeLoan = (amount: number) => setGameState((prev) => takeBankLoan(prev, amount));
+  const handleRepayLoan = (amount: number) => setGameState((prev) => repayBankLoan(prev, amount));
+  const handlePayOffDebt = (key: string) => setGameState((prev) => payOffDebt(prev, key));
 
   const showInstructions = () => {
     toast.info(
@@ -500,6 +518,9 @@ const Index = () => {
               gameState={gameState}
               onRollDice={rollDice}
               onSellAsset={handleSellAsset}
+              onTakeLoan={handleTakeLoan}
+              onRepayLoan={handleRepayLoan}
+              onPayOffDebt={handlePayOffDebt}
             />
           </div>
         </div>
