@@ -13,7 +13,11 @@ import { Label } from "@/components/ui/label";
 import type { GameState } from "@/types/game";
 import { availableBankLoan, calculateEMI, maxLoanLimit } from "@/lib/gameLogic";
 
-const fmt = (n: number) => `₹${n.toLocaleString()}`;
+const fmt = (n: number) => `₹${(Number.isFinite(n) ? Math.round(n) : 0).toLocaleString()}`;
+const safeNum = (v: unknown, fallback = 0): number => {
+  const n = typeof v === "number" ? v : parseInt(String(v ?? ""), 10);
+  return Number.isFinite(n) ? n : fallback;
+};
 
 // ---------------------- TAKE LOAN ----------------------
 export const TakeLoanDialog = ({
@@ -27,10 +31,12 @@ export const TakeLoanDialog = ({
   onClose: () => void;
   onConfirm: (amount: number) => void;
 }) => {
-  const avail = availableBankLoan(gameState);
-  const [amount, setAmount] = useState(Math.min(10000, avail));
+  const avail = safeNum(availableBankLoan(gameState));
+  const [amount, setAmount] = useState(safeNum(Math.min(10000, avail)));
   const bank = gameState.liabilities.bankLoan ?? { principal: 0, emi: 0, interestRate: 12 };
-  const newEMI = calculateEMI(bank.principal + amount, bank.interestRate);
+  const principal = safeNum(bank.principal);
+  const rate = safeNum(bank.interestRate, 12);
+  const newEMI = safeNum(calculateEMI(principal + safeNum(amount), rate));
 
   return (
     <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
@@ -48,8 +54,8 @@ export const TakeLoanDialog = ({
             min={1000}
             max={avail}
             step={1000}
-            value={amount}
-            onChange={(e) => setAmount(Math.min(avail, Math.max(0, parseInt(e.target.value) || 0)))}
+            value={Number.isFinite(amount) ? amount : 0}
+            onChange={(e) => setAmount(Math.min(avail, Math.max(0, safeNum(e.target.value))))}
           />
           <p className="text-sm text-muted-foreground">
             New monthly EMI: <b>{fmt(newEMI)}</b>
@@ -83,7 +89,9 @@ export const RepayLoanDialog = ({
   onConfirm: (amount: number) => void;
 }) => {
   const bank = gameState.liabilities.bankLoan;
-  const maxRepay = Math.min(gameState.cash, bank?.principal ?? 0);
+  const cash = safeNum(gameState.cash);
+  const principal = safeNum(bank?.principal);
+  const maxRepay = Math.max(0, Math.min(cash, principal));
   const [amount, setAmount] = useState(maxRepay);
   return (
     <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
@@ -101,8 +109,8 @@ export const RepayLoanDialog = ({
             min={0}
             max={maxRepay}
             step={1000}
-            value={amount}
-            onChange={(e) => setAmount(Math.min(maxRepay, Math.max(0, parseInt(e.target.value) || 0)))}
+            value={Number.isFinite(amount) ? amount : 0}
+            onChange={(e) => setAmount(Math.min(maxRepay, Math.max(0, safeNum(e.target.value))))}
           />
         </div>
         <DialogFooter>
