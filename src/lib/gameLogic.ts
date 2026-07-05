@@ -1,860 +1,676 @@
-import { GameState, Tile, Asset, MarketHint } from "@/types/game";
+import {
+  GameState,
+  Tile,
+  TileType,
+  Asset,
+  AssetType,
+  Liability,
+  MarketHint,
+  MarketCycle,
+  OpportunityCard,
+  SimpleOpportunityCard,
+  StockOpportunityCard,
+  DecisionOpportunityCard,
+  MarketCard,
+  calculateEMI,
+} from "@/types/game";
 
-export { type GameState, type Tile, type Asset };
+export { type GameState, type Tile, type Asset, calculateEMI };
 
 const LOG_LIMIT = 19;
 const prefix = (state: GameState, msg: string) => `[Turn ${state.turnCount}] ${msg}`;
-const pushLog = (state: GameState, msg: string) => {
+export const pushLog = (state: GameState, msg: string) => {
   state.gameLog = [prefix(state, msg), ...state.gameLog.slice(0, LOG_LIMIT)];
 };
 
-export const INVESTMENT_OPPORTUNITIES = [
-  // Low Risk
-  { name: "Fixed Deposit", cost: 25000, income: 600, value: 25000, risk: "low" as const, description: "Safe bank deposit with guaranteed returns" },
-  { name: "Government Bonds", cost: 50000, income: 1200, value: 50000, risk: "low" as const, description: "Secure government-backed bonds" },
-  { name: "Dividend Stocks", cost: 75000, income: 2000, value: 75000, risk: "low" as const, description: "Blue-chip stocks with steady dividends" },
-  // Medium Risk
-  { name: "Rental Property", cost: 500000, income: 14400, value: 500000, risk: "medium" as const, description: "Residential property for rental income" },
-  { name: "Side Business", cost: 100000, income: 6000, value: 100000, risk: "medium" as const, description: "Part-time business venture" },
-  { name: "REITs", cost: 150000, income: 5400, value: 150000, risk: "medium" as const, description: "Real Estate Investment Trust" },
-  { name: "Mutual Funds", cost: 200000, income: 6000, value: 200000, risk: "medium" as const, description: "Diversified portfolio managed by experts" },
-  // High Risk
-  { name: "Startup Investment", cost: 250000, income: 15000, value: 250000, risk: "high" as const, description: "Equity in an early-stage company" },
-  { name: "Crypto Portfolio", cost: 100000, income: 8000, value: 100000, risk: "high" as const, description: "Diversified cryptocurrency holdings" },
-  { name: "Commercial Property", cost: 1000000, income: 40000, value: 1000000, risk: "high" as const, description: "Office/retail space for lease" },
-  { name: "Franchise Business", cost: 750000, income: 30000, value: 750000, risk: "high" as const, description: "Branded franchise operation" },
-];
+// ---------------------------------------------------------------------------
+// TILE VISUALS
+// ---------------------------------------------------------------------------
+const G: Record<TileType, { color: string; gradient: string; icon: string }> = {
+  payday:         { color: "#10B981", gradient: "linear-gradient(135deg,#10B981,#34d399)", icon: "💵" },
+  opportunity:    { color: "#3B82F6", gradient: "linear-gradient(135deg,#3B82F6,#8b5cf6)", icon: "💡" },
+  doodad:         { color: "#EF4444", gradient: "linear-gradient(135deg,#EF4444,#f97316)", icon: "🛍️" },
+  market:         { color: "#F59E0B", gradient: "linear-gradient(135deg,#F59E0B,#fbbf24)", icon: "📊" },
+  charity:        { color: "#8B5CF6", gradient: "linear-gradient(135deg,#8B5CF6,#ec4899)", icon: "💖" },
+  baby:           { color: "#EC4899", gradient: "linear-gradient(135deg,#EC4899,#f472b6)", icon: "👶" },
+  downsized:      { color: "#4B5563", gradient: "linear-gradient(135deg,#4B5563,#1f2937)", icon: "📉" },
+  ft_business:    { color: "#0EA5E9", gradient: "linear-gradient(135deg,#0EA5E9,#22d3ee)", icon: "🏢" },
+  ft_dream:       { color: "#F59E0B", gradient: "linear-gradient(135deg,#F59E0B,#fde047)", icon: "🌟" },
+  ft_cashflowday: { color: "#10B981", gradient: "linear-gradient(135deg,#10B981,#facc15)", icon: "💰" },
+  ft_charity:     { color: "#8B5CF6", gradient: "linear-gradient(135deg,#8B5CF6,#ec4899)", icon: "💖" },
+  ft_divorce:     { color: "#DC2626", gradient: "linear-gradient(135deg,#DC2626,#7f1d1d)", icon: "💔" },
+  ft_lawsuit:     { color: "#6D28D9", gradient: "linear-gradient(135deg,#6D28D9,#a855f7)", icon: "⚖️" },
+};
 
-const G = {
-  payday:               { color: "#f7971e", gradient: "linear-gradient(135deg,#f7971e,#ffd200)", icon: "💰" },
-  opportunity:          { color: "#4776E6", gradient: "linear-gradient(135deg,#4776E6,#8E54E9)", icon: "💡" },
-  market:               { color: "#f46b45", gradient: "linear-gradient(135deg,#f46b45,#eea849)", icon: "📊" },
-  charity:              { color: "#a18cd1", gradient: "linear-gradient(135deg,#a18cd1,#fbc2eb)", icon: "❤️" },
-  baby:                 { color: "#f953c6", gradient: "linear-gradient(135deg,#f953c6,#b91d73)", icon: "👶" },
-  vacation:             { color: "#43b89c", gradient: "linear-gradient(135deg,#43b89c,#0f3443)", icon: "🏝️" },
-  dinner:               { color: "#cb2d3e", gradient: "linear-gradient(135deg,#cb2d3e,#ef473a)", icon: "🍽️" },
-  downsized:            { color: "#373b44", gradient: "linear-gradient(135deg,#373b44,#4286f4)", icon: "📉" },
-  tax_audit:            { color: "#eb3349", gradient: "linear-gradient(135deg,#eb3349,#f45c43)", icon: "🔍" },
-  medical_emergency:    { color: "#c0392b", gradient: "linear-gradient(135deg,#c0392b,#8e44ad)", icon: "🏥" },
-  side_hustle:          { color: "#56ab2f", gradient: "linear-gradient(135deg,#56ab2f,#a8e063)", icon: "💼" },
-  inheritance:          { color: "#11998e", gradient: "linear-gradient(135deg,#11998e,#38ef7d)", icon: "🎁" },
-  real_estate_boom:     { color: "#134e5e", gradient: "linear-gradient(135deg,#134e5e,#71b280)", icon: "🏠" },
-  stock_market_crash:   { color: "#1a1a2e", gradient: "linear-gradient(135deg,#1a1a2e,#e94560)", icon: "📉" },
-  rate_hike:            { color: "#c0392b", gradient: "linear-gradient(135deg,#c0392b,#e74c3c)", icon: "📈" },
-  insurance_premium:    { color: "#8e44ad", gradient: "linear-gradient(135deg,#8e44ad,#9b59b6)", icon: "🛡️" },
-  home_repair:          { color: "#d35400", gradient: "linear-gradient(135deg,#d35400,#e67e22)", icon: "🔧" },
-  traffic_fine:         { color: "#e74c3c", gradient: "linear-gradient(135deg,#e74c3c,#c0392b)", icon: "🚦" },
-  credit_card_bill:     { color: "#c0392b", gradient: "linear-gradient(135deg,#922b21,#c0392b)", icon: "💳" },
-  school_fees:          { color: "#2980b9", gradient: "linear-gradient(135deg,#2980b9,#3498db)", icon: "🎒" },
-  festival_expense:     { color: "#f39c12", gradient: "linear-gradient(135deg,#f39c12,#f1c40f)", icon: "🪔" },
-  electricity_bill:     { color: "#d4ac0d", gradient: "linear-gradient(135deg,#d4ac0d,#f9ca24)", icon: "⚡" },
-  rent_hike:            { color: "#922b21", gradient: "linear-gradient(135deg,#922b21,#c0392b)", icon: "🏠" },
-  vehicle_breakdown:    { color: "#717d7e", gradient: "linear-gradient(135deg,#717d7e,#95a5a6)", icon: "🚗" },
-  loan_interest_spike:  { color: "#6e2f1a", gradient: "linear-gradient(135deg,#6e2f1a,#a04000)", icon: "🏦" },
-  society_maintenance:  { color: "#1a5276", gradient: "linear-gradient(135deg,#1a5276,#2471a3)", icon: "🏢" },
-  gold_loan_offer:      { color: "#b7950b", gradient: "linear-gradient(135deg,#b7950b,#f1c40f)", icon: "🪙" },
-  wedding_in_family:    { color: "#a93226", gradient: "linear-gradient(135deg,#a93226,#e74c3c)", icon: "💍" },
-  subscription_creep:   { color: "#5b2c6f", gradient: "linear-gradient(135deg,#5b2c6f,#8e44ad)", icon: "📺" },
-  fuel_price_hike:      { color: "#7b241c", gradient: "linear-gradient(135deg,#7b241c,#c0392b)", icon: "⛽" },
-  parents_medical:      { color: "#5d6d7e", gradient: "linear-gradient(135deg,#5d6d7e,#85929e)", icon: "👴" },
-  gst_notice:           { color: "#1b4f72", gradient: "linear-gradient(135deg,#1b4f72,#2874a6)", icon: "🧾" },
-  bonus:                { color: "#1e8449", gradient: "linear-gradient(135deg,#1e8449,#28b463)", icon: "🎉" },
-  tax_refund:           { color: "#117864", gradient: "linear-gradient(135deg,#117864,#16a085)", icon: "💸" },
-  bnpl_trap:            { color: "#a93268", gradient: "linear-gradient(135deg,#a93268,#e84393)", icon: "🛍️" },
-  solar_install:        { color: "#d4ac0d", gradient: "linear-gradient(135deg,#d4ac0d,#f1c40f)", icon: "☀️" },
-  ev_switch:            { color: "#117a3e", gradient: "linear-gradient(135deg,#117a3e,#27ae60)", icon: "🔋" },
-  streaming_audit:      { color: "#117a8b", gradient: "linear-gradient(135deg,#117a8b,#1abc9c)", icon: "✂️" },
-  pet_adoption:         { color: "#cb6a1e", gradient: "linear-gradient(135deg,#cb6a1e,#f39c12)", icon: "🐶" },
-  elderly_care_hire:    { color: "#6c3483", gradient: "linear-gradient(135deg,#6c3483,#8e44ad)", icon: "🧓" },
-  payday_loan:          { color: "#922b50", gradient: "linear-gradient(135deg,#922b50,#e84393)", icon: "💸" },
-  margin_call:          { color: "#7b1f1f", gradient: "linear-gradient(135deg,#7b1f1f,#e74c3c)", icon: "📞" },
-  tax_arrears:          { color: "#7e5109", gradient: "linear-gradient(135deg,#7e5109,#b9770e)", icon: "🧾" },
-  college_admission_loan: { color: "#1f4e8e", gradient: "linear-gradient(135deg,#1f4e8e,#4a90e2)", icon: "🎓" },
-  home_purchase_loan:   { color: "#a0522d", gradient: "linear-gradient(135deg,#a0522d,#e67e22)", icon: "🏡" },
-  legal_settlement:     { color: "#4a235a", gradient: "linear-gradient(135deg,#4a235a,#7d3c98)", icon: "⚖️" },
-  // ---- Pool slots (the only tile types actually placed on the 24-tile board)
-  quick_cash_trap:      { color: "#8e0e3a", gradient: "linear-gradient(135deg,#8e0e3a,#e84393)", icon: "💸" },
-  tax_trouble:          { color: "#7e5109", gradient: "linear-gradient(135deg,#7e5109,#c0392b)", icon: "🧾" },
-  bill_shock:           { color: "#b03a2e", gradient: "linear-gradient(135deg,#b03a2e,#f1948a)", icon: "💥" },
-  unexpected_repair:    { color: "#a04000", gradient: "linear-gradient(135deg,#a04000,#e67e22)", icon: "🛠️" },
-  life_event:           { color: "#a93268", gradient: "linear-gradient(135deg,#a93268,#fbc2eb)", icon: "🎈" },
-  family_care:          { color: "#5d3a8e", gradient: "linear-gradient(135deg,#5d3a8e,#8e44ad)", icon: "👨‍👩‍👧" },
-  monthly_bills:        { color: "#1a5276", gradient: "linear-gradient(135deg,#1a5276,#5dade2)", icon: "🧾" },
-  green_upgrade:        { color: "#117a3e", gradient: "linear-gradient(135deg,#117a3e,#27ae60)", icon: "🌱" },
-} as const;
-
-const t = (id: number, type: keyof typeof G, label: string): Tile => ({
-  id, type: type as Tile["type"], label, color: G[type].color, gradient: G[type].gradient, icon: G[type].icon,
+const t = (id: number, type: TileType, label: string, extra: Partial<Tile> = {}): Tile => ({
+  id, type, label, color: G[type].color, gradient: G[type].gradient, icon: G[type].icon, ...extra,
 });
 
-// 24-tile perimeter ring (7x7 board: 4*7 - 4 = 24).
-// The 36 underlying tile types still exist; pool slots resolve to one of
-// them at landing-time via resolvePoolTile(), so repeat visits feel different.
-export const BOARD_TILES: Tile[] = [
-  // Arc 1 — Earning & Foundation (0–5)
-  t(0,  "payday",              "Pay Day"),
-  t(1,  "opportunity",         "Opportunity"),
-  t(2,  "side_hustle",         "Side Hustle"),
-  t(3,  "monthly_bills",       "Monthly Bills"),
-  t(4,  "market",              "Market"),
-  t(5,  "bonus",               "Bonus!"),
-  // Arc 2 — Life & Family (6–11)
-  t(6,  "life_event",          "Life Event"),
-  t(7,  "charity",             "Charity"),
-  t(8,  "streaming_audit",     "Audit Refund"),
-  t(9,  "wedding_in_family",   "Wedding"),
-  t(10, "family_care",         "Family Care"),
-  t(11, "tax_refund",          "Tax Refund"),
-  // Arc 3 — Shocks & Life (12–17)
-  t(12, "bill_shock",          "Bill Shock"),
-  t(13, "opportunity",         "Opportunity"),
-  t(14, "unexpected_repair",   "Unexpected Repair"),
-  t(15, "medical_emergency",   "Medical"),
-  t(16, "side_hustle",         "Side Hustle"),
-  t(17, "inheritance",         "Inheritance"),
-  // Arc 4 — Market & Recovery (18–23)
-  t(18, "bonus",               "Windfall"),
-  t(19, "real_estate_boom",    "RE Boom"),
-  t(20, "tax_trouble",         "Tax Trouble"),
-  t(21, "stock_market_crash",  "Crash"),
-  t(22, "downsized",           "Downsized!"),
-  t(23, "green_upgrade",       "Green Upgrade"),
+// ---------------------------------------------------------------------------
+// BOARDS
+// ---------------------------------------------------------------------------
+
+/** 20-tile Rat Race ring — matches the uploaded reference exactly. */
+export const RAT_RACE_TILES: Tile[] = [
+  t(0,  "payday",      "Pay Day"),
+  t(1,  "opportunity", "Opportunity"),
+  t(2,  "doodad",      "New Phone",      { cost: 50000 }),
+  t(3,  "market",      "Market"),
+  t(4,  "opportunity", "Opportunity"),
+  t(5,  "charity",     "Charity"),
+  t(6,  "payday",      "Pay Day"),
+  t(7,  "baby",        "Baby!"),
+  t(8,  "opportunity", "Opportunity"),
+  t(9,  "doodad",      "Dinner Out",     { cost: 8000 }),
+  t(10, "market",      "Market"),
+  t(11, "opportunity", "Opportunity"),
+  t(12, "downsized",   "Downsized!"),
+  t(13, "payday",      "Pay Day"),
+  t(14, "opportunity", "Opportunity"),
+  t(15, "doodad",      "Vacation",       { cost: 100000 }),
+  t(16, "market",      "Market"),
+  t(17, "opportunity", "Opportunity"),
+  t(18, "charity",     "Charity"),
+  t(19, "payday",      "Pay Day"),
 ];
 
-// Pool definitions: each board slot above maps to a set of underlying
-// concrete tile types. Resolved at landing-time so the same board cell
-// can produce different flavors on repeat visits.
-const TILE_POOLS: Partial<Record<Tile["type"], Tile["type"][]>> = {
-  tax_trouble:       ["tax_audit", "gst_notice"],
-  bill_shock:        ["rent_hike", "fuel_price_hike", "insurance_premium", "subscription_creep"],
-  unexpected_repair: ["vehicle_breakdown", "home_repair", "traffic_fine"],
-  life_event:        ["baby", "school_fees", "festival_expense", "vacation", "dinner"],
-  family_care:       ["parents_medical", "elderly_care_hire", "pet_adoption"],
-  monthly_bills:     ["electricity_bill", "society_maintenance"],
-  green_upgrade:     ["ev_switch", "solar_install"],
-};
+/** 12-tile Fast Track ring. */
+export const FAST_TRACK_TILES: Tile[] = [
+  t(0,  "ft_business",    "E-Commerce Store",    { ftCost: 2000000,  ftIncome: 40000 }),
+  t(1,  "ft_dream",       "World Tour",          { ftCost: 5000000 }),
+  t(2,  "ft_cashflowday", "Cash Flow Day"),
+  t(3,  "ft_business",    "Apartment Complex",   { ftCost: 8000000,  ftIncome: 100000 }),
+  t(4,  "ft_charity",     "Charity Ball"),
+  t(5,  "ft_dream",       "Dream Car",           { ftCost: 8000000 }),
+  t(6,  "ft_cashflowday", "Cash Flow Day"),
+  t(7,  "ft_business",    "Software Company",    { ftCost: 15000000, ftIncome: 250000 }),
+  t(8,  "ft_divorce",     "Divorce"),
+  t(9,  "ft_dream",       "Yacht",               { ftCost: 10000000 }),
+  t(10, "ft_cashflowday", "Cash Flow Day"),
+  t(11, "ft_lawsuit",     "Lawsuit"),
+];
 
-/** If `tile` is a pool slot, return a synthetic Tile of a randomly-picked
- *  underlying type. Otherwise returns the tile unchanged. */
-export const resolvePoolTile = (tile: Tile): Tile => {
-  const pool = TILE_POOLS[tile.type];
-  if (!pool || pool.length === 0) return tile;
-  const pickedType = pool[Math.floor(Math.random() * pool.length)];
-  return { ...tile, type: pickedType };
-};
+/** Backward-compat: existing GameBoard2D imports BOARD_TILES. */
+export const BOARD_TILES: Tile[] = RAT_RACE_TILES;
 
-export const calculateMonthlyCashFlow = (state: GameState): number => {
-  return (state.salary ?? 0) + (state.passiveIncome ?? 0);
-};
+// ---------------------------------------------------------------------------
+// CARD DECKS
+// ---------------------------------------------------------------------------
 
-export const calculateNetWorth = (state: GameState): number => {
-  const totalAssets = (state.assets ?? []).reduce((sum, a) => sum + (a.value ?? 0), 0);
-  return (state.cash ?? 0) + totalAssets;
-};
+const shuffle = <T>(arr: T[]): T[] => [...arr].sort(() => Math.random() - 0.5);
 
-export const handleTileEffect = (state: GameState, tile: Tile): GameState => {
-  // Pool slots resolve to a random underlying tile type at landing-time.
-  // This is how 24 board slots cover 36+ flavors of event without losing variety.
-  tile = resolvePoolTile(tile);
-  const newState: GameState = {
-    ...state,
-    assets: [...state.assets],
-  };
-  let logMessage = "";
-  let lessonMessage: string | null = null;
+export const BEGINNER_OPPORTUNITY_CARDS: SimpleOpportunityCard[] = [
+  { cardType: "simple", name: "Govt. Bonds",    cost: 10000, income: 200,  type: "paper",   description: "A safe, early investment. Buy Government Bonds for ₹10,000 to get ₹200/mo." },
+  { cardType: "simple", name: "Local Tech Park",cost: 25000, income: 1000, type: "business",description: "An early-bird investment opportunity in a new local tech park for ₹25,000. Generates ₹1,000/mo." },
+];
 
-  switch (tile.type) {
-    case "payday":
-      const cashFlow = calculateMonthlyCashFlow(state);
-      newState.cash += cashFlow;
-      logMessage = `Pay Day! Received ₹${cashFlow.toLocaleString()} (Monthly Cash Flow)`;
-      break;
+export const OPPORTUNITY_CARDS: OpportunityCard[] = shuffle<OpportunityCard>([
+  // Stocks
+  { cardType: "stock", name: "Astromee",           shares: 100, pricePerShare: 500,  description: "The popular astrological services provider, Astromee.com, is going public." },
+  { cardType: "stock", name: "Reliance Industries",shares: 10,  pricePerShare: 2800, description: "A chance to buy shares in the diversified giant, Reliance Industries." },
+  { cardType: "stock", name: "TCS",                shares: 5,   pricePerShare: 3800, description: "Invest in Tata Consultancy Services, a pillar of the Indian IT sector." },
+  { cardType: "stock", name: "HDFC Bank",          shares: 15,  pricePerShare: 1500, description: "Own a piece of India's leading private sector bank." },
+  { cardType: "stock", name: "Infosys",            shares: 10,  pricePerShare: 1500, description: "Buy shares in the global IT powerhouse, Infosys." },
+  { cardType: "stock", name: "Hindustan Unilever", shares: 5,   pricePerShare: 2500, description: "Invest in the stable consumer goods company." },
+  { cardType: "stock", name: "Bajaj Finance",      shares: 2,   pricePerShare: 7200, description: "High-value opportunity in Bajaj Finance." },
+  { cardType: "stock", name: "Zomato",             shares: 200, pricePerShare: 180,  description: "A volatile but popular tech stock, Zomato, is available." },
+  // Real Estate
+  { cardType: "simple", name: "Small Rental Flat",     cost: 400000,  income: 8000,  type: "real_estate", description: "Down payment on a small rental flat for ₹4,00,000. Generates ₹8,000/mo cash flow." },
+  { cardType: "simple", name: "Commercial Property",   cost: 1000000, income: 25000, type: "real_estate", description: "Invest in a commercial property for ₹10,00,000. Brings in ₹25,000/mo." },
+  { cardType: "simple", name: "2 BHK Jagatpura",       cost: 500000,  income: 12000, type: "real_estate", description: "Buy a 2 BHK flat in Jagatpura for ₹5,00,000. Solid rental (~₹12,000/mo)." },
+  { cardType: "simple", name: "Shop in Johari Bazaar", cost: 800000,  income: 20000, type: "real_estate", description: "A small commercial shop in bustling Johari Bazaar. ₹8,00,000 for ₹20,000/mo rent." },
+  { cardType: "simple", name: "Land on Ajmer Road",    cost: 600000,  income: 0,     type: "land",        description: "A plot on Ajmer Road. Generates no income now, but could appreciate." },
+  // Businesses
+  { cardType: "simple", name: "Trendy Cafe",           cost: 150000,  income: 6000,  type: "business", volatile: true, description: "A trendy cafe in a popular Jaipur neighborhood. ₹1,50,000 for ₹6,000/mo — but trends change." },
+  { cardType: "simple", name: "Handicraft Export",     cost: 250000,  income: 10000, type: "business", volatile: true, description: "Export Rajasthani handicrafts. ₹2,50,000 for ₹10,000/mo — regulations can bite." },
+  { cardType: "simple", name: "Blue Pottery Workshop", cost: 300000,  income: 15000, type: "business", description: "Invest in a Blue Pottery workshop. ₹3,00,000 for ₹15,000/mo passive." },
+  { cardType: "simple", name: "Tour Guide Service",    cost: 100000,  income: 5000,  type: "business", description: "A small tour guide service for tourists. ₹1,00,000 for ₹5,000/mo." },
+  // Decision
+  {
+    cardType: "decision",
+    name: "Startup Venture",
+    description: "A friend is starting a delivery app. Huge upside, big risk. How much will you invest?",
+    choices: [
+      { text: "Small Seed",     cost: 50000,  reward: 5000,  successChance: 0.6,  logText: "a small seed investment" },
+      { text: "Angel Investor", cost: 200000, reward: 25000, successChance: 0.4,  logText: "as an angel investor" },
+      { text: "Lead Investor",  cost: 500000, reward: 75000, successChance: 0.25, logText: "as the lead investor" },
+    ],
+  },
+]);
 
-    case "opportunity":
-      const opp = INVESTMENT_OPPORTUNITIES[Math.floor(Math.random() * INVESTMENT_OPPORTUNITIES.length)];
-      newState.pendingDecision = {
-        type: "opportunity",
-        opportunity: opp,
-      };
-      const riskLabel = opp.risk === "low" ? "🟢 Low" : opp.risk === "medium" ? "🟡 Medium" : "🔴 High";
-      logMessage = `Opportunity (${riskLabel} Risk): ${opp.name} for ₹${opp.cost.toLocaleString()}`;
-      break;
+export const MARKET_CARDS: MarketCard[] = [
+  { id: 0,  text: "Regulatory changes hit niche businesses hard! A volatile business venture might now be losing money." },
+  { id: 1,  text: "A developer wants your land on Ajmer Road! Sell now for ₹10,00,000 profit." },
+  { id: 2,  text: "Market booms! Any 'Reliance Industries' stock you own doubles in value." },
+  { id: 3,  text: "A real estate buyer wants one of your properties! Sell for a ₹4,00,000 profit." },
+  { id: 4,  text: "RBI increases interest rates. Your credit card EMI increases by 20%." },
+  { id: 5,  text: "New tenant needed for a rental. Pay ₹10,000 in repairs." },
+  { id: 6,  text: "Your business has a breakthrough! Passive income from it doubles." },
+  { id: 7,  text: "Recession warning: if you have less than ₹50,000 cash, you may be downsized." },
+];
 
-    case "market":
-      // Market events affect investments based on risk level
-      // If a hint was generated, bias the outcome toward it
-      let isBoom: boolean;
-      if (state.marketHint?.sentiment === "bullish") {
-        isBoom = Math.random() < 0.8;
-      } else if (state.marketHint?.sentiment === "bearish") {
-        isBoom = Math.random() < 0.2;
-      } else {
-        isBoom = Math.random() > 0.5;
-      }
-      
-      // Risk multipliers: high-risk assets are more volatile
-      const riskMultipliers = {
-        low: isBoom ? 1.03 : 0.98,    // ±2-3% for low risk
-        medium: isBoom ? 1.08 : 0.92,  // ±8% for medium risk
-        high: isBoom ? 1.20 : 0.75,    // +20% / -25% for high risk
-      };
-      
-      let totalValueChange = 0;
-      let totalIncomeChange = 0;
-      newState.assets = newState.assets.map(a => {
-        const multiplier = riskMultipliers[a.risk] || riskMultipliers.medium;
-        const oldValue = a.value;
-        const newValue = Math.round(a.value * multiplier);
-        // Monthly income scales with the asset's new value (rents, dividends, yields all move with valuation).
-        const newIncome = Math.round(a.monthlyIncome * multiplier);
-        totalValueChange += newValue - oldValue;
-        totalIncomeChange += newIncome - a.monthlyIncome;
-        return { ...a, value: newValue, monthlyIncome: newIncome };
-      });
-      // Keep aggregate passive income in sync with per-asset changes so the financial model stays correct.
-      newState.passiveIncome = Math.max(0, newState.passiveIncome + totalIncomeChange);
-
-      if (newState.assets.length === 0) {
-        logMessage = isBoom 
-          ? "Market Boom! But you have no investments to benefit." 
-          : "Market Dip! Good thing you have no investments at risk.";
-      } else {
-        const changeText = totalValueChange >= 0 
-          ? `+₹${totalValueChange.toLocaleString()}` 
-          : `-₹${Math.abs(totalValueChange).toLocaleString()}`;
-        logMessage = isBoom 
-          ? `📈 Market Boom! Portfolio ${changeText}. High-risk assets gained 20%!` 
-          : `📉 Market Crash! Portfolio ${changeText}. High-risk assets lost 25%!`;
-      }
-      newState.marketCondition = isBoom ? "boom" : "crash";
-      lessonMessage = "💡 High-risk assets are more volatile — they gain more in booms but lose more in crashes.";
-      break;
-
-    case "charity":
-      const charityAmount = 5000;
-      newState.pendingDecision = {
-        type: "charity",
-        charityAmount,
-      };
-      logMessage = `Charity opportunity! You can donate ₹${charityAmount.toLocaleString()}`;
-      break;
-
-    case "baby": {
-      const cost = 80000 + Math.floor(Math.random() * 40000);
-      newState.cash -= cost;
-      logMessage = `👶 Baby! Hospital, cot & first months of gear — spent ₹${cost.toLocaleString()}.`;
-      break;
-    }
-
-    case "vacation":
-      const vacationCost = 30000;
-      newState.cash -= vacationCost;
-      logMessage = `Vacation! Spent ₹${vacationCost.toLocaleString()}`;
-      break;
-
-    case "dinner":
-      const dinnerCost = 5000;
-      newState.cash -= dinnerCost;
-      logMessage = `Dinner Out! Spent ₹${dinnerCost.toLocaleString()}`;
-      break;
-
-    case "downsized":
-      newState.salary = Math.round(newState.salary * 0.8);
-      logMessage = `Downsized! Salary reduced to ₹${newState.salary.toLocaleString()}`;
-      break;
-
-    case "tax_audit": {
-      let penalty: number;
-      if (newState.cash > 500000) {
-        penalty = Math.round(newState.cash * 0.08);
-      } else if (newState.cash > 0) {
-        penalty = 20000;
-      } else {
-        penalty = Math.floor(Math.random() * 130000) + 20000;
-      }
-      newState.cash -= penalty;
-      logMessage = `🔍 Tax Audit! The IT department reviewed your finances — penalty ₹${penalty.toLocaleString()}`;
-      break;
-    }
-
-    case "medical_emergency": {
-      let cost = Math.floor(Math.random() * 250000) + 50000;
-      const hasInsurance = newState.assets.some(a => /insurance/i.test(a.name));
-      if (hasInsurance) cost = Math.round(cost * 0.4);
-      if (newState.cash >= cost) {
-        newState.cash -= cost;
-        logMessage = `🏥 Medical Emergency! Paid ₹${cost.toLocaleString()} in full.`;
-      } else {
-        newState.cash = Math.max(0, newState.cash);
-        const debtName = cost > 250000 ? "Health-Crisis EMI" : "Medical Debt";
-        newState.cash -= cost;
-        logMessage = `🏥 Medical Emergency! ₹${cost.toLocaleString()} added as ${debtName}.`;
-      }
-      break;
-    }
-
-    case "side_hustle": {
-      const earn = Math.floor(Math.random() * 60000) + 15000;
-      newState.cash += earn;
-      if (Math.random() < 0.3) {
-        newState.assets.push({
-          id: `side-${Date.now()}`,
-          name: "Side Business",
-          value: 50000,
-          monthlyIncome: 5000,
-          risk: "medium",
-        });
-        newState.passiveIncome += 5000;
-        logMessage = `💼 Side Hustle pays off! Earned ₹${earn.toLocaleString()} + became a Side Business (+₹5,000/mo).`;
-      } else {
-        logMessage = `💼 Side Hustle pays off! Earned ₹${earn.toLocaleString()}.`;
-      }
-      break;
-    }
-
-    case "inheritance": {
-      const amt = Math.floor(Math.random() * 800000) + 200000;
-      newState.cash += amt;
-      // 50% auto-invest into FD
-      if (Math.random() < 0.5 && newState.cash >= amt) {
-        const invest = Math.round(amt / 2);
-        newState.cash -= invest;
-        newState.assets.push({
-          id: `inh-${Date.now()}`,
-          name: "Fixed Deposit (Inheritance)",
-          value: invest,
-          monthlyIncome: Math.round(invest * 0.006),
-          risk: "low",
-        });
-        newState.passiveIncome += Math.round(invest * 0.006);
-        logMessage = `🎁 Inheritance! Received ₹${amt.toLocaleString()} — half invested in FD.`;
-      } else {
-        logMessage = `🎁 Inheritance received! ₹${amt.toLocaleString()} added to cash.`;
-      }
-      break;
-    }
-
-    case "real_estate_boom": {
-      const realEstateNames = /(real estate|property|rental|reit|commercial|plot)/i;
-      const re = newState.assets.filter(a => realEstateNames.test(a.name));
-      if (re.length > 0) {
-        let gain = 0;
-        let incomeGain = 0;
-        newState.assets = newState.assets.map(a => {
-          if (realEstateNames.test(a.name)) {
-            const newVal = Math.round(a.value * 1.25);
-            const newInc = Math.round(a.monthlyIncome * 1.10);
-            gain += newVal - a.value;
-            incomeGain += newInc - a.monthlyIncome;
-            return { ...a, value: newVal, monthlyIncome: newInc };
-          }
-          return a;
-        });
-        newState.passiveIncome += incomeGain;
-        logMessage = `🏠 Real Estate Boom! Property values +₹${gain.toLocaleString()}, passive income +₹${incomeGain.toLocaleString()}/mo.`;
-      } else {
-        // Offer small plot via opportunity decision
-        newState.pendingDecision = {
-          type: "opportunity",
-          opportunity: {
-            name: "Small Plot of Land",
-            cost: 300000,
-            income: 8000,
-            value: 300000,
-            risk: "medium",
-            description: "Buy a small plot riding the real estate boom — ₹8,000/mo rent.",
-          },
-        };
-        logMessage = `🏠 Real Estate Boom! A small plot is on offer for ₹3,00,000.`;
-      }
-      break;
-    }
-
-    case "stock_market_crash": {
-      const highRiskRegex = /(startup|crypto|franchise)/i;
-      const high = newState.assets.filter(a => a.risk === "high" || highRiskRegex.test(a.name));
-      if (high.length === 0) {
-        logMessage = `📉 Stock Market Crash! You were safe from the crash.`;
-      } else {
-        let lost = 0;
-        let incLost = 0;
-        newState.assets = newState.assets.map(a => {
-          if (a.risk === "high" || highRiskRegex.test(a.name)) {
-            const newVal = Math.round(a.value * 0.6);
-            const newInc = Math.round(a.monthlyIncome * 0.7);
-            lost += a.value - newVal;
-            incLost += a.monthlyIncome - newInc;
-            return { ...a, value: newVal, monthlyIncome: newInc };
-          }
-          return a;
-        });
-        newState.passiveIncome = Math.max(0, newState.passiveIncome - incLost);
-        newState.marketCondition = "crash";
-        logMessage = `📉 Stock Market Crash! High-risk assets lost ₹${lost.toLocaleString()} in value, -₹${incLost.toLocaleString()}/mo.`;
-      }
-      break;
-    }
-
-    case "rate_hike": {
-      // No liabilities in this build — reframe as an inflation nibble on cash.
-      const nibble = 4000 + Math.floor(Math.random() * 8000);
-      newState.cash -= nibble;
-      logMessage = `📈 RBI tightens! Higher borrowing costs across the economy — ₹${nibble.toLocaleString()} extra out this month.`;
-      break;
-    }
-
-    case "insurance_premium": {
-      const premium = 20000 + Math.floor(Math.random() * 30000);
-      newState.cash -= premium;
-      logMessage = `🛡️ Annual insurance premium due — paid ₹${premium.toLocaleString()}.`;
-      break;
-    }
-
-    case "home_repair": {
-      const repairCost = 20000 + Math.floor(Math.random() * 80000);
-      if (newState.cash >= repairCost) {
-        newState.cash -= repairCost;
-        logMessage = `🔧 Home Repair! Paid ₹${repairCost.toLocaleString()} for urgent repairs.`;
-      } else {
-        if (repairCost >= 60000) {
-          const principal = repairCost + 50000;
-          newState.cash -= principal;
-          logMessage = `🔧 Home Renovation Loan taken — ₹${principal.toLocaleString()} outstanding.`;
-        } else {
-          newState.cash -= repairCost;
-          logMessage = `🔧 Home Repair! Couldn't afford it — added ₹${repairCost.toLocaleString()} as personal loan.`;
-        }
-      }
-      break;
-    }
-
-    case "traffic_fine": {
-      const fine = 2000 + Math.floor(Math.random() * 8000);
-      newState.cash -= fine;
-      logMessage = `🚦 Traffic Fine! Paid ₹${fine.toLocaleString()} in challan fees.`;
-      break;
-    }
-
-    case "credit_card_bill": {
-      const bill = 15000 + Math.floor(Math.random() * 35000);
-      newState.cash -= bill;
-      logMessage = `💳 Credit Card Bill due! Paid ₹${bill.toLocaleString()}.`;
-      break;
-    }
-
-    case "school_fees": {
-      const fees = 25000 + Math.floor(Math.random() * 50000);
-      newState.cash -= fees;
-      logMessage = `🎒 School fees due! Paid ₹${fees.toLocaleString()} for the term.`;
-      break;
-    }
-
-    case "festival_expense": {
-      const festCost = 10000 + Math.floor(Math.random() * 40000);
-      newState.cash -= festCost;
-      logMessage = `🪔 Festival season! Spent ₹${festCost.toLocaleString()} on celebrations and gifts.`;
-      if (Math.random() < 0.2) {
-        const principal = 60000 + Math.floor(Math.random() * 90000);
-        newState.cash -= principal;
-        logMessage += ` Chit fund payout missed — ₹${principal.toLocaleString()} now owed to the group.`;
-      }
-      break;
-    }
-
-    case "electricity_bill": {
-      const bill = 3000 + Math.floor(Math.random() * 7000);
-      newState.cash -= bill;
-      logMessage = `⚡ Electricity bill! Paid ₹${bill.toLocaleString()} — summer AC costs hit hard.`;
-      break;
-    }
-
-    case "rent_hike": {
-      const hike = 8000 + Math.floor(Math.random() * 22000);
-      newState.cash -= hike;
-      logMessage = `🏠 Rent Hike! Landlord charged ₹${hike.toLocaleString()} in one-shot renewal costs.`;
-      break;
-    }
-
-    case "vehicle_breakdown": {
-      const repairCost = 8000 + Math.floor(Math.random() * 32000);
-      if (newState.cash >= repairCost) {
-        newState.cash -= repairCost;
-        logMessage = `🚗 Vehicle Breakdown! Paid ₹${repairCost.toLocaleString()} in repair costs.`;
-      } else {
-        newState.cash -= repairCost;
-        logMessage = `🚗 Vehicle Breakdown! Added ₹${repairCost.toLocaleString()} repair loan.`;
-      }
-      break;
-    }
-
-    case "loan_interest_spike": {
-      const penalty = 5000 + Math.floor(Math.random() * 10000);
-      newState.cash -= penalty;
-      logMessage = `🏦 Bank processing fee! Paid ₹${penalty.toLocaleString()} in charges.`;
-      break;
-    }
-
-    case "society_maintenance": {
-      const fee = 8000 + Math.floor(Math.random() * 12000);
-      newState.cash -= fee;
-      logMessage = `🏢 Annual society maintenance paid — ₹${fee.toLocaleString()}.`;
-      break;
-    }
-
-    case "gold_loan_offer": {
-      // Pawn family gold for fast cash.
-      const principal = 80000 + Math.floor(Math.random() * 170000);
-      newState.cash += principal;
-      newState.cash -= principal;
-      logMessage = `🪙 Gold Loan! Pawned family gold — +₹${principal.toLocaleString()} cash, added as debt.`;
-      break;
-    }
-
-    case "wedding_in_family": {
-      const cost = 300000 + Math.floor(Math.random() * 700000);
-      if (newState.cash >= cost) {
-        newState.cash -= cost;
-        logMessage = `💍 Wedding in the family! Spent ₹${cost.toLocaleString()} from savings.`;
-      } else {
-        const paid = Math.max(0, newState.cash);
-        const shortfall = cost - paid;
-        newState.cash -= paid;
-        newState.cash -= shortfall;
-        logMessage = `💍 Wedding! Paid ₹${paid.toLocaleString()}, rest ₹${shortfall.toLocaleString()} financed.`;
-      }
-      break;
-    }
-
-    case "subscription_creep": {
-      const apps = ["Netflix", "Spotify Premium", "Hotstar", "Prime Video", "iCloud+", "ChatGPT Plus", "YouTube Premium"];
-      const name = apps[Math.floor(Math.random() * apps.length)];
-      const hit = 3000 + Math.floor(Math.random() * 9000);
-      newState.cash -= hit;
-      logMessage = `📺 Subscription Creep! An old ${name} auto-debit surprise — ₹${hit.toLocaleString()} gone.`;
-      lessonMessage = "💡 Auto-debit surprises are one of the top leaks in personal cash flow.";
-      break;
-    }
-
-    case "fuel_price_hike": {
-      const extra = 3000 + Math.floor(Math.random() * 7000);
-      newState.cash -= extra;
-      logMessage = `⛽ Fuel price hike! Pump costs jumped — ₹${extra.toLocaleString()} extra this month.`;
-      break;
-    }
-
-    case "parents_medical": {
-      const cost = 25000 + Math.floor(Math.random() * 75000);
-      if (newState.cash >= cost) {
-        newState.cash -= cost;
-        logMessage = `👴 Parents needed medical care. Paid ₹${cost.toLocaleString()} from cash.`;
-      } else {
-        newState.cash -= cost;
-        logMessage = `👴 Parents medical emergency! ₹${cost.toLocaleString()} added as medical debt.`;
-      }
-      break;
-    }
-
-    case "gst_notice": {
-      const isBiz =
-        newState.profession === "Business Owner" ||
-        newState.profession === "Lawyer";
-      const base = isBiz ? 25000 + Math.floor(Math.random() * 75000) : 5000 + Math.floor(Math.random() * 10000);
-      newState.cash -= base;
-      logMessage = isBiz
-        ? `🧾 GST Notice! Compliance shortfall — paid ₹${base.toLocaleString()} in dues + penalty.`
-        : `🧾 Tax notice! Filed late — penalty ₹${base.toLocaleString()}.`;
-      break;
-    }
-
-    case "bonus": {
-      const bonus = Math.round(newState.salary * (0.5 + Math.random() * 2));
-      newState.cash += bonus;
-      logMessage = `🎉 Performance Bonus! +₹${bonus.toLocaleString()} credited.`;
-      break;
-    }
-
-    case "tax_refund": {
-      const refund = 8000 + Math.floor(Math.random() * 42000);
-      newState.cash += refund;
-      logMessage = `💸 Tax Refund! ₹${refund.toLocaleString()} from the IT department.`;
-      break;
-    }
-
-    case "bnpl_trap": {
-      // Buy Now Pay Later — split into gadgets and consumer durables, equal probability.
-      const isDurable = Math.random() < 0.5;
-      if (isDurable) {
-        const durables = ["AC", "Fridge", "Washing Machine", "TV"];
-        const item = durables[Math.floor(Math.random() * durables.length)];
-        const principal = 20000 + Math.floor(Math.random() * 40001);
-        newState.cash -= principal;
-        logMessage = `🛍️ Consumer Durable Loan! "${item}" financed — ₹${principal.toLocaleString()} added to outstanding debt.`;
-      } else {
-        const gadgets = ["iPhone", "OLED TV", "Gaming Laptop", "Smartwatch", "DSLR Camera", "Air Fryer Pro"];
-        const item = gadgets[Math.floor(Math.random() * gadgets.length)];
-        const principal = 30000 + Math.floor(Math.random() * 90001);
-        newState.cash -= principal;
-        logMessage = `🛍️ BNPL Trap! "${item}" financed — ₹${principal.toLocaleString()} added to outstanding debt.`;
-      }
-      lessonMessage = "💡 Even 'no-cost' financing adds real principal you'll have to pay back.";
-      break;
-    }
-
-    case "solar_install": {
-      // Rooftop solar — adds a personal loan (recurring bill savings removed).
-      const principal = 150000;
-      newState.cash -= principal;
-      logMessage = `☀️ Solar Installed! New ₹${principal.toLocaleString()} rooftop loan added.`;
-      lessonMessage = "💡 Financed upgrades add real debt — weigh the long-term payoff.";
-      break;
-    }
-
-    case "ev_switch": {
-      // Trade in petrol vehicle: new vehicle loan.
-      const principal = 600000;
-      newState.cash -= principal;
-      logMessage = `🔋 Switched to EV! New ₹${principal.toLocaleString()} auto loan added.`;
-      break;
-    }
-
-    case "streaming_audit": {
-      // Audit / refund windfall — small one-time cash back.
-      const refund = 2000 + Math.floor(Math.random() * 6000);
-      newState.cash += refund;
-      logMessage = `✂️ Subscription audit paid off — reclaimed ₹${refund.toLocaleString()} in overcharges.`;
-      lessonMessage = "💡 Reviewing statements quarterly can quietly return real money.";
-      break;
-    }
-
-    case "pet_adoption": {
-      // New pet — one-time setup + first year of care lumped together.
-      const setup = 25000 + Math.floor(Math.random() * 25000);
-      newState.cash -= setup;
-      logMessage = `🐶 You adopted a pet! Setup + first-year care cost ₹${setup.toLocaleString()}.`;
-      break;
-    }
-
-    case "elderly_care_hire": {
-      // Hire a caregiver — one-time deposit + first month.
-      const cost = 40000 + Math.floor(Math.random() * 40000);
-      newState.cash -= cost;
-      logMessage = `🧓 Hired a live-in caregiver for parents — deposit + first month ₹${cost.toLocaleString()}.`;
-      lessonMessage = "💡 Eldercare costs come in big spikes — plan a cash cushion.";
-      break;
-    }
-
-    case "payday_loan": {
-      // Half the time it's a sketchy NBFC instant-app loan flavor.
-      const isApp = Math.random() < 0.5;
-      const principal = isApp
-        ? 15000 + Math.floor(Math.random() * 35000)
-        : 40000 + Math.floor(Math.random() * 60000);
-      newState.cash += principal;
-      newState.cash -= principal;
-      logMessage = isApp
-        ? `📱 NBFC Instant App Loan! +₹${principal.toLocaleString()} cash in seconds.`
-        : `💸 Payday Loan! +₹${principal.toLocaleString()} cash now.`;
-      lessonMessage = "💡 Quick-cash loans compound viciously — avoid unless truly desperate.";
-      break;
-    }
-
-    case "margin_call": {
-      const hasHighRisk = newState.assets.some(a => a.risk === "high");
-      const hasStocks = newState.assets.some(a => /stock|equity|mutual|crypto|startup/i.test(a.name));
-      if (hasHighRisk || hasStocks) {
-        const cryptoAsset = newState.assets.find(a => /crypto/i.test(a.name));
-        const isCrypto = !!cryptoAsset;
-        const principal = isCrypto
-          ? 100000 + Math.floor(Math.random() * 200001)
-          : 200000 + Math.floor(Math.random() * 300000);
-        const isLAS = hasStocks && !hasHighRisk && !isCrypto;
-        const name = isCrypto
-          ? "Crypto Margin Loss Loan"
-          : isLAS ? "Loan Against Securities" : "Margin Loan";
-        newState.cash -= principal;
-        logMessage = `📞 Margin Call! Broker financed your high-risk losses — ₹${principal.toLocaleString()} added to outstanding debt.`;
-        lessonMessage = "💡 Leveraged investing magnifies losses. Margin loans survive even when the trade dies.";
-      } else {
-        const fee = 3000 + Math.floor(Math.random() * 5000);
-        newState.cash -= fee;
-        logMessage = `📞 Broker called — no margin position to liquidate. Paid ₹${fee.toLocaleString()} account fee.`;
-      }
-      break;
-    }
-
-    case "tax_arrears": {
-      // Old returns flagged — owe past taxes as a structured debt.
-      const arrears = 60000 + Math.floor(Math.random() * 140000);
-      newState.cash -= arrears;
-      logMessage = `🧾 Tax Arrears! IT Dept demands ₹${arrears.toLocaleString()} from past filings — added as debt.`;
-      break;
-    }
-
-    case "college_admission_loan": {
-      const cost = 200000 + Math.floor(Math.random() * 400001);
-      if (newState.cash >= cost) {
-        newState.cash -= cost;
-        logMessage = `🎓 College Admission! Paid ₹${cost.toLocaleString()} in fees from cash.`;
-      } else {
-        const paid = Math.max(0, newState.cash);
-        const shortfall = cost - paid;
-        newState.cash -= paid;
-        newState.cash -= shortfall;
-        logMessage = `🎓 College Admission! Paid ₹${paid.toLocaleString()}, financed ₹${shortfall.toLocaleString()} as child's education loan.`;
-      }
-      break;
-    }
-
-    case "home_purchase_loan": {
-      const cost = 500000 + Math.floor(Math.random() * 1000001);
-      if (newState.cash >= cost) {
-        newState.cash -= cost;
-        logMessage = `🏡 Home Purchase! Paid ₹${cost.toLocaleString()} down payment in full.`;
-      } else {
-        const paid = Math.max(0, newState.cash);
-        const shortfall = cost - paid;
-        newState.cash -= paid;
-        newState.cash -= shortfall;
-        logMessage = `🏡 Home Purchase! Paid ₹${paid.toLocaleString()}, financed ₹${shortfall.toLocaleString()} as home loan.`;
-      }
-      break;
-    }
-
-    case "legal_settlement": {
-      const principal = 50000 + Math.floor(Math.random() * 150001);
-      newState.cash -= principal;
-      logMessage = `⚖️ Legal Settlement! ₹${principal.toLocaleString()} added as debt to cover court fees & damages.`;
-      lessonMessage = "💡 Legal fights are expensive — mediation often costs less than litigation.";
-      break;
-    }
-  }
-
-  pushLog(newState, logMessage);
-  if (lessonMessage) pushLog(newState, lessonMessage);
-
-  // Clear any market hint that has now resolved (or stale after any roll)
-  newState.marketHint = null;
-
-  // Check win condition — only valid after at least one investment
-  if (
-    newState.assets.length > 0 &&
-    newState.passiveIncome >= newState.salary &&
-    !newState.hasEscapedRatRace
-  ) {
-    newState.hasEscapedRatRace = true;
-    pushLog(newState, "🎉 You escaped the Rat Race! Passive income now exceeds your salary!");
-  }
-
-  // Primary win: ₹5 Crore in cash
-  if (newState.cash >= 50000000 && !newState.hasReachedFiveCrore) {
-    newState.hasReachedFiveCrore = true;
-    pushLog(newState, "🏆 You reached ₹5 Crore in cash!");
-  }
-
-  return newState;
-};
-
-export const applyCharityDecision = (state: GameState, accept: boolean): GameState => {
-  const newState = { ...state, pendingDecision: null };
-  
-  if (accept && state.pendingDecision?.charityAmount) {
-    newState.cash -= state.pendingDecision.charityAmount;
-    pushLog(newState, `Donated ₹${state.pendingDecision.charityAmount.toLocaleString()} to charity!`);
-  } else {
-    pushLog(newState, "Declined charity donation.");
-  }
-  
-  return newState;
-};
-
-export const applyOpportunityDecision = (state: GameState, accept: boolean): GameState => {
-  const newState = { ...state, pendingDecision: null };
-  const opp = state.pendingDecision?.opportunity;
-  
-  if (accept && opp) {
-    if (newState.cash >= opp.cost) {
-      newState.cash -= opp.cost;
-      newState.assets.push({
-        id: `asset-${Date.now()}`,
-        name: opp.name,
-        value: opp.value,
-        monthlyIncome: opp.income,
-        risk: opp.risk,
-      });
-      newState.passiveIncome += opp.income;
-      pushLog(newState, `Invested in ${opp.name}! Monthly income: +₹${opp.income.toLocaleString()}`);
-    } else {
-      pushLog(newState, `Insufficient funds for ${opp.name} (need ₹${opp.cost.toLocaleString()})`);
-    }
-  } else {
-    pushLog(newState, "Passed on investment opportunity.");
-  }
-  
-  // Check win condition after investment (only after at least one asset exists)
-  if (
-    newState.assets.length > 0 &&
-    newState.passiveIncome >= newState.salary &&
-    !newState.hasEscapedRatRace
-  ) {
-    newState.hasEscapedRatRace = true;
-    pushLog(newState, "🎉 You escaped the Rat Race! Passive income now exceeds your salary!");
-  }
-  
-  return newState;
-};
+// ---------------------------------------------------------------------------
+// MARKET HINTS (existing pre-roll headlines)
+// ---------------------------------------------------------------------------
 
 const MARKET_NEWS: MarketHint[] = [
   { sentiment: "bullish", headline: "📰 Tech sector surges as quarterly earnings beat expectations" },
   { sentiment: "bullish", headline: "📰 Central bank cuts interest rates — investors cheer" },
   { sentiment: "bullish", headline: "📰 Real estate demand hits record highs this quarter" },
-  { sentiment: "bullish", headline: "📰 Crypto rally continues as institutional money pours in" },
   { sentiment: "bearish", headline: "📰 Inflation fears spook markets — sell-off looms" },
   { sentiment: "bearish", headline: "📰 Geopolitical tensions rattle global investors" },
   { sentiment: "bearish", headline: "📰 Major bank reports losses — markets jittery" },
-  { sentiment: "bearish", headline: "📰 Crypto regulation crackdown sparks panic selling" },
   { sentiment: "neutral", headline: "📰 Analysts split on market direction this week" },
   { sentiment: "neutral", headline: "📰 Mixed signals from economic data leave traders cautious" },
 ];
 
-export const generateMarketHint = (): MarketHint => {
-  return MARKET_NEWS[Math.floor(Math.random() * MARKET_NEWS.length)];
+export const generateMarketHint = (): MarketHint =>
+  MARKET_NEWS[Math.floor(Math.random() * MARKET_NEWS.length)];
+
+// ---------------------------------------------------------------------------
+// FINANCIAL CALCULATIONS
+// ---------------------------------------------------------------------------
+
+export const calculateTotalEMI = (state: GameState): number =>
+  Object.values(state.liabilities).reduce(
+    (sum, l) => sum + (l.principal > 0 ? l.emi : 0),
+    0,
+  );
+
+export const calculateTotalExpenses = (state: GameState): number => {
+  const expensesTotal = Object.values(state.expenses).reduce((a, b) => a + b, 0);
+  return expensesTotal + calculateTotalEMI(state);
 };
+
+export const calculateEffectiveSalary = (state: GameState): number =>
+  Math.round((state.salary ?? 0) * (state.efficiency ?? 1));
+
+export const calculateEffectivePassiveIncome = (state: GameState): number =>
+  (state.assets ?? []).reduce(
+    (sum, a) => sum + (a.income > 0 ? Math.round(a.income * (state.efficiency ?? 1)) : 0),
+    0,
+  );
+
+export const calculateMonthlyCashFlow = (state: GameState): number =>
+  calculateEffectiveSalary(state) + calculateEffectivePassiveIncome(state) - calculateTotalExpenses(state);
+
+export const calculateNetWorth = (state: GameState): number => {
+  const totalAssets = (state.assets ?? []).reduce((sum, a) => sum + (a.cost ?? 0), 0);
+  const totalDebt   = Object.values(state.liabilities ?? {}).reduce((s, l) => s + (l.principal ?? 0), 0);
+  return (state.cash ?? 0) + totalAssets - totalDebt;
+};
+
+/** Recomputes cashFlow + passiveIncome aggregate to keep state coherent. */
+export const recomputeDerived = (state: GameState): GameState => {
+  const passive = (state.assets ?? []).reduce((s, a) => s + (a.income > 0 ? a.income : 0), 0);
+  const next: GameState = { ...state, passiveIncome: passive };
+  next.cashFlow = calculateMonthlyCashFlow(next);
+  return next;
+};
+
+// ---------------------------------------------------------------------------
+// ASSET HELPERS
+// ---------------------------------------------------------------------------
+
+const RISK_BY_TYPE: Record<AssetType, "low" | "medium" | "high"> = {
+  paper: "low",
+  real_estate: "medium",
+  business: "medium",
+  stock: "high",
+  land: "medium",
+};
+
+export const createAsset = (partial: {
+  name: string;
+  type: AssetType;
+  cost: number;
+  income: number;
+  volatile?: boolean;
+  shares?: number;
+  company?: string;
+}): Asset => ({
+  id: `asset-${Date.now()}-${Math.floor(Math.random() * 10000)}`,
+  ...partial,
+  value: partial.cost,
+  monthlyIncome: partial.income,
+  risk: RISK_BY_TYPE[partial.type] ?? "medium",
+});
+
+// ---------------------------------------------------------------------------
+// LOANS
+// ---------------------------------------------------------------------------
+
+export const maxLoanLimit = (state: GameState): number => (state.salary ?? 0) * 20;
+
+export const availableBankLoan = (state: GameState): number => {
+  const bank = state.liabilities.bankLoan ?? { principal: 0, emi: 0, interestRate: 12 };
+  return Math.max(0, maxLoanLimit(state) - bank.principal);
+};
+
+export const takeBankLoan = (state: GameState, amount: number): GameState => {
+  if (amount <= 0) return state;
+  const bank: Liability = state.liabilities.bankLoan ?? { principal: 0, emi: 0, interestRate: 12 };
+  const newPrincipal = bank.principal + amount;
+  const newEMI = calculateEMI(newPrincipal, bank.interestRate);
+  const next: GameState = {
+    ...state,
+    cash: state.cash + amount,
+    liabilities: {
+      ...state.liabilities,
+      bankLoan: { principal: newPrincipal, emi: newEMI, interestRate: bank.interestRate },
+    },
+    decisionHistory: [
+      ...(state.decisionHistory ?? []),
+      { type: "loan", turn: state.turnCount, amount },
+    ],
+  };
+  pushLog(next, `Took a bank loan of ₹${amount.toLocaleString()} at 12% APR. New EMI: ₹${newEMI.toLocaleString()}.`);
+  return recomputeDerived(next);
+};
+
+export const repayBankLoan = (state: GameState, amount: number): GameState => {
+  const bank = state.liabilities.bankLoan;
+  if (!bank || amount <= 0) return state;
+  const repay = Math.min(amount, bank.principal, state.cash);
+  const newPrincipal = bank.principal - repay;
+  const newEMI = calculateEMI(newPrincipal, bank.interestRate);
+  const next: GameState = {
+    ...state,
+    cash: state.cash - repay,
+    liabilities: {
+      ...state.liabilities,
+      bankLoan: { principal: newPrincipal, emi: newEMI, interestRate: bank.interestRate },
+    },
+  };
+  pushLog(next, `Repaid ₹${repay.toLocaleString()} of bank loan. New EMI: ₹${newEMI.toLocaleString()}.`);
+  return recomputeDerived(next);
+};
+
+export const payOffDebt = (state: GameState, key: string): GameState => {
+  const debt = state.liabilities[key];
+  if (!debt || debt.principal <= 0) return state;
+  if (state.cash < debt.principal) return state;
+  const next: GameState = {
+    ...state,
+    cash: state.cash - debt.principal,
+    liabilities: {
+      ...state.liabilities,
+      [key]: { principal: 0, emi: 0, interestRate: debt.interestRate },
+    },
+  };
+  pushLog(next, `Paid off ${prettifyKey(key)} completely!`);
+  return recomputeDerived(next);
+};
+
+const prettifyKey = (k: string) =>
+  k.replace(/([A-Z])/g, " $1").replace(/^./, (c) => c.toUpperCase());
+
+// ---------------------------------------------------------------------------
+// MARKET CYCLE
+// ---------------------------------------------------------------------------
+
+export const opportunityCostAfterCycle = (baseCost: number, cycle: MarketCycle): number => {
+  if (cycle === "Boom") return Math.round(baseCost * 1.5);
+  if (cycle === "Recession") return Math.round(baseCost * 0.7);
+  return baseCost;
+};
+
+export const tickMarketCycle = (state: GameState): GameState => {
+  const remaining = state.turnsUntilCycleChange - 1;
+  if (remaining > 0) return { ...state, turnsUntilCycleChange: remaining };
+  const pool: MarketCycle[] = ["Normal", "Normal", "Boom", "Recession"];
+  const nextCycle = pool[Math.floor(Math.random() * pool.length)];
+  const next: GameState = {
+    ...state,
+    marketCycle: nextCycle,
+    turnsUntilCycleChange: 5 + Math.floor(Math.random() * 5),
+    marketCondition: nextCycle === "Boom" ? "boom" : nextCycle === "Recession" ? "crash" : "normal",
+  };
+  pushLog(next, `Market cycle changed → ${nextCycle}.`);
+  return next;
+};
+
+// ---------------------------------------------------------------------------
+// DRAWING CARDS
+// ---------------------------------------------------------------------------
+
+export const drawOpportunityCard = (state: GameState): { card: OpportunityCard; state: GameState } => {
+  // Turns 1-5: use beginner deck for first N picks
+  const recentBuys = (state.decisionHistory ?? []).filter((d) => (d.turn as number) <= 5).length;
+  if (state.turnCount <= 5 && recentBuys < BEGINNER_OPPORTUNITY_CARDS.length) {
+    return { card: BEGINNER_OPPORTUNITY_CARDS[recentBuys], state };
+  }
+  const idx = state.opportunityCardIndex % OPPORTUNITY_CARDS.length;
+  const card = OPPORTUNITY_CARDS[idx];
+  return {
+    card,
+    state: { ...state, opportunityCardIndex: (idx + 1) % OPPORTUNITY_CARDS.length },
+  };
+};
+
+export const drawMarketCard = (state: GameState): { card: MarketCard; state: GameState } => {
+  const idx = state.marketCardIndex % MARKET_CARDS.length;
+  const card = MARKET_CARDS[idx];
+  return { card, state: { ...state, marketCardIndex: (idx + 1) % MARKET_CARDS.length } };
+};
+
+// ---------------------------------------------------------------------------
+// TILE EFFECTS
+// ---------------------------------------------------------------------------
+
+export const handleTileEffect = (state: GameState, tile: Tile): GameState => {
+  let next: GameState = {
+    ...state,
+    assets: [...state.assets],
+    expenses: { ...state.expenses },
+    liabilities: Object.fromEntries(
+      Object.entries(state.liabilities).map(([k, v]) => [k, { ...v }]),
+    ),
+  };
+
+  switch (tile.type) {
+    case "payday": {
+      // Pay Day = full monthly cash flow (income - all expenses & EMIs).
+      const flow = calculateMonthlyCashFlow(next);
+      next.cash += flow;
+      pushLog(next, `Pay Day! Received ₹${flow.toLocaleString()} in monthly cash flow.`);
+      break;
+    }
+
+    case "opportunity": {
+      const drawn = drawOpportunityCard(next);
+      next = drawn.state;
+      const card = drawn.card;
+      let baseCost = 0;
+      if (card.cardType === "simple") baseCost = card.cost;
+      else if (card.cardType === "stock") baseCost = card.pricePerShare * card.shares;
+      else if (card.cardType === "decision") baseCost = card.choices[0].cost;
+      const costAfterCycle = opportunityCostAfterCycle(baseCost, next.marketCycle);
+      next.pendingDecision = { type: "opportunity", card, costAfterCycle };
+      pushLog(next, `Opportunity: ${card.name}.`);
+      break;
+    }
+
+    case "doodad": {
+      const cost = tile.cost ?? 0;
+      next.cash -= cost;
+      pushLog(next, `Doodad: ${tile.label} — spent ₹${cost.toLocaleString()}.`);
+      break;
+    }
+
+    case "market": {
+      const drawn = drawMarketCard(next);
+      next = drawn.state;
+      next.pendingDecision = { type: "market_card", cardId: drawn.card.id };
+      pushLog(next, `Market: ${drawn.card.text}`);
+      break;
+    }
+
+    case "charity": {
+      const total = calculateEffectiveSalary(next) + calculateEffectivePassiveIncome(next);
+      const donation = Math.round(total * 0.1);
+      next.pendingDecision = { type: "charity", donation };
+      pushLog(next, `Charity: donate ₹${donation.toLocaleString()} for 2-dice next roll?`);
+      break;
+    }
+
+    case "baby": {
+      next.childrenCount += 1;
+      const childCost = Math.round((next.salary / 10) * next.childrenCount);
+      next.expenses.children = childCost;
+      pushLog(next, `👶 Baby! Monthly children expense is now ₹${childCost.toLocaleString()}.`);
+      break;
+    }
+
+    case "downsized": {
+      next.skipTurns = 2;
+      const shortfall = Math.max(0, calculateTotalExpenses(next) - calculateEffectiveSalary(next));
+      next.cash -= shortfall;
+      pushLog(next, `📉 Downsized! Skip 2 turns and lose ₹${shortfall.toLocaleString()} to cover expenses.`);
+      break;
+    }
+
+    // Fast Track
+    case "ft_cashflowday": {
+      const bonus = calculateEffectivePassiveIncome(next) * 10;
+      next.cash += bonus;
+      pushLog(next, `💰 Cash Flow Day! +₹${bonus.toLocaleString()}.`);
+      break;
+    }
+    case "ft_business":
+    case "ft_dream": {
+      // Handled via pending decision in Index (needs UI confirmation)
+      next.pendingDecision = null; // Index shows a modal separately using tile data
+      break;
+    }
+    case "ft_charity": {
+      const donation = Math.round(next.cash * 0.05);
+      next.cash -= donation;
+      pushLog(next, `Charity Ball: donated ₹${donation.toLocaleString()}.`);
+      break;
+    }
+    case "ft_divorce": {
+      const loss = Math.round(next.cash / 2);
+      next.cash -= loss;
+      pushLog(next, `💔 Divorce! Lost ₹${loss.toLocaleString()}.`);
+      break;
+    }
+    case "ft_lawsuit": {
+      next.cash -= 500000;
+      pushLog(next, `⚖️ Lawsuit! -₹5,00,000.`);
+      break;
+    }
+  }
+
+  return recomputeDerived(next);
+};
+
+// ---------------------------------------------------------------------------
+// DECISIONS
+// ---------------------------------------------------------------------------
+
+export const applyCharityDecision = (state: GameState, accept: boolean): GameState => {
+  let next: GameState = { ...state, pendingDecision: null };
+  if (accept && state.pendingDecision?.type === "charity") {
+    const donation = state.pendingDecision.donation;
+    if (next.cash >= donation) {
+      next.cash -= donation;
+      next.charityUsed = true;
+      next.decisionHistory = [...next.decisionHistory, { type: "charity", turn: next.turnCount }];
+      pushLog(next, `Donated ₹${donation.toLocaleString()}. Next roll uses 2 dice!`);
+    } else {
+      pushLog(next, `Not enough cash to donate.`);
+    }
+  } else {
+    pushLog(next, `Declined charity.`);
+  }
+  return recomputeDerived(next);
+};
+
+const buySimple = (state: GameState, card: SimpleOpportunityCard, costAfterCycle: number): GameState => {
+  const next = { ...state, assets: [...state.assets] };
+  next.cash -= costAfterCycle;
+  next.assets.push(createAsset({ name: card.name, type: card.type, cost: costAfterCycle, income: card.income, volatile: card.volatile }));
+  next.decisionHistory = [...next.decisionHistory, { type: "buy", turn: next.turnCount, name: card.name, cost: costAfterCycle, income: card.income }];
+  pushLog(next, `Invested in ${card.name} for ₹${costAfterCycle.toLocaleString()} (+₹${card.income.toLocaleString()}/mo).`);
+  return next;
+};
+
+const buyStock = (state: GameState, card: StockOpportunityCard, totalCost: number): GameState => {
+  const next = { ...state, assets: [...state.assets] };
+  next.cash -= totalCost;
+  next.assets.push(createAsset({ name: `${card.name} Stock`, type: "stock", cost: totalCost, income: 0, shares: card.shares, company: card.name }));
+  next.decisionHistory = [...next.decisionHistory, { type: "buy", turn: next.turnCount, name: card.name, cost: totalCost, income: 0 }];
+  pushLog(next, `Bought ${card.shares} shares of ${card.name} for ₹${totalCost.toLocaleString()}.`);
+  return next;
+};
+
+const buyDecision = (state: GameState, card: DecisionOpportunityCard, choiceIndex: number): GameState => {
+  const next = { ...state, assets: [...state.assets] };
+  const choice = card.choices[choiceIndex];
+  next.cash -= choice.cost;
+  next.decisionHistory = [...next.decisionHistory, { type: "buy", turn: next.turnCount, name: card.name, cost: choice.cost, income: choice.reward }];
+  if (Math.random() < choice.successChance) {
+    next.assets.push(createAsset({ name: card.name, type: "business", cost: choice.cost, income: choice.reward, volatile: true }));
+    pushLog(next, `Success! ${card.name} (${choice.logText}) → +₹${choice.reward.toLocaleString()}/mo.`);
+  } else {
+    pushLog(next, `The venture failed. Lost ₹${choice.cost.toLocaleString()}.`);
+  }
+  return next;
+};
+
+/** Called when the player accepts/declines a simple/stock opportunity from the modal. */
+export const applyOpportunityDecision = (
+  state: GameState,
+  accept: boolean,
+  extra?: { decisionChoiceIndex?: number },
+): GameState => {
+  let next: GameState = { ...state, pendingDecision: null };
+  if (!accept || state.pendingDecision?.type !== "opportunity") {
+    pushLog(next, `Passed on opportunity.`);
+    if (state.pendingDecision?.type === "opportunity") {
+      next.decisionHistory = [...next.decisionHistory, { type: "pass", turn: next.turnCount, name: state.pendingDecision.card.name }];
+    }
+    return recomputeDerived(next);
+  }
+
+  const { card, costAfterCycle } = state.pendingDecision;
+  if (card.cardType === "simple") {
+    if (next.cash >= costAfterCycle) next = buySimple(next, card, costAfterCycle);
+    else return offerLoanForAsset(next, card, costAfterCycle, "buy_simple");
+  } else if (card.cardType === "stock") {
+    const total = card.pricePerShare * card.shares;
+    if (next.cash >= total) next = buyStock(next, card, total);
+    else return offerLoanForAsset(next, card, total, "buy_stock");
+  } else if (card.cardType === "decision") {
+    const idx = extra?.decisionChoiceIndex ?? 0;
+    const cost = card.choices[idx].cost;
+    if (next.cash >= cost) next = buyDecision(next, card, idx);
+    else return offerLoanForAsset(next, card, cost, "buy_decision", idx);
+  }
+
+  next = checkEscapeRatRace(next);
+  return recomputeDerived(next);
+};
+
+/** Presents a loan-for-shortfall modal decision. */
+const offerLoanForAsset = (
+  state: GameState,
+  card: OpportunityCard,
+  totalCost: number,
+  onAccept: "buy_simple" | "buy_stock" | "buy_decision",
+  decisionChoiceIndex?: number,
+): GameState => {
+  const shortfall = totalCost - state.cash;
+  const loanAmount = Math.ceil(shortfall / 1000) * 1000;
+  const bank = state.liabilities.bankLoan ?? { principal: 0, emi: 0, interestRate: 12 };
+  if (availableBankLoan(state) < loanAmount) {
+    pushLog(state, `Loan denied — need ₹${loanAmount.toLocaleString()} but limit remaining is ₹${availableBankLoan(state).toLocaleString()}.`);
+    return recomputeDerived({ ...state, pendingDecision: null });
+  }
+  const newEMI = calculateEMI(bank.principal + loanAmount, bank.interestRate);
+  return {
+    ...state,
+    pendingDecision: {
+      type: "loan_for_asset",
+      card,
+      totalCost,
+      shortfall,
+      loanAmount,
+      newEMI,
+      onAccept,
+      decisionChoiceIndex,
+    },
+  };
+};
+
+/** Accept the offered loan and complete the purchase. */
+export const applyLoanForAssetDecision = (state: GameState, accept: boolean): GameState => {
+  if (state.pendingDecision?.type !== "loan_for_asset") return state;
+  let next = { ...state, pendingDecision: null };
+  if (!accept) {
+    pushLog(next, `Declined loan — passed on the deal.`);
+    return recomputeDerived(next);
+  }
+  const { card, totalCost, loanAmount, onAccept, decisionChoiceIndex } = state.pendingDecision;
+  next = takeBankLoan(next, loanAmount);
+  if (onAccept === "buy_simple" && card.cardType === "simple") {
+    next = buySimple(next, card, totalCost);
+  } else if (onAccept === "buy_stock" && card.cardType === "stock") {
+    next = buyStock(next, card, totalCost);
+  } else if (onAccept === "buy_decision" && card.cardType === "decision") {
+    next = buyDecision(next, card, decisionChoiceIndex ?? 0);
+  }
+  next = checkEscapeRatRace(next);
+  return recomputeDerived(next);
+};
+
+// ---------------------------------------------------------------------------
+// ESCAPE / WIN
+// ---------------------------------------------------------------------------
+
+export const checkEscapeRatRace = (state: GameState): GameState => {
+  if (state.hasEscapedRatRace || state.onFastTrack) return state;
+  const totalExpenses = calculateTotalExpenses(state);
+  const effPassive = calculateEffectivePassiveIncome(state);
+  if (state.assets.length > 0 && effPassive > totalExpenses) {
+    const next: GameState = {
+      ...state,
+      hasEscapedRatRace: true,
+      onFastTrack: true,
+      ftPosition: 0,
+    };
+    pushLog(next, `🎉 You escaped the Rat Race! Passive income now covers all expenses.`);
+    return next;
+  }
+  return state;
+};
+
+// ---------------------------------------------------------------------------
+// SELL ASSET (used for bankruptcy)
+// ---------------------------------------------------------------------------
 
 export const sellAsset = (state: GameState, assetId: string): GameState => {
-  const asset = state.assets.find(a => a.id === assetId);
+  const asset = state.assets.find((a) => a.id === assetId);
   if (!asset) return state;
-
-  const newState = { ...state };
-  newState.cash += asset.value;
-  newState.passiveIncome = Math.max(0, newState.passiveIncome - asset.monthlyIncome);
-  newState.assets = newState.assets.filter(a => a.id !== assetId);
-  pushLog(newState, `Sold ${asset.name} for ₹${asset.value.toLocaleString()} (lost ₹${asset.monthlyIncome.toLocaleString()}/mo income)`);
-  return newState;
+  const salePrice = Math.round(asset.cost * 0.8);
+  const next: GameState = {
+    ...state,
+    cash: state.cash + salePrice,
+    assets: state.assets.filter((a) => a.id !== assetId),
+  };
+  pushLog(next, `Sold ${asset.name} for ₹${salePrice.toLocaleString()} (80% of cost).`);
+  return recomputeDerived(next);
 };
 
-// Apply periodic mechanics based on turn number. Mutates a copy.
+// ---------------------------------------------------------------------------
+// PERIODIC MECHANICS
+// ---------------------------------------------------------------------------
+
 export const applyPeriodicMechanics = (
-  state: GameState
+  state: GameState,
 ): { state: GameState; events: string[] } => {
   const events: string[] = [];
-  let next = { ...state, assets: [...state.assets] };
+  let next: GameState = { ...state, assets: [...state.assets] };
 
-  // Salary review every 8 turns: +5–15%
+  // Salary review every 8 turns
   if (next.turnCount > 0 && next.turnCount % 8 === 0) {
     const pct = 5 + Math.floor(Math.random() * 11);
     const oldSalary = next.salary;
     next.salary = Math.round(next.salary * (1 + pct / 100));
     events.push(`🎉 Salary review! +${pct}% (₹${oldSalary.toLocaleString()} → ₹${next.salary.toLocaleString()})`);
-    pushLog(next, `🎉 Salary review: +${pct}% raise to ₹${next.salary.toLocaleString()}.`);
+    pushLog(next, `Salary review: +${pct}% raise to ₹${next.salary.toLocaleString()}.`);
   }
 
-  // Depreciation every 10 turns: non-real-estate assets -2% value
-  if (next.turnCount > 0 && next.turnCount % 10 === 0) {
-    const reRegex = /(real estate|property|rental|reit|commercial|plot)/i;
-    next.assets = next.assets.map(a =>
-      reRegex.test(a.name) ? a : { ...a, value: Math.round(a.value * 0.98) }
-    );
-  }
-
-  return { state: next, events };
+  return { state: recomputeDerived(next), events };
 };
+
+// ---------------------------------------------------------------------------
+// LEGACY EXPORT (kept for old imports)
+// ---------------------------------------------------------------------------
+
+/** No-op kept so old imports don't break — kept as identity. */
+export const resolvePoolTile = (tile: Tile): Tile => tile;
+
+/** Legacy: kept for consumers that used the old opportunity catalog. */
+export const INVESTMENT_OPPORTUNITIES: never[] = [];
