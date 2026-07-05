@@ -272,17 +272,36 @@ const Index = () => {
 
   const rollDice = () => {
     if (gameState.isRolling) return;
+    // Skip-turn (downsized) — roll consumed, no movement
+    if (gameState.skipTurns > 0) {
+      setGameState((prev) => ({
+        ...prev,
+        skipTurns: prev.skipTurns - 1,
+        turnCount: prev.turnCount + 1,
+        gameLog: [
+          `[Turn ${prev.turnCount + 1}] Skipped turn (${prev.skipTurns - 1} left).`,
+          ...prev.gameLog.slice(0, 19),
+        ],
+      }));
+      toast.info("You skipped this turn (Downsized).");
+      return;
+    }
     playSound("diceRoll");
-    const diceValue = Math.floor(Math.random() * 6) + 1;
+    const d1 = Math.floor(Math.random() * 6) + 1;
+    const d2 = gameState.charityUsed ? Math.floor(Math.random() * 6) + 1 : 0;
+    const diceValue = d1 + d2;
     setGameState((prev) => {
-      const newPosition = (prev.position + diceValue) % BOARD_TILES.length;
-      const landedTile = BOARD_TILES[newPosition];
+      const board = prev.onFastTrack ? FAST_TRACK_TILES : BOARD_TILES;
+      const posKey = prev.onFastTrack ? "ftPosition" : "position";
+      const newPos = ((prev as any)[posKey] + diceValue) % board.length;
+      const landedTile = board[newPos];
       let updated: GameState = {
         ...prev,
         diceValue,
-        position: newPosition,
+        [posKey]: newPos,
         isRolling: false,
         turnCount: prev.turnCount + 1,
+        charityUsed: false,
       };
       // --- Self-healing layer ---------------------------------------------
       // Tile resolution is the hottest source of "weird" runtime errors
