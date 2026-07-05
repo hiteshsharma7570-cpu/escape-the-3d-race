@@ -287,11 +287,7 @@ export const handleTileEffect = (state: GameState, tile: Tile): GameState => {
       } else {
         newState.cash = Math.max(0, newState.cash);
         const debtName = cost > 250000 ? "Health-Crisis EMI" : "Medical Debt";
-        addLiability(newState, {
-          name: debtName,
-          category: "medical_debt",
-          principal: cost,
-        });
+        newState.cash -= cost;
         logMessage = `🏥 Medical Emergency! ₹${cost.toLocaleString()} added as ${debtName}.`;
       }
       break;
@@ -439,11 +435,7 @@ export const handleTileEffect = (state: GameState, tile: Tile): GameState => {
           });
           logMessage = `🔧 Home Renovation Loan taken — ₹${principal.toLocaleString()} outstanding.`;
         } else {
-          addLiability(newState, {
-            name: "Home Repair Loan",
-            category: "personal_loan",
-            principal: repairCost,
-          });
+          newState.cash -= repairCost;
           logMessage = `🔧 Home Repair! Couldn't afford it — added ₹${repairCost.toLocaleString()} as personal loan.`;
         }
       }
@@ -471,11 +463,7 @@ export const handleTileEffect = (state: GameState, tile: Tile): GameState => {
               : l
           );
         } else {
-          addLiability(newState, {
-            name: "Credit Card",
-            category: "credit_card",
-            principal: bill,
-          });
+          newState.cash -= bill;
         }
         logMessage = `💳 Credit Card Bill! Added ₹${bill.toLocaleString()} to outstanding card debt.`;
       }
@@ -525,11 +513,7 @@ export const handleTileEffect = (state: GameState, tile: Tile): GameState => {
         newState.cash -= repairCost;
         logMessage = `🚗 Vehicle Breakdown! Paid ₹${repairCost.toLocaleString()} in repair costs.`;
       } else {
-        addLiability(newState, {
-          name: "Vehicle Repair Loan",
-          category: "vehicle_loan",
-          principal: repairCost,
-        });
+        newState.cash -= repairCost;
         logMessage = `🚗 Vehicle Breakdown! Added ₹${repairCost.toLocaleString()} repair loan.`;
       }
       break;
@@ -570,7 +554,6 @@ export const handleTileEffect = (state: GameState, tile: Tile): GameState => {
       // Pawn family gold for fast cash.
       const principal = 80000 + Math.floor(Math.random() * 170000);
       newState.cash += principal;
-      newState.loansTaken += 1;
       addLiability(newState, {
         name: "Gold Loan",
         category: "gold_loan",
@@ -589,11 +572,7 @@ export const handleTileEffect = (state: GameState, tile: Tile): GameState => {
         const paid = Math.max(0, newState.cash);
         const shortfall = cost - paid;
         newState.cash -= paid;
-        addLiability(newState, {
-          name: "Wedding Loan",
-          category: "personal_loan",
-          principal: shortfall,
-        });
+        newState.cash -= shortfall;
         logMessage = `💍 Wedding! Paid ₹${paid.toLocaleString()}, rest ₹${shortfall.toLocaleString()} financed.`;
       }
       break;
@@ -622,11 +601,7 @@ export const handleTileEffect = (state: GameState, tile: Tile): GameState => {
         newState.cash -= cost;
         logMessage = `👴 Parents needed medical care. Paid ₹${cost.toLocaleString()} from cash.`;
       } else {
-        addLiability(newState, {
-          name: "Parents Medical Debt",
-          category: "medical_debt",
-          principal: cost,
-        });
+        newState.cash -= cost;
         logMessage = `👴 Parents medical emergency! ₹${cost.toLocaleString()} added as medical debt.`;
       }
       break;
@@ -642,11 +617,7 @@ export const handleTileEffect = (state: GameState, tile: Tile): GameState => {
         const paid = Math.max(0, newState.cash);
         const shortfall = base - paid;
         newState.cash -= paid;
-        addLiability(newState, {
-          name: "GST Penalty Loan",
-          category: "business_loan",
-          principal: shortfall,
-        });
+        newState.cash -= shortfall;
         logMessage = `🧾 GST Notice! Paid ₹${paid.toLocaleString()}, financed ₹${shortfall.toLocaleString()} as GST Penalty Loan.`;
       } else {
         newState.cash -= base;
@@ -757,7 +728,6 @@ export const handleTileEffect = (state: GameState, tile: Tile): GameState => {
         ? 15000 + Math.floor(Math.random() * 35000)
         : 40000 + Math.floor(Math.random() * 60000);
       newState.cash += principal;
-      newState.loansTaken += 1;
       addLiability(newState, {
         name: isApp ? "NBFC Instant App Loan" : "Payday Loan",
         category: "payday_loan",
@@ -801,11 +771,7 @@ export const handleTileEffect = (state: GameState, tile: Tile): GameState => {
     case "tax_arrears": {
       // Old returns flagged — owe past taxes as a structured debt.
       const arrears = 60000 + Math.floor(Math.random() * 140000);
-      addLiability(newState, {
-        name: "Tax Arrears (IT Dept)",
-        category: "tax_arrears",
-        principal: arrears,
-      });
+      newState.cash -= arrears;
       logMessage = `🧾 Tax Arrears! IT Dept demands ₹${arrears.toLocaleString()} from past filings — added as debt.`;
       break;
     }
@@ -819,11 +785,7 @@ export const handleTileEffect = (state: GameState, tile: Tile): GameState => {
         const paid = Math.max(0, newState.cash);
         const shortfall = cost - paid;
         newState.cash -= paid;
-        addLiability(newState, {
-          name: "Education Loan (Child)",
-          category: "education_loan",
-          principal: shortfall,
-        });
+        newState.cash -= shortfall;
         logMessage = `🎓 College Admission! Paid ₹${paid.toLocaleString()}, financed ₹${shortfall.toLocaleString()} as child's education loan.`;
       }
       break;
@@ -838,11 +800,7 @@ export const handleTileEffect = (state: GameState, tile: Tile): GameState => {
         const paid = Math.max(0, newState.cash);
         const shortfall = cost - paid;
         newState.cash -= paid;
-        addLiability(newState, {
-          name: "Home Purchase Loan",
-          category: "home_loan",
-          principal: shortfall,
-        });
+        newState.cash -= shortfall;
         logMessage = `🏡 Home Purchase! Paid ₹${paid.toLocaleString()}, financed ₹${shortfall.toLocaleString()} as home loan.`;
       }
       break;
