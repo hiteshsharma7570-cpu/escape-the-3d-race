@@ -470,7 +470,7 @@ export const handleTileEffect = (state: GameState, tile: Tile): GameState => {
 // ---------------------------------------------------------------------------
 
 export const applyCharityDecision = (state: GameState, accept: boolean): GameState => {
-  let next: GameState = { ...state, pendingDecision: null };
+  const next: GameState = { ...state, pendingDecision: null };
   if (accept && state.pendingDecision?.type === "charity") {
     const donation = state.pendingDecision.donation;
     if (next.cash >= donation) {
@@ -651,7 +651,7 @@ export const applyPeriodicMechanics = (
   state: GameState,
 ): { state: GameState; events: string[] } => {
   const events: string[] = [];
-  let next: GameState = { ...state, assets: [...state.assets] };
+  const next: GameState = { ...state, assets: [...state.assets] };
 
   // Salary review every 8 turns
   if (next.turnCount > 0 && next.turnCount % 8 === 0) {
