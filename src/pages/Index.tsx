@@ -150,6 +150,9 @@ const Index = () => {
       playSound("payDay");
       toast.success("🏆 Crorepati! You crossed ₹1 Crore in cash!");
     }
+    // playSound is a stable ref from useSounds; excluded to avoid re-firing on
+    // every audio state change.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [gameState.cash, gameMode, certificateAwarded]);
 
   // Primary win: ₹5 Crore in cash
@@ -160,6 +163,8 @@ const Index = () => {
       playSound("payDay");
       toast.success("🏆 You reached ₹5 Crore! You've escaped the Rat Race!");
     }
+    // playSound is a stable ref from useSounds; excluded intentionally.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [gameState.cash, gameMode, fiveCroreAwarded]);
 
   // Show win screen on rat-race escape (once) and bump games_won
@@ -172,7 +177,9 @@ const Index = () => {
         const next = gamesWon + 1;
         localStorage.setItem(gamesWonKeyFor(gameState.playerName), String(next));
         setGamesWon(next);
-      } catch {}
+      } catch {
+        /* localStorage unavailable — non-fatal, in-memory state still updates. */
+      }
     }
   }, [gameState.hasEscapedRatRace, gameMode, winRecorded, gamesWon, gameState.playerName]);
 
@@ -189,7 +196,9 @@ const Index = () => {
       setUnlockedAchIds(updated);
       try {
         localStorage.setItem(achKeyFor(gameState.playerName), JSON.stringify(updated));
-      } catch {}
+      } catch {
+        /* localStorage unavailable — unlocked achievements stay in-memory. */
+      }
       newlyUnlocked.forEach((id) => {
         const ach = ACHIEVEMENTS.find((a) => a.id === id);
         if (ach) {
@@ -294,7 +303,8 @@ const Index = () => {
     setGameState((prev) => {
       const board = prev.onFastTrack ? FAST_TRACK_TILES : BOARD_TILES;
       const posKey = prev.onFastTrack ? "ftPosition" : "position";
-      const newPos = ((prev as any)[posKey] + diceValue) % board.length;
+      const newPos =
+        ((prev as unknown as Record<string, number>)[posKey] + diceValue) % board.length;
       const landedTile = board[newPos];
       let updated: GameState = {
         ...prev,

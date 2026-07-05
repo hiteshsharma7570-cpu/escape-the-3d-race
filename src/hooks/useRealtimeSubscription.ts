@@ -1,4 +1,5 @@
 import { useEffect } from "react";
+import type { RealtimePostgresChangesFilter } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
@@ -24,16 +25,18 @@ export const useRealtimeSubscription = ({
       const uniqueChannelName =
         channelName || `${table}_changes_${event}${filter ? `_${btoa(filter)}` : ""}`;
 
+      const changesFilter = {
+        event,
+        schema: "public",
+        table,
+        ...(filter ? { filter } : {}),
+      } as RealtimePostgresChangesFilter<"*">;
+
       channel = supabase
         .channel(uniqueChannelName)
         .on(
           "postgres_changes",
-          {
-            event,
-            schema: "public",
-            table,
-            ...(filter ? { filter } : {}),
-          },
+          changesFilter,
           (payload) => {
             try {
               onChange();

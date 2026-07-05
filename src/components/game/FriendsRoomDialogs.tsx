@@ -113,8 +113,9 @@ export function FriendsRoomDialog({ open, onOpenChange, mode }: Props) {
       reset();
       onOpenChange(false);
       navigate(`/leagues/room/${code}`);
-    } catch (e: any) {
-      toast.error(e?.message ?? "Could not create room");
+    } catch (e: unknown) {
+      const msg = e instanceof Error ? e.message : undefined;
+      toast.error(msg ?? "Could not create room");
     } finally {
       setLoading(false);
     }
@@ -181,8 +182,9 @@ export function FriendsRoomDialog({ open, onOpenChange, mode }: Props) {
       reset();
       onOpenChange(false);
       navigate(`/leagues/room/${code}`);
-    } catch (e: any) {
-      toast.error(e?.message ?? "Could not join room");
+    } catch (e: unknown) {
+      const msg = e instanceof Error ? e.message : undefined;
+      toast.error(msg ?? "Could not join room");
     } finally {
       setLoading(false);
     }

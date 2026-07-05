@@ -31,7 +31,6 @@ export async function logMaintenanceError(params: {
 
   // Always log locally — this is the developer's primary signal even if the
   // network is offline or the table is unreachable.
-  // eslint-disable-next-line no-console
   console.error(`[maintenance:${errorType}]`, err, { context, gameState });
 
   try {
@@ -48,7 +47,6 @@ export async function logMaintenanceError(params: {
       .single();
 
     if (insertError) {
-      // eslint-disable-next-line no-console
       console.warn("[maintenance] failed to persist log row", insertError);
       return;
     }
@@ -61,7 +59,6 @@ export async function logMaintenanceError(params: {
         .catch((e) => console.warn("[maintenance] diagnosis trigger failed", e));
     }
   } catch (e) {
-    // eslint-disable-next-line no-console
     console.warn("[maintenance] reporter threw, swallowing", e);
   }
 }
