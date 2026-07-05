@@ -11,7 +11,6 @@ interface GameBoard2DProps {
   gameState?: GameState;
   isRolling?: boolean;
   onRollDice?: () => void;
-  onPayOffDebts?: () => void;
 }
 
 
@@ -28,7 +27,7 @@ function buildPerimeter(n: number = BOARD_SIZE): Array<[number, number]> {
   return cells;
 }
 
-export const GameBoard2D = ({ currentPosition, diceValue, gameState, isRolling, onRollDice, onPayOffDebts }: GameBoard2DProps) => {
+export const GameBoard2D = ({ currentPosition, diceValue, gameState, isRolling, onRollDice }: GameBoard2DProps) => {
   const [displayedPosition, setDisplayedPosition] = useState(currentPosition);
   const [visited, setVisited] = useState<Set<number>>(new Set([currentPosition]));
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -242,12 +241,8 @@ export const GameBoard2D = ({ currentPosition, diceValue, gameState, isRolling, 
                 <Stat label="Salary"        value={`₹${(gameState.salary ?? 0).toLocaleString()} /m`} />
                 <Stat label="Passive"       value={`₹${(gameState.passiveIncome ?? 0).toLocaleString()} /m`} tone="gold" />
                 <Stat label="Net Worth"     value={`₹${(netWorth ?? 0).toLocaleString()}`} tone={(netWorth ?? 0) >= 0 ? "green" : "red"} />
-                <Stat label="Assets / Debts" value={
-                  <>
-                    <span className="text-emerald-400">{gameState.assets.length}</span>
-                    <span className="text-slate-500"> / </span>
-                    <span className="text-rose-400">{gameState.liabilities.length}</span>
-                  </>
+                <Stat label="Assets" value={
+                  <span className="text-emerald-400">{gameState.assets.length}</span>
                 } />
               </div>
             ) : (
@@ -267,23 +262,13 @@ export const GameBoard2D = ({ currentPosition, diceValue, gameState, isRolling, 
               <span className="font-semibold">{currentMeta.icon} {currentMeta.category}</span>
             </div>
 
-            {(onRollDice || onPayOffDebts) && (
+            {onRollDice && (
               <div className="pt-3 w-full border-t border-amber-500/20 flex items-center justify-center gap-4">
-                {onRollDice && (
                   <DiceRoll
                     diceValue={diceValue}
                     isRolling={!!isRolling}
                     onRoll={onRollDice}
                   />
-                )}
-                {onPayOffDebts && (
-                  <button
-                    onClick={onPayOffDebts}
-                    className="glass-card rounded-xl px-5 py-2.5 text-[11px] font-display font-bold tracking-wider text-slate-200 hover:text-gold hover:border-amber-500/50 transition-all hover:scale-105"
-                  >
-                    PAY OFF DEBTS
-                  </button>
-                )}
               </div>
             )}
 
