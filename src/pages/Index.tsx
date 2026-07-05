@@ -17,9 +17,7 @@ import {
   sellAsset,
   applyPeriodicMechanics,
   calculateNetWorth,
-  repayLiability,
 } from "@/lib/gameLogic";
-import { RepayLoanDialog } from "@/components/game/RepayLoanDialog";
 import { toast } from "sonner";
 import { logMaintenanceError } from "@/lib/maintenanceLog";
 import { Button } from "@/components/ui/button";
@@ -62,16 +60,6 @@ const normalizeSavedGame = (saved: GameState, fallbackPlayerName: string, fallba
           risk: asset.risk ?? "low",
         }))
       : [],
-    liabilities: Array.isArray(saved.liabilities)
-      ? saved.liabilities.map((liability, idx) => ({
-          ...liability,
-          // Guarantee unique ids — duplicates would make repayments
-          // collapse multiple liabilities at once.
-          id: liability.id ?? `liability-${idx}-${Date.now()}`,
-          category: liability.category ?? "personal_loan",
-          principal: liability.principal ?? 0,
-        }))
-      : [],
     position: saved.position ?? 0,
     diceValue: saved.diceValue ?? null,
     isRolling: saved.isRolling ?? false,
@@ -82,7 +70,6 @@ const normalizeSavedGame = (saved: GameState, fallbackPlayerName: string, fallba
     pendingDecision: saved.pendingDecision ?? null,
     marketHint: saved.marketHint ?? null,
     turnCount: saved.turnCount ?? 0,
-    loansTaken: saved.loansTaken ?? 0,
   };
 };
 
