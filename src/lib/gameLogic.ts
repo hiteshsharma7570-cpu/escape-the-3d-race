@@ -1,24 +1,11 @@
-import { GameState, Tile, Asset, Liability, MarketHint, LiabilityCategory } from "@/types/game";
+import { GameState, Tile, Asset, MarketHint } from "@/types/game";
 
-export { type GameState, type Tile, type Asset, type Liability };
+export { type GameState, type Tile, type Asset };
 
 const LOG_LIMIT = 19;
 const prefix = (state: GameState, msg: string) => `[Turn ${state.turnCount}] ${msg}`;
 const pushLog = (state: GameState, msg: string) => {
   state.gameLog = [prefix(state, msg), ...state.gameLog.slice(0, LOG_LIMIT)];
-};
-
-// ---------- liability helpers ----------
-let _uid = 0;
-const uid = (prefix: string) => `${prefix}-${Date.now().toString(36)}-${(_uid++).toString(36)}`;
-
-const addLiability = (
-  state: GameState,
-  data: { name: string; category: LiabilityCategory; principal: number }
-): Liability => {
-  const l: Liability = { id: uid("liab"), ...data };
-  state.liabilities.push(l);
-  return l;
 };
 
 export const INVESTMENT_OPPORTUNITIES = [
@@ -114,19 +101,19 @@ export const BOARD_TILES: Tile[] = [
   // Arc 2 — Life & Family (6–11)
   t(6,  "life_event",          "Life Event"),
   t(7,  "charity",             "Charity"),
-  t(8,  "credit_card_bill",    "Credit Card Bill"),
+  t(8,  "streaming_audit",     "Audit Refund"),
   t(9,  "wedding_in_family",   "Wedding"),
   t(10, "family_care",         "Family Care"),
   t(11, "tax_refund",          "Tax Refund"),
-  // Arc 3 — Shocks & Debt (12–17)
+  // Arc 3 — Shocks & Life (12–17)
   t(12, "bill_shock",          "Bill Shock"),
-  t(13, "bnpl_trap",           "BNPL Trap"),
+  t(13, "opportunity",         "Opportunity"),
   t(14, "unexpected_repair",   "Unexpected Repair"),
   t(15, "medical_emergency",   "Medical"),
-  t(16, "quick_cash_trap",     "Quick Cash Trap"),
+  t(16, "side_hustle",         "Side Hustle"),
   t(17, "inheritance",         "Inheritance"),
   // Arc 4 — Market & Recovery (18–23)
-  t(18, "rate_hike",           "Rate Hike"),
+  t(18, "bonus",               "Windfall"),
   t(19, "real_estate_boom",    "RE Boom"),
   t(20, "tax_trouble",         "Tax Trouble"),
   t(21, "stock_market_crash",  "Crash"),
@@ -138,11 +125,10 @@ export const BOARD_TILES: Tile[] = [
 // concrete tile types. Resolved at landing-time so the same board cell
 // can produce different flavors on repeat visits.
 const TILE_POOLS: Partial<Record<Tile["type"], Tile["type"][]>> = {
-  quick_cash_trap:   ["gold_loan_offer", "payday_loan", "margin_call", "legal_settlement"],
-  tax_trouble:       ["tax_audit", "tax_arrears", "gst_notice"],
-  bill_shock:        ["rent_hike", "fuel_price_hike", "insurance_premium", "loan_interest_spike", "subscription_creep"],
+  tax_trouble:       ["tax_audit", "gst_notice"],
+  bill_shock:        ["rent_hike", "fuel_price_hike", "insurance_premium", "subscription_creep"],
   unexpected_repair: ["vehicle_breakdown", "home_repair", "traffic_fine"],
-  life_event:        ["baby", "school_fees", "festival_expense", "vacation", "dinner", "college_admission_loan", "home_purchase_loan"],
+  life_event:        ["baby", "school_fees", "festival_expense", "vacation", "dinner"],
   family_care:       ["parents_medical", "elderly_care_hire", "pet_adoption"],
   monthly_bills:     ["electricity_bill", "society_maintenance"],
   green_upgrade:     ["ev_switch", "solar_install"],
@@ -161,14 +147,9 @@ export const calculateMonthlyCashFlow = (state: GameState): number => {
   return (state.salary ?? 0) + (state.passiveIncome ?? 0);
 };
 
-/** Sum of all outstanding debt principal across liabilities. */
-export const calculateOutstandingDebt = (state: GameState): number =>
-  (state.liabilities ?? []).reduce((sum, l) => sum + (l.principal ?? 0), 0);
-
 export const calculateNetWorth = (state: GameState): number => {
   const totalAssets = (state.assets ?? []).reduce((sum, a) => sum + (a.value ?? 0), 0);
-  const totalLiabilities = (state.liabilities ?? []).reduce((sum, l) => sum + (l.principal ?? 0), 0);
-  return (state.cash ?? 0) + totalAssets - totalLiabilities;
+  return (state.cash ?? 0) + totalAssets;
 };
 
 export const handleTileEffect = (state: GameState, tile: Tile): GameState => {
@@ -177,7 +158,6 @@ export const handleTileEffect = (state: GameState, tile: Tile): GameState => {
   tile = resolvePoolTile(tile);
   const newState: GameState = {
     ...state,
-    liabilities: [...state.liabilities],
     assets: [...state.assets],
   };
   let logMessage = "";
@@ -307,11 +287,7 @@ export const handleTileEffect = (state: GameState, tile: Tile): GameState => {
       } else {
         newState.cash = Math.max(0, newState.cash);
         const debtName = cost > 250000 ? "Health-Crisis EMI" : "Medical Debt";
-        addLiability(newState, {
-          name: debtName,
-          category: "medical_debt",
-          principal: cost,
-        });
+        newState.cash -= cost;
         logMessage = `🏥 Medical Emergency! ₹${cost.toLocaleString()} added as ${debtName}.`;
       }
       break;
@@ -420,20 +396,10 @@ export const handleTileEffect = (state: GameState, tile: Tile): GameState => {
     }
 
     case "rate_hike": {
-      if (newState.liabilities.length === 0) {
-        logMessage = `📈 RBI hikes rates — but you have no loans. Phew.`;
-      } else {
-        // Convert "rate hike" into a one-time fixed principal add-on
-        // (refinancing / restructuring fee) so debt stays principal-only.
-        const pct = 3 + Math.floor(Math.random() * 5); // 3-7%
-        let added = 0;
-        newState.liabilities = newState.liabilities.map(l => {
-          const bump = Math.round(l.principal * pct / 100);
-          added += bump;
-          return { ...l, principal: l.principal + bump };
-        });
-        logMessage = `📈 RBI tightens! Restructuring fees added ₹${added.toLocaleString()} to your outstanding debts.`;
-      }
+      // No liabilities in this build — reframe as an inflation nibble on cash.
+      const nibble = 4000 + Math.floor(Math.random() * 8000);
+      newState.cash -= nibble;
+      logMessage = `📈 RBI tightens! Higher borrowing costs across the economy — ₹${nibble.toLocaleString()} extra out this month.`;
       break;
     }
 
@@ -452,18 +418,10 @@ export const handleTileEffect = (state: GameState, tile: Tile): GameState => {
       } else {
         if (repairCost >= 60000) {
           const principal = repairCost + 50000;
-          addLiability(newState, {
-            name: "Home Renovation Loan",
-            category: "home_loan",
-            principal,
-          });
+          newState.cash -= principal;
           logMessage = `🔧 Home Renovation Loan taken — ₹${principal.toLocaleString()} outstanding.`;
         } else {
-          addLiability(newState, {
-            name: "Home Repair Loan",
-            category: "personal_loan",
-            principal: repairCost,
-          });
+          newState.cash -= repairCost;
           logMessage = `🔧 Home Repair! Couldn't afford it — added ₹${repairCost.toLocaleString()} as personal loan.`;
         }
       }
@@ -479,26 +437,8 @@ export const handleTileEffect = (state: GameState, tile: Tile): GameState => {
 
     case "credit_card_bill": {
       const bill = 15000 + Math.floor(Math.random() * 35000);
-      if (newState.cash >= bill) {
-        newState.cash -= bill;
-        logMessage = `💳 Credit Card Bill due! Paid ₹${bill.toLocaleString()}.`;
-      } else {
-        const existing = newState.liabilities.find(l => l.category === "credit_card");
-        if (existing) {
-          newState.liabilities = newState.liabilities.map(l =>
-            l.id === existing.id
-              ? { ...l, principal: l.principal + bill }
-              : l
-          );
-        } else {
-          addLiability(newState, {
-            name: "Credit Card",
-            category: "credit_card",
-            principal: bill,
-          });
-        }
-        logMessage = `💳 Credit Card Bill! Added ₹${bill.toLocaleString()} to outstanding card debt.`;
-      }
+      newState.cash -= bill;
+      logMessage = `💳 Credit Card Bill due! Paid ₹${bill.toLocaleString()}.`;
       break;
     }
 
@@ -515,11 +455,7 @@ export const handleTileEffect = (state: GameState, tile: Tile): GameState => {
       logMessage = `🪔 Festival season! Spent ₹${festCost.toLocaleString()} on celebrations and gifts.`;
       if (Math.random() < 0.2) {
         const principal = 60000 + Math.floor(Math.random() * 90000);
-        addLiability(newState, {
-          name: "Chit Fund Default",
-          category: "personal_loan",
-          principal,
-        });
+        newState.cash -= principal;
         logMessage += ` Chit fund payout missed — ₹${principal.toLocaleString()} now owed to the group.`;
       }
       break;
@@ -545,37 +481,16 @@ export const handleTileEffect = (state: GameState, tile: Tile): GameState => {
         newState.cash -= repairCost;
         logMessage = `🚗 Vehicle Breakdown! Paid ₹${repairCost.toLocaleString()} in repair costs.`;
       } else {
-        addLiability(newState, {
-          name: "Vehicle Repair Loan",
-          category: "vehicle_loan",
-          principal: repairCost,
-        });
+        newState.cash -= repairCost;
         logMessage = `🚗 Vehicle Breakdown! Added ₹${repairCost.toLocaleString()} repair loan.`;
       }
       break;
     }
 
     case "loan_interest_spike": {
-      const floatingLoans = newState.liabilities.filter(
-        l => l.category === "home_loan" || l.category === "personal_loan"
-      );
-      if (floatingLoans.length > 0) {
-        // No interest in this game — express the "spike" as a one-time
-        // fixed late-payment fee added to those loans' principal.
-        const ids = new Set(floatingLoans.map(l => l.id));
-        const fee = 4000 + Math.floor(Math.random() * 6000); // ₹4k-₹10k per loan
-        let total = 0;
-        newState.liabilities = newState.liabilities.map(l => {
-          if (!ids.has(l.id)) return l;
-          total += fee;
-          return { ...l, principal: l.principal + fee };
-        });
-        logMessage = `🏦 Late-payment penalty! ₹${total.toLocaleString()} added across your home/personal loans.`;
-      } else {
-        const penalty = 5000 + Math.floor(Math.random() * 10000);
-        newState.cash -= penalty;
-        logMessage = `🏦 Bank processing fee! Paid ₹${penalty.toLocaleString()} in charges.`;
-      }
+      const penalty = 5000 + Math.floor(Math.random() * 10000);
+      newState.cash -= penalty;
+      logMessage = `🏦 Bank processing fee! Paid ₹${penalty.toLocaleString()} in charges.`;
       break;
     }
 
@@ -590,12 +505,7 @@ export const handleTileEffect = (state: GameState, tile: Tile): GameState => {
       // Pawn family gold for fast cash.
       const principal = 80000 + Math.floor(Math.random() * 170000);
       newState.cash += principal;
-      newState.loansTaken += 1;
-      addLiability(newState, {
-        name: "Gold Loan",
-        category: "gold_loan",
-        principal,
-      });
+      newState.cash -= principal;
       logMessage = `🪙 Gold Loan! Pawned family gold — +₹${principal.toLocaleString()} cash, added as debt.`;
       break;
     }
@@ -609,11 +519,7 @@ export const handleTileEffect = (state: GameState, tile: Tile): GameState => {
         const paid = Math.max(0, newState.cash);
         const shortfall = cost - paid;
         newState.cash -= paid;
-        addLiability(newState, {
-          name: "Wedding Loan",
-          category: "personal_loan",
-          principal: shortfall,
-        });
+        newState.cash -= shortfall;
         logMessage = `💍 Wedding! Paid ₹${paid.toLocaleString()}, rest ₹${shortfall.toLocaleString()} financed.`;
       }
       break;
@@ -642,11 +548,7 @@ export const handleTileEffect = (state: GameState, tile: Tile): GameState => {
         newState.cash -= cost;
         logMessage = `👴 Parents needed medical care. Paid ₹${cost.toLocaleString()} from cash.`;
       } else {
-        addLiability(newState, {
-          name: "Parents Medical Debt",
-          category: "medical_debt",
-          principal: cost,
-        });
+        newState.cash -= cost;
         logMessage = `👴 Parents medical emergency! ₹${cost.toLocaleString()} added as medical debt.`;
       }
       break;
@@ -655,25 +557,12 @@ export const handleTileEffect = (state: GameState, tile: Tile): GameState => {
     case "gst_notice": {
       const isBiz =
         newState.profession === "Business Owner" ||
-        newState.profession === "Lawyer" ||
-        newState.liabilities.some(l => l.category === "business_loan");
+        newState.profession === "Lawyer";
       const base = isBiz ? 25000 + Math.floor(Math.random() * 75000) : 5000 + Math.floor(Math.random() * 10000);
-      if (isBiz && newState.cash < base) {
-        const paid = Math.max(0, newState.cash);
-        const shortfall = base - paid;
-        newState.cash -= paid;
-        addLiability(newState, {
-          name: "GST Penalty Loan",
-          category: "business_loan",
-          principal: shortfall,
-        });
-        logMessage = `🧾 GST Notice! Paid ₹${paid.toLocaleString()}, financed ₹${shortfall.toLocaleString()} as GST Penalty Loan.`;
-      } else {
-        newState.cash -= base;
-        logMessage = isBiz
-          ? `🧾 GST Notice! Compliance shortfall — paid ₹${base.toLocaleString()} in dues + penalty.`
-          : `🧾 Tax notice! Filed late — penalty ₹${base.toLocaleString()}.`;
-      }
+      newState.cash -= base;
+      logMessage = isBiz
+        ? `🧾 GST Notice! Compliance shortfall — paid ₹${base.toLocaleString()} in dues + penalty.`
+        : `🧾 Tax notice! Filed late — penalty ₹${base.toLocaleString()}.`;
       break;
     }
 
@@ -698,21 +587,13 @@ export const handleTileEffect = (state: GameState, tile: Tile): GameState => {
         const durables = ["AC", "Fridge", "Washing Machine", "TV"];
         const item = durables[Math.floor(Math.random() * durables.length)];
         const principal = 20000 + Math.floor(Math.random() * 40001);
-        addLiability(newState, {
-          name: `Consumer Durable Loan: ${item}`,
-          category: "bnpl",
-          principal,
-        });
+        newState.cash -= principal;
         logMessage = `🛍️ Consumer Durable Loan! "${item}" financed — ₹${principal.toLocaleString()} added to outstanding debt.`;
       } else {
         const gadgets = ["iPhone", "OLED TV", "Gaming Laptop", "Smartwatch", "DSLR Camera", "Air Fryer Pro"];
         const item = gadgets[Math.floor(Math.random() * gadgets.length)];
         const principal = 30000 + Math.floor(Math.random() * 90001);
-        addLiability(newState, {
-          name: `BNPL: ${item}`,
-          category: "bnpl",
-          principal,
-        });
+        newState.cash -= principal;
         logMessage = `🛍️ BNPL Trap! "${item}" financed — ₹${principal.toLocaleString()} added to outstanding debt.`;
       }
       lessonMessage = "💡 Even 'no-cost' financing adds real principal you'll have to pay back.";
@@ -722,11 +603,7 @@ export const handleTileEffect = (state: GameState, tile: Tile): GameState => {
     case "solar_install": {
       // Rooftop solar — adds a personal loan (recurring bill savings removed).
       const principal = 150000;
-      addLiability(newState, {
-        name: "Solar Rooftop Loan",
-        category: "personal_loan",
-        principal,
-      });
+      newState.cash -= principal;
       logMessage = `☀️ Solar Installed! New ₹${principal.toLocaleString()} rooftop loan added.`;
       lessonMessage = "💡 Financed upgrades add real debt — weigh the long-term payoff.";
       break;
@@ -735,11 +612,7 @@ export const handleTileEffect = (state: GameState, tile: Tile): GameState => {
     case "ev_switch": {
       // Trade in petrol vehicle: new vehicle loan.
       const principal = 600000;
-      addLiability(newState, {
-        name: "EV Auto Loan",
-        category: "vehicle_loan",
-        principal,
-      });
+      newState.cash -= principal;
       logMessage = `🔋 Switched to EV! New ₹${principal.toLocaleString()} auto loan added.`;
       break;
     }
@@ -777,12 +650,7 @@ export const handleTileEffect = (state: GameState, tile: Tile): GameState => {
         ? 15000 + Math.floor(Math.random() * 35000)
         : 40000 + Math.floor(Math.random() * 60000);
       newState.cash += principal;
-      newState.loansTaken += 1;
-      addLiability(newState, {
-        name: isApp ? "NBFC Instant App Loan" : "Payday Loan",
-        category: "payday_loan",
-        principal,
-      });
+      newState.cash -= principal;
       logMessage = isApp
         ? `📱 NBFC Instant App Loan! +₹${principal.toLocaleString()} cash in seconds.`
         : `💸 Payday Loan! +₹${principal.toLocaleString()} cash now.`;
@@ -803,11 +671,7 @@ export const handleTileEffect = (state: GameState, tile: Tile): GameState => {
         const name = isCrypto
           ? "Crypto Margin Loss Loan"
           : isLAS ? "Loan Against Securities" : "Margin Loan";
-        addLiability(newState, {
-          name,
-          category: "margin_loan",
-          principal,
-        });
+        newState.cash -= principal;
         logMessage = `📞 Margin Call! Broker financed your high-risk losses — ₹${principal.toLocaleString()} added to outstanding debt.`;
         lessonMessage = "💡 Leveraged investing magnifies losses. Margin loans survive even when the trade dies.";
       } else {
@@ -821,11 +685,7 @@ export const handleTileEffect = (state: GameState, tile: Tile): GameState => {
     case "tax_arrears": {
       // Old returns flagged — owe past taxes as a structured debt.
       const arrears = 60000 + Math.floor(Math.random() * 140000);
-      addLiability(newState, {
-        name: "Tax Arrears (IT Dept)",
-        category: "tax_arrears",
-        principal: arrears,
-      });
+      newState.cash -= arrears;
       logMessage = `🧾 Tax Arrears! IT Dept demands ₹${arrears.toLocaleString()} from past filings — added as debt.`;
       break;
     }
@@ -839,11 +699,7 @@ export const handleTileEffect = (state: GameState, tile: Tile): GameState => {
         const paid = Math.max(0, newState.cash);
         const shortfall = cost - paid;
         newState.cash -= paid;
-        addLiability(newState, {
-          name: "Education Loan (Child)",
-          category: "education_loan",
-          principal: shortfall,
-        });
+        newState.cash -= shortfall;
         logMessage = `🎓 College Admission! Paid ₹${paid.toLocaleString()}, financed ₹${shortfall.toLocaleString()} as child's education loan.`;
       }
       break;
@@ -858,11 +714,7 @@ export const handleTileEffect = (state: GameState, tile: Tile): GameState => {
         const paid = Math.max(0, newState.cash);
         const shortfall = cost - paid;
         newState.cash -= paid;
-        addLiability(newState, {
-          name: "Home Purchase Loan",
-          category: "home_loan",
-          principal: shortfall,
-        });
+        newState.cash -= shortfall;
         logMessage = `🏡 Home Purchase! Paid ₹${paid.toLocaleString()}, financed ₹${shortfall.toLocaleString()} as home loan.`;
       }
       break;
@@ -870,11 +722,7 @@ export const handleTileEffect = (state: GameState, tile: Tile): GameState => {
 
     case "legal_settlement": {
       const principal = 50000 + Math.floor(Math.random() * 150001);
-      addLiability(newState, {
-        name: "Legal Settlement Loan",
-        category: "personal_loan",
-        principal,
-      });
+      newState.cash -= principal;
       logMessage = `⚖️ Legal Settlement! ₹${principal.toLocaleString()} added as debt to cover court fees & damages.`;
       lessonMessage = "💡 Legal fights are expensive — mediation often costs less than litigation.";
       break;
@@ -984,45 +832,12 @@ export const sellAsset = (state: GameState, assetId: string): GameState => {
   return newState;
 };
 
-/**
- * Repay a specific liability by `amount` rupees from cash.
- * Full repayment removes the liability entirely.
- * Partial repayment shrinks the outstanding principal.
- */
-export const repayLiability = (
-  state: GameState,
-  liabilityId: string,
-  amount: number,
-): { state: GameState; ok: boolean; error?: string } => {
-  const liability = state.liabilities.find(l => l.id === liabilityId);
-  if (!liability) return { state, ok: false, error: "Loan not found." };
-  const pay = Math.min(Math.max(0, Math.floor(amount)), liability.principal);
-  if (pay <= 0) return { state, ok: false, error: "Enter an amount greater than zero." };
-  if (state.cash < pay) return { state, ok: false, error: "Insufficient cash for this repayment." };
-
-  const next: GameState = { ...state, liabilities: [...state.liabilities] };
-  next.cash -= pay;
-
-  if (pay >= liability.principal) {
-    next.liabilities = next.liabilities.filter(l => l.id !== liabilityId);
-    pushLog(next, `✅ Fully repaid ${liability.name} (₹${pay.toLocaleString()}). Debt cleared.`);
-  } else {
-    next.liabilities = next.liabilities.map(l =>
-      l.id === liabilityId
-        ? { ...l, principal: l.principal - pay }
-        : l
-    );
-    pushLog(next, `💰 Part-paid ${liability.name} (₹${pay.toLocaleString()}). Outstanding: ₹${(liability.principal - pay).toLocaleString()}.`);
-  }
-  return { state: next, ok: true };
-};
-
 // Apply periodic mechanics based on turn number. Mutates a copy.
 export const applyPeriodicMechanics = (
   state: GameState
 ): { state: GameState; events: string[] } => {
   const events: string[] = [];
-  let next = { ...state, liabilities: [...state.liabilities], assets: [...state.assets] };
+  let next = { ...state, assets: [...state.assets] };
 
   // Salary review every 8 turns: +5–15%
   if (next.turnCount > 0 && next.turnCount % 8 === 0) {

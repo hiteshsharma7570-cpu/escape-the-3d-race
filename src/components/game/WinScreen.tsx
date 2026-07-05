@@ -1,7 +1,7 @@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { GameState } from "@/types/game";
-import { calculateNetWorth, calculateOutstandingDebt } from "@/lib/gameLogic";
+import { calculateNetWorth } from "@/lib/gameLogic";
 import { Trophy, Share2, RotateCcw } from "lucide-react";
 import { toast } from "sonner";
 import { buildReportCard, gradeColor } from "@/lib/reportCard";
@@ -15,7 +15,6 @@ interface WinScreenProps {
 
 export const WinScreen = ({ open, gameState, onPlayAgain }: WinScreenProps) => {
   const netWorth = calculateNetWorth(gameState);
-  const outstandingDebt = calculateOutstandingDebt(gameState);
   const best = [...(gameState.assets ?? [])].sort((a, b) => (b.monthlyIncome ?? 0) - (a.monthlyIncome ?? 0))[0];
   const report = useMemo(() => buildReportCard(gameState), [gameState]);
 

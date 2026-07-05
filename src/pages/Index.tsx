@@ -17,9 +17,7 @@ import {
   sellAsset,
   applyPeriodicMechanics,
   calculateNetWorth,
-  repayLiability,
 } from "@/lib/gameLogic";
-import { RepayLoanDialog } from "@/components/game/RepayLoanDialog";
 import { toast } from "sonner";
 import { logMaintenanceError } from "@/lib/maintenanceLog";
 import { Button } from "@/components/ui/button";
@@ -62,16 +60,6 @@ const normalizeSavedGame = (saved: GameState, fallbackPlayerName: string, fallba
           risk: asset.risk ?? "low",
         }))
       : [],
-    liabilities: Array.isArray(saved.liabilities)
-      ? saved.liabilities.map((liability, idx) => ({
-          ...liability,
-          // Guarantee unique ids — duplicates would make repayments
-          // collapse multiple liabilities at once.
-          id: liability.id ?? `liability-${idx}-${Date.now()}`,
-          category: liability.category ?? "personal_loan",
-          principal: liability.principal ?? 0,
-        }))
-      : [],
     position: saved.position ?? 0,
     diceValue: saved.diceValue ?? null,
     isRolling: saved.isRolling ?? false,
@@ -82,7 +70,6 @@ const normalizeSavedGame = (saved: GameState, fallbackPlayerName: string, fallba
     pendingDecision: saved.pendingDecision ?? null,
     marketHint: saved.marketHint ?? null,
     turnCount: saved.turnCount ?? 0,
-    loansTaken: saved.loansTaken ?? 0,
   };
 };
 
@@ -364,110 +351,6 @@ const Index = () => {
     toast.success("Asset sold!");
   };
 
-  const takeLoan = () => {
-    const activeBankLoans = gameState.liabilities.filter((l) => l.name === "Bank Loan").length;
-    if (activeBankLoans >= 3) {
-      toast.error("You already have 3 active bank loans. Repay one before taking another.");
-      return;
-    }
-    const loanAmount = 100000;
-
-    playSound("earnMoney");
-    setGameState((prev) => ({
-      ...prev,
-      cash: prev.cash + loanAmount,
-      loansTaken: prev.loansTaken + 1,
-      liabilities: [
-        ...prev.liabilities,
-        {
-          id: `loan-${Date.now()}`,
-          name: "Bank Loan",
-          category: "personal_loan" as const,
-          principal: loanAmount,
-        },
-      ],
-      gameLog: [
-        `[Turn ${prev.turnCount}] Took a loan of ₹${loanAmount.toLocaleString()}. Outstanding debt added.`,
-        ...prev.gameLog.slice(0, 19),
-      ],
-    }));
-    
-    toast.success(`Loan approved! ₹${loanAmount.toLocaleString()} added to cash`);
-  };
-
-  const repayLoan = () => {
-    if (gameState.liabilities.length === 0) {
-      toast.error("You have no outstanding loans.");
-      return;
-    }
-    setRepayOpen(true);
-  };
-
-  const handleRepaySpecific = (liabilityId: string, amount: number) => {
-    // Use a functional updater so we always operate on the latest state —
-    // prevents stale-closure bugs where the wrong liability gets reduced
-    // (or cash/net-worth lag behind) when other updates are in flight.
-    let outcome: { ok: boolean; error?: string; name?: string; pay?: number } = { ok: false };
-    setGameState((prev) => {
-      const result = repayLiability(prev, liabilityId, amount);
-      if (!result.ok) {
-        outcome = { ok: false, error: result.error };
-        return prev;
-      }
-      const target = prev.liabilities.find((l) => l.id === liabilityId);
-      outcome = {
-        ok: true,
-        name: target?.name,
-        pay: Math.min(Math.floor(amount), target?.principal ?? 0),
-      };
-      return result.state;
-    });
-    // Defer toast/sound to after the state has been queued so UI reflects the change first.
-    queueMicrotask(() => {
-      if (!outcome.ok) {
-        playSound("loseMoney");
-        toast.error(outcome.error ?? "Could not repay loan.");
-      } else {
-        playSound("earnMoney");
-        toast.success(
-          outcome.name
-            ? `Paid ₹${(outcome.pay ?? 0).toLocaleString()} towards ${outcome.name}.`
-            : "Loan payment applied!"
-        );
-      }
-    });
-  };
-
-  const payOffDebts = () => {
-    // Every liability now has an outstanding principal — all are clearable in a lump sum.
-    const clearable = gameState.liabilities.filter((l) => (l.principal ?? 0) > 0);
-    if (clearable.length === 0) {
-      toast.error("No outstanding loans to clear.");
-      return;
-    }
-    const totalDebt = clearable.reduce((sum, l) => sum + (l.principal ?? 0), 0);
-    if (!confirm(`Pay off ${clearable.length} loan(s) totaling ₹${totalDebt.toLocaleString()}?`)) {
-      return;
-    }
-    if (gameState.cash >= totalDebt) {
-      playSound("earnMoney");
-      const clearableIds = new Set(clearable.map((l) => l.id));
-      setGameState((prev) => ({
-        ...prev,
-        cash: prev.cash - totalDebt,
-        liabilities: prev.liabilities.filter((l) => !clearableIds.has(l.id)),
-        gameLog: [
-          `[Turn ${prev.turnCount}] Paid off loans totaling ₹${totalDebt.toLocaleString()}`,
-          ...prev.gameLog.slice(0, 19),
-        ],
-      }));
-      toast.success("Loans cleared!");
-    } else {
-      playSound("loseMoney");
-      toast.error("Insufficient funds to pay off all loans");
-    }
-  };
-
   const handleDecisionAccept = () => {
     if (!gameState.pendingDecision) return;
     const decision = gameState.pendingDecision;
@@ -602,7 +485,6 @@ const Index = () => {
             gameState={gameState}
             isRolling={gameState.isRolling}
             onRollDice={rollDice}
-            onPayOffDebts={payOffDebts}
           />
 
 
@@ -617,9 +499,6 @@ const Index = () => {
             <GameDashboard
               gameState={gameState}
               onRollDice={rollDice}
-              onTakeLoan={takeLoan}
-              onRepayLoan={repayLoan}
-              onPayOffDebts={payOffDebts}
               onSellAsset={handleSellAsset}
             />
           </div>
@@ -631,16 +510,6 @@ const Index = () => {
           <PlayersPanel currentPlayerName={gameState.playerName} currentNetWorth={netWorth} />
         </div>
       </div>
-
-      {/* === Repay loan dialog === */}
-
-      <RepayLoanDialog
-        open={repayOpen}
-        onOpenChange={setRepayOpen}
-        gameState={gameState}
-        onRepay={handleRepaySpecific}
-      />
-
 
       <DecisionModal
         pendingDecision={gameState.pendingDecision}
