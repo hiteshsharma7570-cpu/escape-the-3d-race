@@ -18,7 +18,8 @@ import {
 } from "@/lib/gameLogic";
 import { TakeLoanDialog, RepayLoanDialog, PayOffDebtsDialog } from "./LoanDialogs";
 
-const fmt = (n: number) => `₹${Math.round(n).toLocaleString()}`;
+const fmt = (n: number) => `₹${(Number.isFinite(n) ? Math.round(n) : 0).toLocaleString()}`;
+const safeRate = (r: unknown) => (typeof r === "number" && Number.isFinite(r) ? r : 12);
 
 const InfoLabel = ({ label, tip }: { label: string; tip: string }) => (
   <TooltipProvider delayDuration={150}>
@@ -188,7 +189,7 @@ export const GameDashboard = ({
             <h3 className="text-yellow-500 font-bold mb-2">Liabilities</h3>
             <div className="space-y-1 text-sm">
               {Object.entries(gameState.liabilities).filter(([, v]) => v.principal > 0).map(([k, v]) => (
-                <Row key={k} label={`${prettyKey(k)} @${v.interestRate}%`} value={fmt(v.principal)} />
+                <Row key={k} label={`${prettyKey(k)} @${safeRate(v.interestRate)}%`} value={fmt(v.principal)} />
               ))}
             </div>
           </div>
