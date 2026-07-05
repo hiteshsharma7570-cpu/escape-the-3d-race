@@ -23,18 +23,12 @@ const InfoLabel = ({ label, tip }: { label: string; tip: string }) => (
 interface GameDashboardProps {
   gameState: GameState;
   onRollDice: () => void;
-  onTakeLoan: () => void;
-  onRepayLoan: () => void;
-  onPayOffDebts: () => void;
   onSellAsset: (assetId: string) => void;
 }
 
 export const GameDashboard = ({ 
   gameState, 
   onRollDice, 
-  onTakeLoan, 
-  onRepayLoan,
-  onPayOffDebts,
   onSellAsset,
 }: GameDashboardProps) => {
   const monthlyCashFlow = calculateMonthlyCashFlow(gameState);
@@ -134,27 +128,6 @@ export const GameDashboard = ({
           >
             Roll Dice
           </Button>
-          <Button 
-            onClick={onTakeLoan}
-            size="lg"
-            className="bg-success hover:bg-success/90 text-success-foreground font-bold"
-          >
-            Take Loan
-          </Button>
-          <Button 
-            onClick={onRepayLoan}
-            size="lg"
-            className="bg-destructive hover:bg-destructive/90 text-destructive-foreground font-bold"
-          >
-            Repay Loan
-          </Button>
-          <Button 
-            onClick={onPayOffDebts}
-            size="lg"
-            className="bg-info hover:bg-info/90 text-info-foreground font-bold"
-          >
-            Pay Off Other Debts
-          </Button>
         </div>
       </Card>
 
@@ -168,9 +141,6 @@ export const GameDashboard = ({
           <div>
             <p className="text-sm text-muted-foreground">
               {gameState.profession} · Starting salary ₹{(gameState.salary ?? 0).toLocaleString()}
-            </p>
-            <p className="text-xs text-muted-foreground mt-1">
-              Loans taken: <span className="font-semibold">{gameState.loansTaken}</span>
             </p>
           </div>
 
@@ -238,24 +208,6 @@ export const GameDashboard = ({
                         Sell
                       </Button>
                     </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {gameState.liabilities.length > 0 && (
-            <div>
-              <h3 className="text-destructive font-bold mb-2">
-                <InfoLabel label="Outstanding Debts" tip="Money you owe. Repay principal to reduce what you owe." />
-              </h3>
-              <div className="space-y-1 text-sm">
-                {gameState.liabilities.map((liability) => (
-                  <div key={liability.id} className="flex justify-between">
-                    <span className="truncate pr-2">{liability.name}</span>
-                    <span className="text-destructive shrink-0">
-                      ₹{(liability.principal ?? 0).toLocaleString()}
-                    </span>
                   </div>
                 ))}
               </div>
