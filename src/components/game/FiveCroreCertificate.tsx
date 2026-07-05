@@ -329,7 +329,7 @@ export const FiveCroreCertificate = ({
         rotate: Math.random() * 360,
         color: ["#FFD700", "#FFA500", "#FF6B6B", "#9DE0AD", "#56C7E5"][i % 5],
       })),
-    [open]
+    [],
   );
 
   return (
