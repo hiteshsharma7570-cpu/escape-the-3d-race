@@ -33,11 +33,10 @@ const clamp = (n: number, min = 0, max = 100) => Math.max(min, Math.min(max, n))
 
 export const buildReportCard = (state: GameState): ReportCard => {
   const netWorth = calculateNetWorth(state);
-  const totalLiabilityAmount = state.liabilities.reduce((s, l) => s + l.principal, 0);
   const assets = state.assets;
   const turns = Math.max(1, state.turnCount);
 
-  // 1. Risk Management — asset diversification across risk tiers + penalty for medical debt
+  // 1. Risk Management — asset diversification across risk tiers
   const riskCount = { low: 0, medium: 0, high: 0 };
   assets.forEach((a) => {
     riskCount[a.risk] += 1;
@@ -47,27 +46,18 @@ export const buildReportCard = (state: GameState): ReportCard => {
   let riskScore = 40 + tiersUsed * 18; // 1 tier = 58, 2 = 76, 3 = 94
   if (highRatio > 0.6) riskScore -= 20; // over-concentrated in high risk
   if (assets.length === 0) riskScore = 30;
-  const hasMedicalDebt = state.liabilities.some((l) => l.category === "medical_debt");
-  if (hasMedicalDebt) riskScore -= 12;
   riskScore = clamp(riskScore);
 
-  // 2. Debt Management — low debt-to-net-worth + restrained loan taking
-  const debtRatio =
-    netWorth > 0 ? totalLiabilityAmount / (netWorth + totalLiabilityAmount) : 1;
-  let debtScore = 100 - debtRatio * 110;
-  debtScore -= state.loansTaken * 6;
-  debtScore = clamp(debtScore);
-
-  // 3. Investment Timing — passive income built per turn
+  // 2. Investment Timing — passive income built per turn
   const incomePerTurn = state.passiveIncome / turns;
   // 2000/turn ~ A, 4000/turn ~ A+
   const timingScore = clamp(Math.sqrt(incomePerTurn / 4000) * 100);
 
-  // 4. Cash Flow — passive income vs salary replacement
+  // 3. Cash Flow — passive income vs salary replacement
   const coverage = state.salary > 0 ? state.passiveIncome / state.salary : 1;
   const cashFlowScore = clamp(coverage * 70 + (state.hasEscapedRatRace ? 30 : 0));
 
-  // 5. Wealth Building — net worth growth
+  // 4. Wealth Building — net worth growth
   const worthPerTurn = netWorth / turns;
   // 50k/turn ~ A+
   const wealthScore = clamp(Math.sqrt(Math.max(0, worthPerTurn) / 50000) * 100);
@@ -88,20 +78,6 @@ export const buildReportCard = (state: GameState): ReportCard => {
           : highRatio > 0.6
           ? "Over-exposed to high-risk assets. A crash would hurt."
           : "Concentrated in one risk tier.",
-    },
-    {
-      key: "debt",
-      label: "Debt Management",
-      score: debtScore,
-      grade: toGrade(debtScore),
-      summary:
-        totalLiabilityAmount === 0
-          ? "Debt-free. You kept the balance sheet clean."
-          : debtRatio < 0.2
-          ? "Low debt relative to net worth — healthy leverage."
-          : debtRatio < 0.5
-          ? "Moderate debt load. Manageable but watch the payments."
-          : "Heavy debt burden ate into your net worth.",
     },
     {
       key: "timing",
