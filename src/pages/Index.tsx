@@ -357,7 +357,7 @@ const Index = () => {
     toast.success("Asset sold!");
   };
 
-  const handleDecisionAccept = () => {
+  const handleDecisionAccept = (extra?: { decisionChoiceIndex?: number }) => {
     if (!gameState.pendingDecision) return;
     const decision = gameState.pendingDecision;
     try {
@@ -366,7 +366,7 @@ const Index = () => {
         setGameState((prev) => applyCharityDecision(prev, true));
       } else if (decision.type === "opportunity") {
         playSound("opportunity");
-        setGameState((prev) => applyOpportunityDecision(prev, true));
+        setGameState((prev) => applyOpportunityDecision(prev, true, extra));
       } else if (decision.type === "loan_for_asset") {
         setGameState((prev) => applyLoanForAssetDecision(prev, true));
       } else if (decision.type === "market_card" || decision.type === "doodad") {
