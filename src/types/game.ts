@@ -192,12 +192,14 @@ export interface GameState {
 
 // EMI utility used both in profession seed and at runtime.
 export const calculateEMI = (principal: number, interestRate: number, months = 60): number => {
-  if (principal <= 0) return 0;
-  const r = interestRate / 100 / 12;
-  if (r === 0) return Math.round(principal / months);
-  return Math.round(
-    (principal * r * Math.pow(1 + r, months)) / (Math.pow(1 + r, months) - 1),
-  );
+  const p = Number(principal);
+  const rate = Number.isFinite(interestRate) && interestRate! > 0 ? interestRate : 12;
+  if (!Number.isFinite(p) || p <= 0) return 0;
+  const r = rate / 100 / 12;
+  if (r === 0) return Math.round(p / months);
+  const emi =
+    (p * r * Math.pow(1 + r, months)) / (Math.pow(1 + r, months) - 1);
+  return Number.isFinite(emi) ? Math.round(emi) : 0;
 };
 
 const liab = (principal: number, interestRate: number): Liability => ({
