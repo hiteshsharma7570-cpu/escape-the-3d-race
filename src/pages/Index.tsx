@@ -10,6 +10,7 @@ import { WelcomeModal } from "@/components/game/WelcomeModal";
 import { createInitialGameState, GameState } from "@/types/game";
 import {
   BOARD_TILES,
+  FAST_TRACK_TILES,
   handleTileEffect,
   applyCharityDecision,
   applyOpportunityDecision,
