@@ -29,7 +29,8 @@ const toGrade = (score: number): Grade => {
   return "F";
 };
 
-const clamp = (n: number, min = 0, max = 100) => Math.max(min, Math.min(max, n));
+const clamp = (n: number, min = 0, max = 100) =>
+  Number.isFinite(n) ? Math.max(min, Math.min(max, n)) : min;
 
 export const buildReportCard = (state: GameState): ReportCard => {
   const netWorth = calculateNetWorth(state);
