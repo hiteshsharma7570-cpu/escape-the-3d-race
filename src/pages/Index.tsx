@@ -342,6 +342,9 @@ const Index = () => {
         });
         setTimeout(() => toast("Recovered from a hiccup, your progress is safe"), 0);
       }
+      // Market cycle countdown & escape-check
+      updated = tickMarketCycle(updated);
+      updated = checkEscapeRatRace(updated);
       if (
         !updated.marketHint &&
         !updated.pendingDecision &&
