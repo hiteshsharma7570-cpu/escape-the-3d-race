@@ -485,7 +485,6 @@ const Index = () => {
             gameState={gameState}
             isRolling={gameState.isRolling}
             onRollDice={rollDice}
-            onPayOffDebts={payOffDebts}
           />
 
 
@@ -500,9 +499,6 @@ const Index = () => {
             <GameDashboard
               gameState={gameState}
               onRollDice={rollDice}
-              onTakeLoan={takeLoan}
-              onRepayLoan={repayLoan}
-              onPayOffDebts={payOffDebts}
               onSellAsset={handleSellAsset}
             />
           </div>
@@ -514,16 +510,6 @@ const Index = () => {
           <PlayersPanel currentPlayerName={gameState.playerName} currentNetWorth={netWorth} />
         </div>
       </div>
-
-      {/* === Repay loan dialog === */}
-
-      <RepayLoanDialog
-        open={repayOpen}
-        onOpenChange={setRepayOpen}
-        gameState={gameState}
-        onRepay={handleRepaySpecific}
-      />
-
 
       <DecisionModal
         pendingDecision={gameState.pendingDecision}
