@@ -1,24 +1,11 @@
-import { GameState, Tile, Asset, Liability, MarketHint, LiabilityCategory } from "@/types/game";
+import { GameState, Tile, Asset, MarketHint } from "@/types/game";
 
-export { type GameState, type Tile, type Asset, type Liability };
+export { type GameState, type Tile, type Asset };
 
 const LOG_LIMIT = 19;
 const prefix = (state: GameState, msg: string) => `[Turn ${state.turnCount}] ${msg}`;
 const pushLog = (state: GameState, msg: string) => {
   state.gameLog = [prefix(state, msg), ...state.gameLog.slice(0, LOG_LIMIT)];
-};
-
-// ---------- liability helpers ----------
-let _uid = 0;
-const uid = (prefix: string) => `${prefix}-${Date.now().toString(36)}-${(_uid++).toString(36)}`;
-
-const addLiability = (
-  state: GameState,
-  data: { name: string; category: LiabilityCategory; principal: number }
-): Liability => {
-  const l: Liability = { id: uid("liab"), ...data };
-  state.liabilities.push(l);
-  return l;
 };
 
 export const INVESTMENT_OPPORTUNITIES = [
