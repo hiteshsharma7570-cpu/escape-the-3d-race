@@ -1,4 +1,4 @@
-import { BOARD_TILES, calculateNetWorth } from "@/lib/gameLogic";
+import { BOARD_TILES, FAST_TRACK_TILES, calculateNetWorth } from "@/lib/gameLogic";
 import { motion } from "framer-motion";
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { GameState } from "@/types/game";
@@ -28,27 +28,39 @@ function buildPerimeter(n: number = BOARD_SIZE): Array<[number, number]> {
 }
 
 export const GameBoard2D = ({ currentPosition, diceValue, gameState, isRolling, onRollDice }: GameBoard2DProps) => {
-  const [displayedPosition, setDisplayedPosition] = useState(currentPosition);
-  const [visited, setVisited] = useState<Set<number>>(new Set([currentPosition]));
+  const onFastTrack = !!gameState?.onFastTrack;
+  const tiles = onFastTrack ? FAST_TRACK_TILES : BOARD_TILES;
+  const activePosition = onFastTrack ? (gameState?.ftPosition ?? 0) : currentPosition;
+  const [displayedPosition, setDisplayedPosition] = useState(activePosition);
+  const [visited, setVisited] = useState<Set<number>>(new Set([activePosition]));
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
+  // When switching boards (Rat Race → Fast Track), snap to the new position
+  // and reset visited tiles so we don't animate through nonexistent indices.
   useEffect(() => {
-    if (displayedPosition === currentPosition) return;
+    setDisplayedPosition(activePosition);
+    setVisited(new Set([activePosition]));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [onFastTrack]);
+
+  useEffect(() => {
+    if (displayedPosition === activePosition) return;
     if (timerRef.current) clearTimeout(timerRef.current);
     timerRef.current = setTimeout(() => {
       setDisplayedPosition((prev) => {
-        if (prev === currentPosition) return prev;
-        const next = (prev + 1) % BOARD_TILES.length;
+        if (prev === activePosition) return prev;
+        const next = (prev + 1) % tiles.length;
         setVisited((v) => new Set(v).add(next));
         return next;
       });
     }, 220);
     return () => { if (timerRef.current) clearTimeout(timerRef.current); };
-  }, [displayedPosition, currentPosition]);
+  }, [displayedPosition, activePosition, tiles.length]);
 
-  const cells = useMemo(buildPerimeter, []);
-  const safePosition = ((displayedPosition % BOARD_TILES.length) + BOARD_TILES.length) % BOARD_TILES.length;
-  const currentTile = BOARD_TILES[safePosition];
+  const boardSize = Math.max(4, Math.ceil(tiles.length / 4) + 1);
+  const cells = useMemo(() => buildPerimeter(boardSize), [boardSize]);
+  const safePosition = ((displayedPosition % tiles.length) + tiles.length) % tiles.length;
+  const currentTile = tiles[safePosition];
   const currentMeta = getTileMeta(currentTile.type);
   const netWorth = gameState ? calculateNetWorth(gameState) : 0;
 
@@ -88,9 +100,9 @@ export const GameBoard2D = ({ currentPosition, diceValue, gameState, isRolling, 
       {/* 7x7 grid */}
       <div
         className="relative grid h-full w-full p-3 gap-1.5"
-        style={{ gridTemplateColumns: `repeat(${BOARD_SIZE}, 1fr)`, gridTemplateRows: `repeat(${BOARD_SIZE}, 1fr)` }}
+        style={{ gridTemplateColumns: `repeat(${boardSize}, 1fr)`, gridTemplateRows: `repeat(${boardSize}, 1fr)` }}
       >
-        {BOARD_TILES.map((tile, index) => {
+        {tiles.map((tile, index) => {
           const [row, col] = cells[index];
           const isCurrent = displayedPosition === index;
           const wasVisited = visited.has(index);
@@ -209,7 +221,7 @@ export const GameBoard2D = ({ currentPosition, diceValue, gameState, isRolling, 
         {/* Center — illustrated island + financial dashboard */}
         <div
           className="relative flex flex-col items-center justify-center"
-          style={{ gridRow: `2 / span ${BOARD_SIZE - 2}`, gridColumn: `2 / span ${BOARD_SIZE - 2}` }}
+          style={{ gridRow: `2 / span ${boardSize - 2}`, gridColumn: `2 / span ${boardSize - 2}` }}
         >
           {/* Decorative island base */}
           <div
