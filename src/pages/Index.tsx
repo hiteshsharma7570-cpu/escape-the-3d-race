@@ -552,13 +552,11 @@ const Index = () => {
         background: "linear-gradient(180deg, transparent 60%, hsl(225 70% 4%) 100%)",
       }} />
 
-      {/* === TOP CENTER HUD === */}
-      <div className="absolute top-3 left-1/2 -translate-x-1/2 z-30">
+      {/* === TOP BAR (mobile-first, wraps cleanly) === */}
+      <div className="relative z-30 flex flex-wrap items-center justify-center gap-2 mb-3 md:mb-4 xl:absolute xl:top-3 xl:left-1/2 xl:-translate-x-1/2 xl:mb-0">
         <TopCenterHud gameState={gameState} />
       </div>
-
-      {/* === TOP-RIGHT controls === */}
-      <div className="absolute top-3 right-3 z-30 flex gap-2">
+      <div className="relative z-30 flex flex-wrap items-center justify-center gap-2 mb-3 xl:absolute xl:top-3 xl:right-3 xl:mb-0">
         <IconBtn onClick={toggleSound} title="Sound">
           {isSoundEnabled ? <Volume2 className="w-4 h-4" /> : <VolumeX className="w-4 h-4" />}
         </IconBtn>
@@ -577,7 +575,7 @@ const Index = () => {
       </div>
 
       {/* === MAIN GRID LAYOUT === */}
-      <div className="max-w-[1600px] mx-auto pt-16 pb-4 flex flex-col xl:flex-row gap-4 items-stretch justify-center">
+      <div className="max-w-[1600px] mx-auto xl:pt-16 pb-4 flex flex-col xl:flex-row gap-4 items-stretch justify-center">
 
         {/* LEFT column: player panel + game log */}
         <div className="flex flex-col justify-between gap-3 order-2 xl:order-1">

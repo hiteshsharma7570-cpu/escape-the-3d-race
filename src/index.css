@@ -94,7 +94,16 @@
       radial-gradient(ellipse at 50% 95%, hsl(210 70% 10%) 0%, transparent 60%),
       hsl(var(--background));
     min-height: 100vh;
+    /* Mobile/native webview polish */
+    overscroll-behavior: none;
+    -webkit-tap-highlight-color: transparent;
+    -webkit-touch-callout: none;
+    padding-top: env(safe-area-inset-top);
+    padding-bottom: env(safe-area-inset-bottom);
+    padding-left: env(safe-area-inset-left);
+    padding-right: env(safe-area-inset-right);
   }
+  html, body { touch-action: manipulation; }
 }
 
 @layer utilities {
