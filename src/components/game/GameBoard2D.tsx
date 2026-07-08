@@ -31,9 +31,17 @@ export const GameBoard2D = ({ currentPosition, diceValue, gameState, isRolling, 
   const onFastTrack = !!gameState?.onFastTrack;
   const tiles = onFastTrack ? FAST_TRACK_TILES : BOARD_TILES;
   const activePosition = onFastTrack ? (gameState?.ftPosition ?? 0) : currentPosition;
-  const [displayedPosition, setDisplayedPosition] = useState(currentPosition);
-  const [visited, setVisited] = useState<Set<number>>(new Set([currentPosition]));
+  const [displayedPosition, setDisplayedPosition] = useState(activePosition);
+  const [visited, setVisited] = useState<Set<number>>(new Set([activePosition]));
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // When switching boards (Rat Race → Fast Track), snap to the new position
+  // and reset visited tiles so we don't animate through nonexistent indices.
+  useEffect(() => {
+    setDisplayedPosition(activePosition);
+    setVisited(new Set([activePosition]));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [onFastTrack]);
 
   useEffect(() => {
     if (displayedPosition === activePosition) return;
