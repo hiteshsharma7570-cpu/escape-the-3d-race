@@ -92,9 +92,9 @@ export const GameBoard2D = ({ currentPosition, diceValue, gameState, isRolling, 
       {/* 7x7 grid */}
       <div
         className="relative grid h-full w-full p-3 gap-1.5"
-        style={{ gridTemplateColumns: `repeat(${BOARD_SIZE}, 1fr)`, gridTemplateRows: `repeat(${BOARD_SIZE}, 1fr)` }}
+        style={{ gridTemplateColumns: `repeat(${boardSize}, 1fr)`, gridTemplateRows: `repeat(${boardSize}, 1fr)` }}
       >
-        {BOARD_TILES.map((tile, index) => {
+        {tiles.map((tile, index) => {
           const [row, col] = cells[index];
           const isCurrent = displayedPosition === index;
           const wasVisited = visited.has(index);
@@ -213,7 +213,7 @@ export const GameBoard2D = ({ currentPosition, diceValue, gameState, isRolling, 
         {/* Center — illustrated island + financial dashboard */}
         <div
           className="relative flex flex-col items-center justify-center"
-          style={{ gridRow: `2 / span ${BOARD_SIZE - 2}`, gridColumn: `2 / span ${BOARD_SIZE - 2}` }}
+          style={{ gridRow: `2 / span ${boardSize - 2}`, gridColumn: `2 / span ${boardSize - 2}` }}
         >
           {/* Decorative island base */}
           <div
