@@ -225,6 +225,15 @@ const Index = () => {
     }
   }, [gameState.hasEscapedRatRace, gameMode, winRecorded, gamesWon, gameState.playerName]);
 
+  // Game over: cash falls to -₹20,00,000 or lower.
+  useEffect(() => {
+    if (gameMode !== "playing") return;
+    if (showGameOver) return;
+    if ((gameState.cash ?? 0) <= -2000000) {
+      setShowGameOver(true);
+    }
+  }, [gameState.cash, gameMode, showGameOver]);
+
   // Check achievements whenever game state or gamesWon changes
   useEffect(() => {
     if (gameMode !== "playing" || !gameState.playerName) return;
