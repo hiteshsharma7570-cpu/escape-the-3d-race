@@ -454,36 +454,22 @@ export const handleTileEffect = (state: GameState, tile: Tile): GameState => {
     }
     case "ft_business":
     case "ft_dream": {
-      // Fast Track purchases resolve immediately here (no per-tile modal).
-      // Auto-buy if the player can afford it; otherwise log a "passed" note.
       const cost = num((tile as Tile).ftCost);
       const income = num((tile as Tile).ftIncome);
       const label = tile.label || (tile.type === "ft_business" ? "Business" : "Dream");
       if (cost <= 0) {
         pushLog(next, `🏝️ ${label}: nothing to do here.`);
-      } else if (num(next.cash) >= cost) {
-        next.cash = num(next.cash) - cost;
-        if (tile.type === "ft_business") {
-          const newAsset: Asset = {
-            id: `ft-${tile.id}-${Date.now()}`,
-            name: label,
-            type: "business",
-            cost,
-            income,
-            value: cost,
-            monthlyIncome: income,
-            risk: "high",
-            volatile: true,
-          };
-          next.assets = [...next.assets, newAsset];
-          pushLog(next, `🏢 Bought ${label} for ₹${cost.toLocaleString()} (+₹${income.toLocaleString()}/mo).`);
-        } else {
-          pushLog(next, `🌟 Lived the dream — ${label} for ₹${cost.toLocaleString()}.`);
-        }
+        next.pendingDecision = null;
       } else {
-        pushLog(next, `${tile.type === "ft_business" ? "🏢" : "🌟"} ${label} costs ₹${cost.toLocaleString()} — not enough cash, passed.`);
+        // Prompt the player with an explicit buy/skip decision.
+        next.pendingDecision = {
+          type: "fast_track_buy",
+          tileType: tile.type as "ft_business" | "ft_dream",
+          label,
+          cost,
+          income,
+        };
       }
-      next.pendingDecision = null;
       break;
     }
     case "ft_charity": {
@@ -645,6 +631,39 @@ export const applyLoanForAssetDecision = (state: GameState, accept: boolean): Ga
     next = buyDecision(next, card, decisionChoiceIndex ?? 0);
   }
   next = checkEscapeRatRace(next);
+  return recomputeDerived(next);
+};
+
+export const applyFastTrackBuyDecision = (state: GameState, accept: boolean): GameState => {
+  if (state.pendingDecision?.type !== "fast_track_buy") return state;
+  const { tileType, label, cost, income } = state.pendingDecision;
+  const next: GameState = { ...state, pendingDecision: null };
+  if (!accept) {
+    pushLog(next, `⏭️ Passed on ${label} (₹${cost.toLocaleString()}).`);
+    return recomputeDerived(next);
+  }
+  if (num(next.cash) < cost) {
+    pushLog(next, `${tileType === "ft_business" ? "🏢" : "🌟"} ${label} costs ₹${cost.toLocaleString()} — not enough cash.`);
+    return recomputeDerived(next);
+  }
+  next.cash = num(next.cash) - cost;
+  if (tileType === "ft_business") {
+    const newAsset: Asset = {
+      id: `ft-${Date.now()}`,
+      name: label,
+      type: "business",
+      cost,
+      income,
+      value: cost,
+      monthlyIncome: income,
+      risk: "high",
+      volatile: true,
+    };
+    next.assets = [...next.assets, newAsset];
+    pushLog(next, `🏢 Bought ${label} for ₹${cost.toLocaleString()} (+₹${income.toLocaleString()}/mo).`);
+  } else {
+    pushLog(next, `🌟 Lived the dream — ${label} for ₹${cost.toLocaleString()}.`);
+  }
   return recomputeDerived(next);
 };
 

@@ -11,7 +11,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { PendingDecision, MarketCard } from "@/types/game";
 import { MARKET_CARDS } from "@/lib/gameLogic";
-import { Heart, TrendingUp, Landmark } from "lucide-react";
+import { Heart, TrendingUp, Landmark, Building2, Sparkles } from "lucide-react";
 
 interface DecisionModalProps {
   pendingDecision: PendingDecision | null;
@@ -170,6 +170,50 @@ export const DecisionModal = ({ pendingDecision, cash, onAccept, onDecline }: De
                 Buy
               </AlertDialogAction>
             )}
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    );
+  }
+
+  // --- FAST TRACK BUY (Business / Dream) ---------------------------------
+  if (pendingDecision.type === "fast_track_buy") {
+    const { tileType, label, cost, income } = pendingDecision;
+    const canAfford = cash >= cost;
+    const isBusiness = tileType === "ft_business";
+    return (
+      <AlertDialog open>
+        <AlertDialogContent className="border-primary max-w-lg">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2 text-xl">
+              {isBusiness ? <Building2 className="w-6 h-6 text-cyan-500" /> : <Sparkles className="w-6 h-6 text-amber-500" />}
+              {isBusiness ? "Big Business Deal" : "Live the Dream"}: {label}
+            </AlertDialogTitle>
+            <AlertDialogDescription className="text-base space-y-3">
+              <p>
+                {isBusiness
+                  ? `A Fast Track business opportunity has landed on your table.`
+                  : `A once-in-a-lifetime dream is within reach.`}
+              </p>
+              <div className="bg-accent p-3 rounded-lg text-sm space-y-1">
+                <p>Cost: <b className="text-destructive">{fmt(cost)}</b></p>
+                {isBusiness && (
+                  <p>Monthly income: <b className="text-success">+{fmt(income)}</b></p>
+                )}
+                <p className="text-muted-foreground">Your cash: {fmt(cash)}</p>
+              </div>
+              {!canAfford && <p className="text-destructive text-sm">⚠️ Not enough cash to buy this.</p>}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={onDecline}>Skip</AlertDialogCancel>
+            <AlertDialogAction
+              disabled={!canAfford}
+              onClick={() => onAccept()}
+              className={isBusiness ? "bg-cyan-600 hover:bg-cyan-700 text-white" : "bg-amber-600 hover:bg-amber-700 text-white"}
+            >
+              {isBusiness ? "Buy Business" : "Buy Dream"}
+            </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
