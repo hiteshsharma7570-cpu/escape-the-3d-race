@@ -212,7 +212,7 @@ const liab = (principal: number, interestRate: number): Liability => ({
 export const PROFESSION_PROFILES: Record<string, ProfessionProfile> = {
   Engineer: {
     name: "Engineer",
-    cash: 32000,
+    cash: 1000000,
     salary: 200000,
     passiveIncome: 0,
     expenses: { taxes: 40000, other: 48000 },
@@ -225,7 +225,7 @@ export const PROFESSION_PROFILES: Record<string, ProfessionProfile> = {
   },
   Doctor: {
     name: "Doctor",
-    cash: 20000,
+    cash: 1000000,
     salary: 400000,
     passiveIncome: 0,
     expenses: { taxes: 100000, other: 80000 },
@@ -239,7 +239,7 @@ export const PROFESSION_PROFILES: Record<string, ProfessionProfile> = {
   },
   Teacher: {
     name: "Teacher",
-    cash: 40000,
+    cash: 1000000,
     salary: 80000,
     passiveIncome: 0,
     expenses: { taxes: 12000, other: 20000 },
@@ -252,14 +252,14 @@ export const PROFESSION_PROFILES: Record<string, ProfessionProfile> = {
   },
   Pilot: {
     name: "Pilot",
-    cash: 25000,
-    salary: 350000,
+    cash: 1000000,
+    salary: 450000,
     passiveIncome: 0,
-    expenses: { taxes: 80000, other: 60000 },
+    expenses: { taxes: 55000, other: 40000 },
     liabilities: {
-      mortgage: liab(5000000, 9.2),
-      carLoan: liab(700000, 10.5),
-      creditCard: liab(500000, 21),
+      mortgage: liab(4000000, 9.2),
+      carLoan: liab(500000, 10.5),
+      creditCard: liab(200000, 21),
       bankLoan: { principal: 0, emi: 0, interestRate: 12 },
     },
   },
