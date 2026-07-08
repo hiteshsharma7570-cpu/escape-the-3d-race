@@ -1,4 +1,4 @@
-import { BOARD_TILES, calculateNetWorth } from "@/lib/gameLogic";
+import { BOARD_TILES, FAST_TRACK_TILES, calculateNetWorth } from "@/lib/gameLogic";
 import { motion } from "framer-motion";
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { GameState } from "@/types/game";
@@ -28,27 +28,31 @@ function buildPerimeter(n: number = BOARD_SIZE): Array<[number, number]> {
 }
 
 export const GameBoard2D = ({ currentPosition, diceValue, gameState, isRolling, onRollDice }: GameBoard2DProps) => {
+  const onFastTrack = !!gameState?.onFastTrack;
+  const tiles = onFastTrack ? FAST_TRACK_TILES : BOARD_TILES;
+  const activePosition = onFastTrack ? (gameState?.ftPosition ?? 0) : currentPosition;
   const [displayedPosition, setDisplayedPosition] = useState(currentPosition);
   const [visited, setVisited] = useState<Set<number>>(new Set([currentPosition]));
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
-    if (displayedPosition === currentPosition) return;
+    if (displayedPosition === activePosition) return;
     if (timerRef.current) clearTimeout(timerRef.current);
     timerRef.current = setTimeout(() => {
       setDisplayedPosition((prev) => {
-        if (prev === currentPosition) return prev;
-        const next = (prev + 1) % BOARD_TILES.length;
+        if (prev === activePosition) return prev;
+        const next = (prev + 1) % tiles.length;
         setVisited((v) => new Set(v).add(next));
         return next;
       });
     }, 220);
     return () => { if (timerRef.current) clearTimeout(timerRef.current); };
-  }, [displayedPosition, currentPosition]);
+  }, [displayedPosition, activePosition, tiles.length]);
 
-  const cells = useMemo(buildPerimeter, []);
-  const safePosition = ((displayedPosition % BOARD_TILES.length) + BOARD_TILES.length) % BOARD_TILES.length;
-  const currentTile = BOARD_TILES[safePosition];
+  const boardSize = Math.max(4, Math.ceil(tiles.length / 4) + 1);
+  const cells = useMemo(() => buildPerimeter(boardSize), [boardSize]);
+  const safePosition = ((displayedPosition % tiles.length) + tiles.length) % tiles.length;
+  const currentTile = tiles[safePosition];
   const currentMeta = getTileMeta(currentTile.type);
   const netWorth = gameState ? calculateNetWorth(gameState) : 0;
 
