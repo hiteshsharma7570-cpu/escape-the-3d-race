@@ -434,6 +434,9 @@ const Index = () => {
         setGameState((prev) => applyOpportunityDecision(prev, true, extra));
       } else if (decision.type === "loan_for_asset") {
         setGameState((prev) => applyLoanForAssetDecision(prev, true));
+      } else if (decision.type === "fast_track_buy") {
+        playSound("earnMoney");
+        setGameState((prev) => applyFastTrackBuyDecision(prev, true));
       } else if (decision.type === "market_card" || decision.type === "doodad") {
         setGameState((prev) => ({ ...prev, pendingDecision: null }));
       }
@@ -459,6 +462,8 @@ const Index = () => {
         setGameState((prev) => applyOpportunityDecision(prev, false));
       } else if (decision.type === "loan_for_asset") {
         setGameState((prev) => applyLoanForAssetDecision(prev, false));
+      } else if (decision.type === "fast_track_buy") {
+        setGameState((prev) => applyFastTrackBuyDecision(prev, false));
       } else {
         setGameState((prev) => ({ ...prev, pendingDecision: null }));
       }
