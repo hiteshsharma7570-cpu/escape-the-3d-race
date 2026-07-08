@@ -32,6 +32,15 @@ import { Button } from "@/components/ui/button";
 import { HelpCircle, Music, Volume2, VolumeX, RotateCcw, Check, LogOut, Settings as SettingsIcon } from "lucide-react";
 import { useGameSounds } from "@/hooks/useGameSounds";
 import { WinScreen } from "@/components/game/WinScreen";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { ACHIEVEMENTS, meetsThreshold } from "@/lib/achievements";
 import {
   Tooltip, TooltipContent, TooltipProvider, TooltipTrigger,
@@ -121,6 +130,7 @@ const Index = () => {
   const [fiveCroreAwarded, setFiveCroreAwarded] = useState(false);
   const [showWelcome, setShowWelcome] = useState(false);
   const [showWinScreen, setShowWinScreen] = useState(false);
+  const [showGameOver, setShowGameOver] = useState(false);
   const [repayOpen, setRepayOpen] = useState(false);
   const [winRecorded, setWinRecorded] = useState(false);
   const [unlockedAchIds, setUnlockedAchIds] = useState<string[]>([]);
@@ -214,6 +224,15 @@ const Index = () => {
       }
     }
   }, [gameState.hasEscapedRatRace, gameMode, winRecorded, gamesWon, gameState.playerName]);
+
+  // Game over: cash falls to -₹20,00,000 or lower.
+  useEffect(() => {
+    if (gameMode !== "playing") return;
+    if (showGameOver) return;
+    if ((gameState.cash ?? 0) <= -2000000) {
+      setShowGameOver(true);
+    }
+  }, [gameState.cash, gameMode, showGameOver]);
 
   // Check achievements whenever game state or gamesWon changes
   useEffect(() => {
@@ -314,6 +333,7 @@ const Index = () => {
 
   const rollDice = () => {
     if (gameState.isRolling) return;
+    if (showGameOver || (gameState.cash ?? 0) <= -2000000) return;
     // Skip-turn (downsized) — roll consumed, no movement
     if (gameState.skipTurns > 0) {
       setGameState((prev) => ({
@@ -642,6 +662,46 @@ const Index = () => {
           setGameMode("setup");
         }}
       />
+
+      <AlertDialog open={showGameOver}>
+        <AlertDialogContent className="border-destructive">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="text-2xl text-destructive">💀 Game Over — Bankrupt</AlertDialogTitle>
+            <AlertDialogDescription className="text-base space-y-2">
+              <span className="block">
+                <b>{gameState.playerName}</b>, your cash fell to{" "}
+                <b className="text-destructive">₹{(gameState.cash ?? 0).toLocaleString()}</b>.
+              </span>
+              <span className="block">
+                Once cash on hand drops to <b>-₹20,00,000</b>, the game ends. Time to start fresh and try
+                a different strategy.
+              </span>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogAction
+              onClick={() => {
+                try {
+                  if (gameState.playerName) {
+                    localStorage.removeItem(saveKeyFor(gameState.playerName));
+                  }
+                } catch { /* ignore */ }
+                setShowGameOver(false);
+                setShowWinScreen(false);
+                setShowCertificate(false);
+                setShowFiveCrore(false);
+                setCertificateAwarded(false);
+                setFiveCroreAwarded(false);
+                setWinRecorded(false);
+                setGameState(createInitialGameState());
+                setGameMode("setup");
+              }}
+            >
+              Start Over
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
     </TooltipProvider>
   );
