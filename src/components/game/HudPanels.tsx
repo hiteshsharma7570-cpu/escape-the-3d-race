@@ -91,7 +91,7 @@ export const MarketStatusPanel = ({ gameState }: { gameState: GameState }) => {
   const Icon = isBull ? TrendingUp : isBear ? TrendingDown : Minus;
 
   return (
-    <div className="glass-card rounded-2xl p-3 w-[230px]">
+    <div className="glass-card rounded-2xl p-3 w-full sm:w-[230px]">
       <div className="text-[10px] tracking-[0.3em] text-gold font-bold pb-2 border-b border-amber-500/15">
         MARKET STATUS
       </div>
@@ -180,7 +180,7 @@ export const PlayersPanel = ({ currentPlayerName, currentNetWorth }: { currentPl
   })();
 
   return (
-    <div className="glass-card rounded-2xl p-3 w-[230px]">
+    <div className="glass-card rounded-2xl p-3 w-full sm:w-[230px]">
       <div className="text-[10px] tracking-[0.3em] text-gold font-bold pb-2 border-b border-amber-500/15">
         PLAYERS
       </div>
@@ -230,7 +230,7 @@ export const PlayersPanel = ({ currentPlayerName, currentNetWorth }: { currentPl
 export const GameLogPanel = ({ gameState }: { gameState: GameState }) => {
   const logs = gameState.gameLog.slice(0, 5);
   return (
-    <div className="glass-card rounded-2xl p-3 w-[300px]">
+    <div className="glass-card rounded-2xl p-3 w-full sm:w-[300px]">
       <div className="text-[10px] tracking-[0.3em] text-gold font-bold pb-2 border-b border-amber-500/15">
         GAME LOG
       </div>
