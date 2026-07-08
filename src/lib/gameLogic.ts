@@ -634,6 +634,39 @@ export const applyLoanForAssetDecision = (state: GameState, accept: boolean): Ga
   return recomputeDerived(next);
 };
 
+export const applyFastTrackBuyDecision = (state: GameState, accept: boolean): GameState => {
+  if (state.pendingDecision?.type !== "fast_track_buy") return state;
+  const { tileType, label, cost, income } = state.pendingDecision;
+  const next: GameState = { ...state, pendingDecision: null };
+  if (!accept) {
+    pushLog(next, `⏭️ Passed on ${label} (₹${cost.toLocaleString()}).`);
+    return recomputeDerived(next);
+  }
+  if (num(next.cash) < cost) {
+    pushLog(next, `${tileType === "ft_business" ? "🏢" : "🌟"} ${label} costs ₹${cost.toLocaleString()} — not enough cash.`);
+    return recomputeDerived(next);
+  }
+  next.cash = num(next.cash) - cost;
+  if (tileType === "ft_business") {
+    const newAsset: Asset = {
+      id: `ft-${Date.now()}`,
+      name: label,
+      type: "business",
+      cost,
+      income,
+      value: cost,
+      monthlyIncome: income,
+      risk: "high",
+      volatile: true,
+    };
+    next.assets = [...next.assets, newAsset];
+    pushLog(next, `🏢 Bought ${label} for ₹${cost.toLocaleString()} (+₹${income.toLocaleString()}/mo).`);
+  } else {
+    pushLog(next, `🌟 Lived the dream — ${label} for ₹${cost.toLocaleString()}.`);
+  }
+  return recomputeDerived(next);
+};
+
 // ---------------------------------------------------------------------------
 // ESCAPE / WIN
 // ---------------------------------------------------------------------------
