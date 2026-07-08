@@ -22,6 +22,7 @@ import {
   repayBankLoan,
   payOffDebt,
   applyLoanForAssetDecision,
+  applyFastTrackBuyDecision,
   checkEscapeRatRace,
   tickMarketCycle,
 } from "@/lib/gameLogic";
