@@ -14,7 +14,7 @@ export const playerSchema = z.object({
     .min(1, 'Player name is required')
     .max(30, 'Player name must be less than 30 characters')
     .regex(/^[a-zA-Z0-9\s\-_]+$/, 'Only letters, numbers, spaces, hyphens, and underscores allowed'),
-  profession: z.enum(['Teacher', 'Engineer', 'Doctor', 'Lawyer', 'Business Owner'], {
+  profession: z.enum(['Teacher', 'Engineer', 'Doctor', 'Pilot'], {
     errorMap: () => ({ message: 'Please select a valid profession' })
   })
 });
