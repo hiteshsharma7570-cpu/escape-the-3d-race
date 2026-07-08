@@ -333,6 +333,7 @@ const Index = () => {
 
   const rollDice = () => {
     if (gameState.isRolling) return;
+    if (showGameOver || (gameState.cash ?? 0) <= -2000000) return;
     // Skip-turn (downsized) — roll consumed, no movement
     if (gameState.skipTurns > 0) {
       setGameState((prev) => ({
