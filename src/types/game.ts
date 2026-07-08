@@ -117,7 +117,8 @@ export type PendingDecision =
   | { type: "loan_for_asset"; card: OpportunityCard; totalCost: number; shortfall: number; loanAmount: number; newEMI: number; onAccept: "buy_simple" | "buy_stock" | "buy_decision"; decisionChoiceIndex?: number }
   | { type: "bankruptcy"; debtOwed: number }
   | { type: "course_offer" }
-  | { type: "market_card"; cardId: number };
+  | { type: "market_card"; cardId: number }
+  | { type: "fast_track_buy"; tileType: "ft_business" | "ft_dream"; label: string; cost: number; income: number };
 
 export interface MarketHint {
   sentiment: "bullish" | "bearish" | "neutral";
