@@ -32,6 +32,15 @@ import { Button } from "@/components/ui/button";
 import { HelpCircle, Music, Volume2, VolumeX, RotateCcw, Check, LogOut, Settings as SettingsIcon } from "lucide-react";
 import { useGameSounds } from "@/hooks/useGameSounds";
 import { WinScreen } from "@/components/game/WinScreen";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { ACHIEVEMENTS, meetsThreshold } from "@/lib/achievements";
 import {
   Tooltip, TooltipContent, TooltipProvider, TooltipTrigger,
@@ -121,6 +130,7 @@ const Index = () => {
   const [fiveCroreAwarded, setFiveCroreAwarded] = useState(false);
   const [showWelcome, setShowWelcome] = useState(false);
   const [showWinScreen, setShowWinScreen] = useState(false);
+  const [showGameOver, setShowGameOver] = useState(false);
   const [repayOpen, setRepayOpen] = useState(false);
   const [winRecorded, setWinRecorded] = useState(false);
   const [unlockedAchIds, setUnlockedAchIds] = useState<string[]>([]);
