@@ -662,6 +662,46 @@ const Index = () => {
           setGameMode("setup");
         }}
       />
+
+      <AlertDialog open={showGameOver}>
+        <AlertDialogContent className="border-destructive">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="text-2xl text-destructive">💀 Game Over — Bankrupt</AlertDialogTitle>
+            <AlertDialogDescription className="text-base space-y-2">
+              <span className="block">
+                <b>{gameState.playerName}</b>, your cash fell to{" "}
+                <b className="text-destructive">₹{(gameState.cash ?? 0).toLocaleString()}</b>.
+              </span>
+              <span className="block">
+                Once cash on hand drops to <b>-₹20,00,000</b>, the game ends. Time to start fresh and try
+                a different strategy.
+              </span>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogAction
+              onClick={() => {
+                try {
+                  if (gameState.playerName) {
+                    localStorage.removeItem(saveKeyFor(gameState.playerName));
+                  }
+                } catch { /* ignore */ }
+                setShowGameOver(false);
+                setShowWinScreen(false);
+                setShowCertificate(false);
+                setShowFiveCrore(false);
+                setCertificateAwarded(false);
+                setFiveCroreAwarded(false);
+                setWinRecorded(false);
+                setGameState(createInitialGameState());
+                setGameMode("setup");
+              }}
+            >
+              Start Over
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
     </TooltipProvider>
   );
