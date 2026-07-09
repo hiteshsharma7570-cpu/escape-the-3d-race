@@ -91,9 +91,14 @@ export const GameBoard2D = ({ currentPosition, diceValue, gameState, isRolling, 
     <div
       className="relative w-full mx-auto rounded-3xl overflow-hidden"
       style={{
-        aspectRatio: "1 / 1",
-        // Live JS-computed cap (updates on resize/orientation/visualViewport).
-        maxWidth: boardMax,
+        // Square in normal mode; fills the whole visible viewport in immersive
+        // mode (rectangular tiles are fine — we prioritize using every pixel).
+        aspectRatio: immersive ? undefined : "1 / 1",
+        maxWidth: immersive ? "none" : boardMax,
+        width: immersive ? "100vw" : undefined,
+        height: immersive ? `calc(100svh - ${reservedHeight}px)` : undefined,
+        marginLeft: immersive ? "calc(50% - 50vw)" : undefined,
+        marginRight: immersive ? "calc(50% - 50vw)" : undefined,
         background:
           "radial-gradient(ellipse at 50% 50%, hsl(225 60% 11%) 0%, hsl(225 70% 6%) 60%, hsl(225 80% 3%) 100%)",
         boxShadow:
