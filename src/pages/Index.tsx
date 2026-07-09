@@ -535,7 +535,7 @@ const Index = () => {
   const netWorth = calculateNetWorth(gameState);
   return (
     <TooltipProvider delayDuration={150}>
-    <div className="relative min-h-screen overflow-hidden p-3 md:p-5">
+    <div className="relative min-h-screen overflow-hidden p-3 md:p-5 landscape:max-[900px]:p-2">
       {/* Night-city ambient backdrop layers */}
       <div className="pointer-events-none absolute inset-0 -z-10" style={{
         background:
@@ -553,10 +553,10 @@ const Index = () => {
       }} />
 
       {/* === TOP BAR (mobile-first, wraps cleanly) === */}
-      <div className="relative z-30 flex flex-wrap items-center justify-center gap-2 mb-3 md:mb-4 xl:absolute xl:top-3 xl:left-1/2 xl:-translate-x-1/2 xl:mb-0">
+      <div className="relative z-30 flex flex-wrap items-center justify-center gap-2 mb-3 md:mb-4 landscape:max-[900px]:mb-1 xl:absolute xl:top-3 xl:left-1/2 xl:-translate-x-1/2 xl:mb-0">
         <TopCenterHud gameState={gameState} />
       </div>
-      <div className="relative z-30 flex flex-wrap items-center justify-center gap-2 mb-3 xl:absolute xl:top-3 xl:right-3 xl:mb-0">
+      <div className="relative z-30 flex flex-wrap items-center justify-center gap-2 mb-3 landscape:max-[900px]:mb-1 xl:absolute xl:top-3 xl:right-3 xl:mb-0">
         <IconBtn onClick={toggleSound} title="Sound">
           {isSoundEnabled ? <Volume2 className="w-4 h-4" /> : <VolumeX className="w-4 h-4" />}
         </IconBtn>
