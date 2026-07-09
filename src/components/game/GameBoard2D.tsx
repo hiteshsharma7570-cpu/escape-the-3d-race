@@ -242,13 +242,13 @@ export const GameBoard2D = ({ currentPosition, diceValue, gameState, isRolling, 
           />
 
           {/* Glass dashboard */}
-          <div className="relative glass-card gold-border rounded-2xl px-6 py-5 w-[94%] h-[92%] max-w-[560px] flex flex-col items-center justify-between">
-            <div className="font-display text-[12px] tracking-[0.3em] text-gold font-bold">
+          <div className="relative glass-card gold-border rounded-xl sm:rounded-2xl px-2 py-2 sm:px-6 sm:py-5 w-[94%] h-[92%] max-w-[560px] flex flex-col items-center justify-between gap-1">
+            <div className="font-display text-[9px] sm:text-[12px] tracking-[0.2em] sm:tracking-[0.3em] text-gold font-bold text-center">
               FINANCIAL DASHBOARD
             </div>
 
             {gameState ? (
-              <div className="grid grid-cols-2 gap-x-8 gap-y-3 text-xs text-slate-200 w-full mt-2">
+              <div className="grid grid-cols-2 gap-x-2 sm:gap-x-8 gap-y-1 sm:gap-y-3 text-[10px] sm:text-xs text-slate-200 w-full">
                 <Stat label="Cash"          value={`₹${(gameState.cash ?? 0).toLocaleString()}`}          tone="green" />
                 <Stat label="Salary"        value={`₹${(gameState.salary ?? 0).toLocaleString()} /m`} />
                 <Stat label="Passive"       value={`₹${(gameState.passiveIncome ?? 0).toLocaleString()} /m`} tone="gold" />
@@ -261,7 +261,7 @@ export const GameBoard2D = ({ currentPosition, diceValue, gameState, isRolling, 
               <div className="text-slate-400 text-xs">Awaiting game state…</div>
             )}
 
-            <div className="w-full px-3 py-2 rounded-md border text-center" style={{ borderColor: "hsla(140, 90%, 55%, 0.4)", background: "hsla(140, 90%, 55%, 0.08)" }}>
+            <div className="hidden sm:block w-full px-3 py-2 rounded-md border text-center" style={{ borderColor: "hsla(140, 90%, 55%, 0.4)", background: "hsla(140, 90%, 55%, 0.08)" }}>
               <div className="text-[10px] tracking-[0.25em] text-gold-deep font-bold">GOAL</div>
               <div className="text-[11px] text-slate-300 mt-0.5">Grow Cash to ₹5 Crore</div>
               <div className="text-sm font-display font-bold mt-0.5" style={{ color: "hsl(140, 90%, 65%)", textShadow: "0 0 10px hsla(140, 90%, 55%, 0.6)" }}>
@@ -269,13 +269,13 @@ export const GameBoard2D = ({ currentPosition, diceValue, gameState, isRolling, 
               </div>
             </div>
 
-            <div className="text-[11px] text-slate-300">
+            <div className="text-[9px] sm:text-[11px] text-slate-300 text-center">
               <span className="text-slate-500">On Tile: </span>
               <span className="font-semibold">{currentMeta.icon} {currentMeta.category}</span>
             </div>
 
             {onRollDice && (
-              <div className="pt-3 w-full border-t border-amber-500/20 flex items-center justify-center gap-4">
+              <div className="pt-1 sm:pt-3 w-full border-t border-amber-500/20 flex items-center justify-center gap-2 sm:gap-4">
                   <DiceRoll
                     diceValue={diceValue}
                     isRolling={!!isRolling}
