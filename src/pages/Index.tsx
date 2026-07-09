@@ -29,7 +29,7 @@ import {
 import { toast } from "sonner";
 import { logMaintenanceError } from "@/lib/maintenanceLog";
 import { Button } from "@/components/ui/button";
-import { HelpCircle, Music, Volume2, VolumeX, RotateCcw, Check, LogOut, Settings as SettingsIcon } from "lucide-react";
+import { HelpCircle, Music, Volume2, VolumeX, RotateCcw, Check, LogOut, Settings as SettingsIcon, Maximize2, Minimize2 } from "lucide-react";
 import { useGameSounds } from "@/hooks/useGameSounds";
 import { WinScreen } from "@/components/game/WinScreen";
 import {
@@ -132,6 +132,7 @@ const Index = () => {
   const [showWinScreen, setShowWinScreen] = useState(false);
   const [showGameOver, setShowGameOver] = useState(false);
   const [repayOpen, setRepayOpen] = useState(false);
+  const [immersive, setImmersive] = useState(false);
   const [winRecorded, setWinRecorded] = useState(false);
   const [unlockedAchIds, setUnlockedAchIds] = useState<string[]>([]);
   const [gamesWon, setGamesWon] = useState(0);
@@ -141,6 +142,33 @@ const Index = () => {
   });
   const saveStatusTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const { playSound, isMusicEnabled, isSoundEnabled, toggleMusic, toggleSound } = useGameSounds();
+
+  // Immersive / fullscreen mode: hides all side panels and requests the
+  // browser Fullscreen API so the board can claim the whole screen.
+  const toggleImmersive = async () => {
+    const next = !immersive;
+    setImmersive(next);
+    try {
+      if (next && !document.fullscreenElement && document.documentElement.requestFullscreen) {
+        await document.documentElement.requestFullscreen();
+      } else if (!next && document.fullscreenElement && document.exitFullscreen) {
+        await document.exitFullscreen();
+      }
+    } catch {
+      /* Fullscreen may be blocked (iOS Safari, insecure context). The layout
+         still switches to immersive so users on those browsers still benefit. */
+    }
+  };
+
+  // Keep the immersive flag in sync when the user presses Esc / uses gesture
+  // to exit fullscreen.
+  useEffect(() => {
+    const onFsChange = () => {
+      if (!document.fullscreenElement) setImmersive(false);
+    };
+    document.addEventListener("fullscreenchange", onFsChange);
+    return () => document.removeEventListener("fullscreenchange", onFsChange);
+  }, []);
 
   const flashSaved = () => {
     setSaveStatus({ show: true, message: "Saved just now" });
