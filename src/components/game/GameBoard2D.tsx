@@ -253,7 +253,7 @@ export const GameBoard2D = ({ currentPosition, diceValue, gameState, isRolling, 
             </div>
 
             {gameState ? (
-              <div className="grid grid-cols-2 gap-x-1.5 sm:gap-x-8 gap-y-0.5 sm:gap-y-3 text-[9px] sm:text-xs max-[359px]:text-[8px] text-slate-200 w-full">
+              <div className="grid grid-cols-2 gap-x-1.5 sm:gap-x-8 gap-y-0 sm:gap-y-3 text-[9px] sm:text-xs max-[359px]:text-[8px] text-slate-200 w-full">
                 <Stat label="Cash"          value={`₹${(gameState.cash ?? 0).toLocaleString()}`}          tone="green" />
                 <Stat label="Salary"        value={`₹${(gameState.salary ?? 0).toLocaleString()} /m`} />
                 <Stat label="Passive"       value={`₹${(gameState.passiveIncome ?? 0).toLocaleString()} /m`} tone="gold" />
