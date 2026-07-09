@@ -71,8 +71,14 @@ export const GameBoard2D = ({ currentPosition, diceValue, gameState, isRolling, 
   //   - Reserve room for the top HUD (≈120px portrait, ≈70px landscape).
   //   - Reserve horizontal room for side panels when we're in the 3-column
   //     phone-landscape layout (~72% of width goes to panels).
-  const reservedHeight = vp.isShort ? 130 : 150;
-  const widthCap = vp.isShort && vp.width < 900 ? Math.floor(vp.width * 0.38) : vp.width - 16;
+  // Reserved space above the board: top HUD (Month ribbon + icons) + page
+  // padding + a bit of breathing room. Landscape has less vertical HUD.
+  const reservedHeight = vp.isShort ? 100 : 160;
+  // Horizontal reserve accounts for page padding (p-3 = 24px total) plus
+  // side panels in the phone-landscape 3-column layout.
+  const widthCap = vp.isShort && vp.width < 900
+    ? Math.floor(vp.width * 0.36)
+    : vp.width - 32;
   const heightCap = vp.height - reservedHeight;
   const boardMax = Math.max(220, Math.min(820, widthCap, heightCap));
 
@@ -183,9 +189,9 @@ export const GameBoard2D = ({ currentPosition, diceValue, gameState, isRolling, 
 
                 {/* Title */}
                 <div
-                  className="relative font-extrabold leading-tight tracking-wide text-white"
+                  className="relative font-extrabold leading-[1.05] tracking-tight text-white break-words w-full px-0.5"
                   style={{
-                    fontSize: "clamp(0.5rem, 1.6vw, 0.72rem)",
+                    fontSize: "clamp(0.42rem, 1.5vw, 0.72rem)",
                     textShadow: `0 0 6px ${neonGlow70}, 0 1px 2px hsla(0,0%,0%,0.9)`,
                   }}
                 >
@@ -194,9 +200,9 @@ export const GameBoard2D = ({ currentPosition, diceValue, gameState, isRolling, 
 
                 {/* Subtitle */}
                 <div
-                  className="relative leading-none tracking-[0.08em] font-mono-num font-semibold"
+                  className="relative leading-tight tracking-[0.04em] font-mono-num font-semibold break-words w-full px-0.5"
                   style={{
-                    fontSize: "clamp(0.42rem, 1.3vw, 0.62rem)",
+                    fontSize: "clamp(0.38rem, 1.2vw, 0.62rem)",
                     color: `hsl(${h}, ${s}, 80%)`,
                   }}
                 >
