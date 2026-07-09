@@ -29,7 +29,7 @@ import {
 import { toast } from "sonner";
 import { logMaintenanceError } from "@/lib/maintenanceLog";
 import { Button } from "@/components/ui/button";
-import { HelpCircle, Music, Volume2, VolumeX, RotateCcw, Check, LogOut, Settings as SettingsIcon, Maximize2, Minimize2 } from "lucide-react";
+import { HelpCircle, Music, Volume2, VolumeX, RotateCcw, Check, LogOut, Settings as SettingsIcon } from "lucide-react";
 import { useGameSounds } from "@/hooks/useGameSounds";
 import { WinScreen } from "@/components/game/WinScreen";
 import {
@@ -132,7 +132,6 @@ const Index = () => {
   const [showWinScreen, setShowWinScreen] = useState(false);
   const [showGameOver, setShowGameOver] = useState(false);
   const [repayOpen, setRepayOpen] = useState(false);
-  const [immersive, setImmersive] = useState(false);
   const [winRecorded, setWinRecorded] = useState(false);
   const [unlockedAchIds, setUnlockedAchIds] = useState<string[]>([]);
   const [gamesWon, setGamesWon] = useState(0);
@@ -142,33 +141,6 @@ const Index = () => {
   });
   const saveStatusTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const { playSound, isMusicEnabled, isSoundEnabled, toggleMusic, toggleSound } = useGameSounds();
-
-  // Immersive / fullscreen mode: hides all side panels and requests the
-  // browser Fullscreen API so the board can claim the whole screen.
-  const toggleImmersive = async () => {
-    const next = !immersive;
-    setImmersive(next);
-    try {
-      if (next && !document.fullscreenElement && document.documentElement.requestFullscreen) {
-        await document.documentElement.requestFullscreen();
-      } else if (!next && document.fullscreenElement && document.exitFullscreen) {
-        await document.exitFullscreen();
-      }
-    } catch {
-      /* Fullscreen may be blocked (iOS Safari, insecure context). The layout
-         still switches to immersive so users on those browsers still benefit. */
-    }
-  };
-
-  // Keep the immersive flag in sync when the user presses Esc / uses gesture
-  // to exit fullscreen.
-  useEffect(() => {
-    const onFsChange = () => {
-      if (!document.fullscreenElement) setImmersive(false);
-    };
-    document.addEventListener("fullscreenchange", onFsChange);
-    return () => document.removeEventListener("fullscreenchange", onFsChange);
-  }, []);
 
   const flashSaved = () => {
     setSaveStatus({ show: true, message: "Saved just now" });
@@ -563,7 +535,7 @@ const Index = () => {
   const netWorth = calculateNetWorth(gameState);
   return (
     <TooltipProvider delayDuration={150}>
-    <div className="relative min-h-screen overflow-hidden p-3 md:p-5 landscape:max-[900px]:p-2">
+    <div className="relative min-h-screen overflow-hidden p-3 md:p-5">
       {/* Night-city ambient backdrop layers */}
       <div className="pointer-events-none absolute inset-0 -z-10" style={{
         background:
@@ -581,48 +553,37 @@ const Index = () => {
       }} />
 
       {/* === TOP BAR (mobile-first, wraps cleanly) === */}
-      {!immersive && (
-      <div className="relative z-30 flex flex-wrap items-center justify-center gap-2 mb-3 md:mb-4 landscape:max-[900px]:mb-1 xl:absolute xl:top-3 xl:left-1/2 xl:-translate-x-1/2 xl:mb-0">
+      <div className="relative z-30 flex flex-wrap items-center justify-center gap-2 mb-3 md:mb-4 xl:absolute xl:top-3 xl:left-1/2 xl:-translate-x-1/2 xl:mb-0">
         <TopCenterHud gameState={gameState} />
       </div>
-      )}
-      <div className={`relative z-30 flex flex-wrap items-center justify-center gap-2 mb-3 landscape:max-[900px]:mb-1 xl:absolute xl:top-3 xl:right-3 xl:mb-0 ${immersive ? "!absolute !top-2 !right-2 !mb-0" : ""}`}>
+      <div className="relative z-30 flex flex-wrap items-center justify-center gap-2 mb-3 xl:absolute xl:top-3 xl:right-3 xl:mb-0">
         <IconBtn onClick={toggleSound} title="Sound">
           {isSoundEnabled ? <Volume2 className="w-4 h-4" /> : <VolumeX className="w-4 h-4" />}
         </IconBtn>
         <IconBtn onClick={toggleMusic} title="Music">
           {isMusicEnabled ? <Music className="w-4 h-4" /> : <VolumeX className="w-4 h-4" />}
         </IconBtn>
-        <IconBtn onClick={toggleImmersive} title={immersive ? "Exit fullscreen" : "Fullscreen board"}>
-          {immersive ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}
+        <IconBtn onClick={showInstructions} title="Help">
+          <HelpCircle className="w-4 h-4" />
         </IconBtn>
-        {!immersive && (
-          <>
-            <IconBtn onClick={showInstructions} title="Help">
-              <HelpCircle className="w-4 h-4" />
-            </IconBtn>
-            <IconBtn onClick={handleChangePlayer} title="Change player">
-              <LogOut className="w-4 h-4" />
-            </IconBtn>
-            <IconBtn onClick={handleResetMyGame} title="Restart">
-              <RotateCcw className="w-4 h-4" />
-            </IconBtn>
-          </>
-        )}
+        <IconBtn onClick={handleChangePlayer} title="Change player">
+          <LogOut className="w-4 h-4" />
+        </IconBtn>
+        <IconBtn onClick={handleResetMyGame} title="Restart">
+          <RotateCcw className="w-4 h-4" />
+        </IconBtn>
       </div>
 
       {/* === MAIN GRID LAYOUT === */}
       {/* On phone-landscape (short viewports) switch to a row so the square board
           shrinks to fit the height and panels sit alongside it. */}
-      <div className={`max-w-[1600px] mx-auto xl:pt-16 pb-4 flex flex-col ${immersive ? "" : "landscape:max-[900px]:flex-row xl:flex-row"} gap-4 items-stretch justify-center`}>
+      <div className="max-w-[1600px] mx-auto xl:pt-16 pb-4 flex flex-col landscape:max-[900px]:flex-row xl:flex-row gap-4 items-stretch justify-center">
 
         {/* LEFT column: player panel + game log */}
-        {!immersive && (
-        <div className="flex flex-col justify-between gap-3 order-2 xl:order-1 landscape:max-[900px]:order-1 landscape:max-[900px]:w-[30%] landscape:max-[900px]:min-w-0">
+        <div className="flex flex-col justify-between gap-3 order-2 xl:order-1 landscape:max-[900px]:order-1 landscape:max-[900px]:w-[38%] landscape:max-[900px]:min-w-0">
           <PlayerPanel gameState={gameState} />
           <GameLogPanel gameState={gameState} />
         </div>
-        )}
 
         {/* CENTER: board + dice + actions */}
         <div className="flex-1 flex flex-col items-stretch gap-3 order-1 xl:order-2 landscape:max-[900px]:order-2 min-w-0">
@@ -632,18 +593,16 @@ const Index = () => {
             gameState={gameState}
             isRolling={gameState.isRolling}
             onRollDice={rollDice}
-            immersive={immersive}
           />
 
 
-          {!immersive && saveStatus.show && (
+          {saveStatus.show && (
             <div className="text-[10px] text-slate-500 flex items-center gap-1 self-center">
               <Check className="w-3 h-3 text-emerald-400" /> {saveStatus.message}
             </div>
           )}
 
           {/* Portfolio dashboard directly below the board, matching its width */}
-          {!immersive && (
           <div className="w-full">
             <GameDashboard
               gameState={gameState}
@@ -654,16 +613,13 @@ const Index = () => {
               onPayOffDebt={handlePayOffDebt}
             />
           </div>
-          )}
         </div>
 
         {/* RIGHT column: market status + players list */}
-        {!immersive && (
-        <div className="flex flex-col gap-3 order-3 xl:w-[380px] landscape:max-[900px]:w-[30%] landscape:max-[900px]:min-w-0">
+        <div className="flex flex-col gap-3 order-3 xl:w-[380px] landscape:max-[900px]:w-[38%] landscape:max-[900px]:min-w-0">
           <MarketStatusPanel gameState={gameState} />
           <PlayersPanel currentPlayerName={gameState.playerName} currentNetWorth={netWorth} />
         </div>
-        )}
       </div>
 
       <DecisionModal

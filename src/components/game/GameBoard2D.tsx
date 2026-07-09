@@ -4,7 +4,6 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import type { GameState } from "@/types/game";
 import { getTileMeta } from "@/lib/tileMeta";
 import { DiceRoll } from "./HudPanels";
-import { useViewport } from "@/hooks/useViewport";
 
 interface GameBoard2DProps {
   currentPosition: number;
@@ -12,8 +11,6 @@ interface GameBoard2DProps {
   gameState?: GameState;
   isRolling?: boolean;
   onRollDice?: () => void;
-  /** When true, board sizes itself to fill the entire viewport (immersive mode). */
-  immersive?: boolean;
 }
 
 
@@ -30,8 +27,7 @@ function buildPerimeter(n: number = BOARD_SIZE): Array<[number, number]> {
   return cells;
 }
 
-export const GameBoard2D = ({ currentPosition, diceValue, gameState, isRolling, onRollDice, immersive }: GameBoard2DProps) => {
-  const vp = useViewport();
+export const GameBoard2D = ({ currentPosition, diceValue, gameState, isRolling, onRollDice }: GameBoard2DProps) => {
   const onFastTrack = !!gameState?.onFastTrack;
   const tiles = onFastTrack ? FAST_TRACK_TILES : BOARD_TILES;
   const activePosition = onFastTrack ? (gameState?.ftPosition ?? 0) : currentPosition;
@@ -68,37 +64,14 @@ export const GameBoard2D = ({ currentPosition, diceValue, gameState, isRolling, 
   const currentMeta = getTileMeta(currentTile.type);
   const netWorth = gameState ? calculateNetWorth(gameState) : 0;
 
-  // Live-computed square board size. Reacts to rotation and browser-chrome
-  // changes (URL bar collapsing, keyboard opening) via useViewport.
-  //   - Reserve room for the top HUD (≈120px portrait, ≈70px landscape).
-  //   - Reserve horizontal room for side panels when we're in the 3-column
-  //     phone-landscape layout (~72% of width goes to panels).
-  // Reserved space above the board: top HUD (Month ribbon + icons) + page
-  // padding + a bit of breathing room. Landscape has less vertical HUD.
-  const reservedHeight = immersive ? 40 : vp.isShort ? 100 : 160;
-  // Horizontal reserve accounts for page padding (p-3 = 24px total) plus
-  // side panels in the phone-landscape 3-column layout. Immersive mode ignores
-  // panels entirely and lets the board consume the full viewport.
-  const widthCap = immersive
-    ? vp.width - 16
-    : vp.isShort && vp.width < 900
-      ? Math.floor(vp.width * 0.36)
-      : vp.width - 32;
-  const heightCap = vp.height - reservedHeight;
-  const boardMax = Math.max(220, Math.min(immersive ? 2000 : 820, widthCap, heightCap));
-
   return (
     <div
       className="relative w-full mx-auto rounded-3xl overflow-hidden"
       style={{
-        // Square in normal mode; fills the whole visible viewport in immersive
-        // mode (rectangular tiles are fine — we prioritize using every pixel).
-        aspectRatio: immersive ? undefined : "1 / 1",
-        maxWidth: immersive ? "none" : boardMax,
-        width: immersive ? "100vw" : undefined,
-        height: immersive ? `calc(100svh - ${reservedHeight}px)` : undefined,
-        marginLeft: immersive ? "calc(50% - 50vw)" : undefined,
-        marginRight: immersive ? "calc(50% - 50vw)" : undefined,
+        aspectRatio: "1 / 1",
+        // Cap by width AND height so the square board fits in landscape too
+        // (svh accounts for mobile browser chrome shrinking the viewport).
+        maxWidth: "min(820px, 100vw - 16px, 100svh - 40px)",
         background:
           "radial-gradient(ellipse at 50% 50%, hsl(225 60% 11%) 0%, hsl(225 70% 6%) 60%, hsl(225 80% 3%) 100%)",
         boxShadow:
@@ -165,7 +138,7 @@ export const GameBoard2D = ({ currentPosition, diceValue, gameState, isRolling, 
               )}
 
               <motion.div
-                className="relative w-full h-full rounded-md sm:rounded-lg flex flex-col items-center justify-center sm:justify-between text-center overflow-hidden py-0.5 px-0.5 sm:py-1.5"
+                className="relative w-full h-full rounded-md sm:rounded-lg flex flex-col items-center justify-between text-center overflow-hidden py-0.5 px-0.5 sm:py-1.5"
                 animate={{
                   scale: isCurrent ? [1, 1.08, 1.03] : 1,
                   boxShadow: isCurrent
@@ -189,7 +162,7 @@ export const GameBoard2D = ({ currentPosition, diceValue, gameState, isRolling, 
 
                 {/* Icon */}
                 <motion.div
-                  className="relative text-[20px] sm:text-[22px] md:text-[28px] leading-none"
+                  className="relative text-[14px] sm:text-[22px] md:text-[28px] leading-none"
                   style={{ filter: `drop-shadow(0 2px 6px ${neonGlow70})` }}
                   animate={isCurrent ? { scale: [1, 1.25, 1], rotate: [0, -8, 8, 0] } : { scale: 1 }}
                   transition={{ duration: 0.7 }}
@@ -197,22 +170,22 @@ export const GameBoard2D = ({ currentPosition, diceValue, gameState, isRolling, 
                   {meta.icon}
                 </motion.div>
 
-                {/* Title — hidden on mobile (icon-only) so tiles stay legible */}
+                {/* Title */}
                 <div
-                  className="relative font-extrabold leading-[1.05] tracking-tight text-white break-words w-full px-0.5 hidden sm:block"
+                  className="relative font-extrabold leading-tight tracking-wide text-white"
                   style={{
-                    fontSize: "clamp(0.42rem, 1.5vw, 0.72rem)",
+                    fontSize: "clamp(0.5rem, 1.6vw, 0.72rem)",
                     textShadow: `0 0 6px ${neonGlow70}, 0 1px 2px hsla(0,0%,0%,0.9)`,
                   }}
                 >
                   {meta.category}
                 </div>
 
-                {/* Subtitle — hidden on mobile */}
+                {/* Subtitle */}
                 <div
-                  className="relative leading-tight tracking-[0.04em] font-mono-num font-semibold break-words w-full px-0.5 hidden sm:block"
+                  className="relative leading-none tracking-[0.08em] font-mono-num font-semibold"
                   style={{
-                    fontSize: "clamp(0.38rem, 1.2vw, 0.62rem)",
+                    fontSize: "clamp(0.42rem, 1.3vw, 0.62rem)",
                     color: `hsl(${h}, ${s}, 80%)`,
                   }}
                 >
@@ -335,8 +308,8 @@ const Stat = ({
     tone === "gold"  ? "text-gold"        : "text-slate-100";
   return (
     <div className="text-left">
-      <div className="text-[8px] sm:text-[10px] uppercase tracking-wider text-slate-500">{label}</div>
-      <div className={`font-mono-num font-bold text-[10px] sm:text-[13px] truncate ${color}`}>{value}</div>
+      <div className="text-[10px] uppercase tracking-wider text-slate-500">{label}</div>
+      <div className={`font-mono-num font-bold text-[13px] ${color}`}>{value}</div>
     </div>
   );
 };
