@@ -280,12 +280,13 @@ export const GameBoard2D = ({ currentPosition, diceValue, gameState, isRolling, 
             </div>
 
             {onRollDice && (
-              <div className="pt-1 sm:pt-3 w-full border-t border-amber-500/20 flex items-center justify-center gap-2 sm:gap-4">
-                  <DiceRoll
-                    diceValue={diceValue}
-                    isRolling={!!isRolling}
-                    onRoll={onRollDice}
-                  />
+              <div className="pt-1 sm:pt-3 pb-1 w-full border-t border-amber-500/20 flex items-center justify-center px-1 sm:px-2">
+                <DiceRoll
+                  diceValue={diceValue}
+                  isRolling={!!isRolling}
+                  disabled={!!isRolling || !!gameState?.isOut}
+                  onRoll={onRollDice}
+                />
               </div>
             )}
 
