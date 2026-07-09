@@ -325,8 +325,8 @@ const Stat = ({
     tone === "gold"  ? "text-gold"        : "text-slate-100";
   return (
     <div className="text-left">
-      <div className="text-[10px] uppercase tracking-wider text-slate-500">{label}</div>
-      <div className={`font-mono-num font-bold text-[13px] ${color}`}>{value}</div>
+      <div className="text-[8px] sm:text-[10px] uppercase tracking-wider text-slate-500">{label}</div>
+      <div className={`font-mono-num font-bold text-[10px] sm:text-[13px] truncate ${color}`}>{value}</div>
     </div>
   );
 };
