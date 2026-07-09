@@ -535,7 +535,7 @@ const Index = () => {
   const netWorth = calculateNetWorth(gameState);
   return (
     <TooltipProvider delayDuration={150}>
-    <div className="relative min-h-screen overflow-hidden p-3 md:p-5">
+    <div className="relative min-h-screen overflow-hidden overflow-x-hidden p-3 md:p-5">
       {/* Night-city ambient backdrop layers */}
       <div className="pointer-events-none absolute inset-0 -z-10" style={{
         background:
@@ -577,7 +577,7 @@ const Index = () => {
       {/* === MAIN GRID LAYOUT === */}
       {/* On phone-landscape (short viewports) switch to a row so the square board
           shrinks to fit the height and panels sit alongside it. */}
-      <div className="max-w-[1600px] mx-auto xl:pt-16 pb-4 flex flex-col landscape:max-[900px]:flex-row xl:flex-row gap-4 items-stretch justify-center">
+      <div className="max-w-[1600px] mx-auto xl:pt-16 pb-4 flex flex-col landscape:max-[900px]:flex-row xl:flex-row gap-4 items-stretch justify-center overflow-x-hidden">
 
         {/* LEFT column: player panel + game log */}
         <div className="flex flex-col justify-between gap-3 order-2 xl:order-1 landscape:max-[900px]:order-1 landscape:max-[900px]:w-[38%] landscape:max-[900px]:min-w-0">
