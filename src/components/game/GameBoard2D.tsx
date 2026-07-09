@@ -71,8 +71,8 @@ export const GameBoard2D = ({ currentPosition, diceValue, gameState, isRolling, 
   //   - Reserve room for the top HUD (≈120px portrait, ≈70px landscape).
   //   - Reserve horizontal room for side panels when we're in the 3-column
   //     phone-landscape layout (~72% of width goes to panels).
-  const reservedHeight = vp.isShort ? 40 : 130;
-  const widthCap = vp.isShort && vp.width < 900 ? Math.floor(vp.width * 0.42) : vp.width - 16;
+  const reservedHeight = vp.isShort ? 130 : 150;
+  const widthCap = vp.isShort && vp.width < 900 ? Math.floor(vp.width * 0.38) : vp.width - 16;
   const heightCap = vp.height - reservedHeight;
   const boardMax = Math.max(220, Math.min(820, widthCap, heightCap));
 
