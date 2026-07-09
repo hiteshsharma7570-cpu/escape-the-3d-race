@@ -102,6 +102,11 @@ export const GameBoard2D = ({ currentPosition, diceValue, gameState, isRolling, 
         className="relative grid h-full w-full p-3 gap-1.5"
         style={{ gridTemplateColumns: `repeat(${boardSize}, 1fr)`, gridTemplateRows: `repeat(${boardSize}, 1fr)` }}
       >
+        {/* Responsive spacing via inline is set above; padding shrinks on mobile via className below */}
+        <div className="hidden" />
+        {tiles.map((tile, index) => {
+        style={{ gridTemplateColumns: `repeat(${boardSize}, 1fr)`, gridTemplateRows: `repeat(${boardSize}, 1fr)` }}
+      >
         {tiles.map((tile, index) => {
           const [row, col] = cells[index];
           const isCurrent = displayedPosition === index;
