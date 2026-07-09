@@ -69,7 +69,7 @@ export const GameBoard2D = ({ currentPosition, diceValue, gameState, isRolling, 
       className="relative w-full mx-auto rounded-3xl overflow-hidden"
       style={{
         aspectRatio: "1 / 1",
-        maxWidth: 820,
+        maxWidth: "min(820px, 100vw - 16px)",
         background:
           "radial-gradient(ellipse at 50% 50%, hsl(225 60% 11%) 0%, hsl(225 70% 6%) 60%, hsl(225 80% 3%) 100%)",
         boxShadow:
