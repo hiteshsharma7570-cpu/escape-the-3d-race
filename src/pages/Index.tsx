@@ -580,7 +580,7 @@ const Index = () => {
       <div className="max-w-[1600px] mx-auto xl:pt-16 pb-4 flex flex-col landscape:max-[900px]:flex-row xl:flex-row gap-4 items-stretch justify-center">
 
         {/* LEFT column: player panel + game log */}
-        <div className="flex flex-col justify-between gap-3 order-2 xl:order-1 landscape:max-[900px]:order-1 landscape:max-[900px]:w-[38%] landscape:max-[900px]:min-w-0">
+        <div className="flex flex-col justify-between gap-3 order-2 xl:order-1 landscape:max-[900px]:order-1 landscape:max-[900px]:w-[30%] landscape:max-[900px]:min-w-0">
           <PlayerPanel gameState={gameState} />
           <GameLogPanel gameState={gameState} />
         </div>
@@ -616,7 +616,7 @@ const Index = () => {
         </div>
 
         {/* RIGHT column: market status + players list */}
-        <div className="flex flex-col gap-3 order-3 xl:w-[380px] landscape:max-[900px]:w-[38%] landscape:max-[900px]:min-w-0">
+        <div className="flex flex-col gap-3 order-3 xl:w-[380px] landscape:max-[900px]:w-[30%] landscape:max-[900px]:min-w-0">
           <MarketStatusPanel gameState={gameState} />
           <PlayersPanel currentPlayerName={gameState.playerName} currentNetWorth={netWorth} />
         </div>
