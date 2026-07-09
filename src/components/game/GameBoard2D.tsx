@@ -4,6 +4,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import type { GameState } from "@/types/game";
 import { getTileMeta } from "@/lib/tileMeta";
 import { DiceRoll } from "./HudPanels";
+import { useViewport } from "@/hooks/useViewport";
 
 interface GameBoard2DProps {
   currentPosition: number;
@@ -28,6 +29,7 @@ function buildPerimeter(n: number = BOARD_SIZE): Array<[number, number]> {
 }
 
 export const GameBoard2D = ({ currentPosition, diceValue, gameState, isRolling, onRollDice }: GameBoard2DProps) => {
+  const vp = useViewport();
   const onFastTrack = !!gameState?.onFastTrack;
   const tiles = onFastTrack ? FAST_TRACK_TILES : BOARD_TILES;
   const activePosition = onFastTrack ? (gameState?.ftPosition ?? 0) : currentPosition;
@@ -64,14 +66,23 @@ export const GameBoard2D = ({ currentPosition, diceValue, gameState, isRolling, 
   const currentMeta = getTileMeta(currentTile.type);
   const netWorth = gameState ? calculateNetWorth(gameState) : 0;
 
+  // Live-computed square board size. Reacts to rotation and browser-chrome
+  // changes (URL bar collapsing, keyboard opening) via useViewport.
+  //   - Reserve room for the top HUD (≈120px portrait, ≈70px landscape).
+  //   - Reserve horizontal room for side panels when we're in the 3-column
+  //     phone-landscape layout (~72% of width goes to panels).
+  const reservedHeight = vp.isShort ? 40 : 130;
+  const widthCap = vp.isShort && vp.width < 900 ? Math.floor(vp.width * 0.42) : vp.width - 16;
+  const heightCap = vp.height - reservedHeight;
+  const boardMax = Math.max(220, Math.min(820, widthCap, heightCap));
+
   return (
     <div
       className="relative w-full mx-auto rounded-3xl overflow-hidden"
       style={{
         aspectRatio: "1 / 1",
-        // Cap by width AND height so the square board fits in landscape too
-        // (svh accounts for mobile browser chrome shrinking the viewport).
-        maxWidth: "min(820px, 100vw - 16px, 100svh - 40px)",
+        // Live JS-computed cap (updates on resize/orientation/visualViewport).
+        maxWidth: boardMax,
         background:
           "radial-gradient(ellipse at 50% 50%, hsl(225 60% 11%) 0%, hsl(225 70% 6%) 60%, hsl(225 80% 3%) 100%)",
         boxShadow:
