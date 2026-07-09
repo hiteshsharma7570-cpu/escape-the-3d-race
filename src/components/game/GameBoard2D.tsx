@@ -72,7 +72,7 @@ export const GameBoard2D = ({ currentPosition, diceValue, gameState, isRolling, 
         // Width caps to the parent flex column (100%) — never vw — so the
         // board never overflows its container. Height cap uses svh so the
         // square board also fits vertically alongside top bar + dice + dashboard.
-        maxWidth: "min(820px, 100%, calc(100svh - 220px))",
+        maxWidth: "min(420px, 100%, calc(100svh - 220px))",
         paddingLeft: "env(safe-area-inset-left)",
         paddingRight: "env(safe-area-inset-right)",
         background:
@@ -105,7 +105,7 @@ export const GameBoard2D = ({ currentPosition, diceValue, gameState, isRolling, 
       {/* 7x7 grid */}
       <div
         className="relative grid h-full w-full p-1.5 sm:p-3 gap-1 sm:gap-1.5 max-[359px]:p-1 max-[359px]:gap-0.5"
-        style={{ gridTemplateColumns: `repeat(${boardSize}, 1fr)`, gridTemplateRows: `repeat(${boardSize}, 1fr)` }}
+        style={{ gridTemplateColumns: `repeat(${boardSize}, minmax(0, 1fr))`, gridTemplateRows: `repeat(${boardSize}, minmax(0, 1fr))` }}
       >
         {tiles.map((tile, index) => {
           const [row, col] = cells[index];
@@ -123,7 +123,7 @@ export const GameBoard2D = ({ currentPosition, diceValue, gameState, isRolling, 
           return (
             <div
               key={tile.id}
-              className="relative"
+              className="relative min-w-0 min-h-0"
               style={{ gridRow: row + 1, gridColumn: col + 1 }}
             >
               {/* Pulsing halo on active tile */}
@@ -175,7 +175,7 @@ export const GameBoard2D = ({ currentPosition, diceValue, gameState, isRolling, 
 
                 {/* Title */}
                 <div
-                  className="relative font-extrabold leading-tight tracking-wide text-white"
+                  className="relative font-extrabold leading-tight tracking-wide text-white whitespace-normal break-words"
                   style={{
                     fontSize: "clamp(0.5rem, 1.6vw, 0.72rem)",
                     textShadow: `0 0 6px ${neonGlow70}, 0 1px 2px hsla(0,0%,0%,0.9)`,
@@ -186,7 +186,7 @@ export const GameBoard2D = ({ currentPosition, diceValue, gameState, isRolling, 
 
                 {/* Subtitle */}
                 <div
-                  className="relative leading-none tracking-[0.08em] font-mono-num font-semibold"
+                  className="relative leading-none tracking-[0.08em] font-mono-num font-semibold whitespace-normal break-words"
                   style={{
                     fontSize: "clamp(0.42rem, 1.3vw, 0.62rem)",
                     color: `hsl(${h}, ${s}, 80%)`,
