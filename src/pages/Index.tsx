@@ -575,16 +575,18 @@ const Index = () => {
       </div>
 
       {/* === MAIN GRID LAYOUT === */}
-      <div className="max-w-[1600px] mx-auto xl:pt-16 pb-4 flex flex-col xl:flex-row gap-4 items-stretch justify-center">
+      {/* On phone-landscape (short viewports) switch to a row so the square board
+          shrinks to fit the height and panels sit alongside it. */}
+      <div className="max-w-[1600px] mx-auto xl:pt-16 pb-4 flex flex-col landscape:max-[900px]:flex-row xl:flex-row gap-4 items-stretch justify-center">
 
         {/* LEFT column: player panel + game log */}
-        <div className="flex flex-col justify-between gap-3 order-2 xl:order-1">
+        <div className="flex flex-col justify-between gap-3 order-2 xl:order-1 landscape:max-[900px]:order-1 landscape:max-[900px]:w-[38%] landscape:max-[900px]:min-w-0">
           <PlayerPanel gameState={gameState} />
           <GameLogPanel gameState={gameState} />
         </div>
 
         {/* CENTER: board + dice + actions */}
-        <div className="flex-1 flex flex-col items-stretch gap-3 order-1 xl:order-2 min-w-0">
+        <div className="flex-1 flex flex-col items-stretch gap-3 order-1 xl:order-2 landscape:max-[900px]:order-2 min-w-0">
           <GameBoard2D
             currentPosition={gameState.position}
             diceValue={gameState.diceValue}
@@ -614,7 +616,7 @@ const Index = () => {
         </div>
 
         {/* RIGHT column: market status + players list */}
-        <div className="flex flex-col gap-3 order-3 xl:w-[380px]">
+        <div className="flex flex-col gap-3 order-3 xl:w-[380px] landscape:max-[900px]:w-[38%] landscape:max-[900px]:min-w-0">
           <MarketStatusPanel gameState={gameState} />
           <PlayersPanel currentPlayerName={gameState.playerName} currentNetWorth={netWorth} />
         </div>

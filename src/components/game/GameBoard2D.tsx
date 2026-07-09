@@ -69,7 +69,9 @@ export const GameBoard2D = ({ currentPosition, diceValue, gameState, isRolling, 
       className="relative w-full mx-auto rounded-3xl overflow-hidden"
       style={{
         aspectRatio: "1 / 1",
-        maxWidth: "min(820px, 100vw - 16px)",
+        // Cap by width AND height so the square board fits in landscape too
+        // (svh accounts for mobile browser chrome shrinking the viewport).
+        maxWidth: "min(820px, 100vw - 16px, 100svh - 40px)",
         background:
           "radial-gradient(ellipse at 50% 50%, hsl(225 60% 11%) 0%, hsl(225 70% 6%) 60%, hsl(225 80% 3%) 100%)",
         boxShadow:
