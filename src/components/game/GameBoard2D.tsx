@@ -69,11 +69,10 @@ export const GameBoard2D = ({ currentPosition, diceValue, gameState, isRolling, 
       className="relative w-full mx-auto rounded-3xl overflow-hidden"
       style={{
         aspectRatio: "1 / 1",
-        // Cap by width AND height so the square board fits in portrait AND
-        // landscape. The 220px offset approximates: top bar (~64px) + dice row
-        // (~56px) + GameDashboard panel below (~100px). dvh follows mobile
-        // browser chrome. svh caps landscape so board never exceeds height.
-        maxWidth: "min(820px, 100vw - 24px, calc(100dvh - 220px), 100svh - 40px)",
+        // Width caps to the parent flex column (100%) — never vw — so the
+        // board never overflows its container. Height cap uses svh so the
+        // square board also fits vertically alongside top bar + dice + dashboard.
+        maxWidth: "min(820px, 100%, calc(100svh - 220px))",
         paddingLeft: "env(safe-area-inset-left)",
         paddingRight: "env(safe-area-inset-right)",
         background:
