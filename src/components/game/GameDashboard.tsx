@@ -109,6 +109,14 @@ export const GameDashboard = ({
         )}
 
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+          <Button
+            onClick={onRollDice}
+            disabled={gameState.isRolling || gameState.isOut}
+            className="col-span-2 sm:col-span-3 bg-primary hover:bg-primary/90 text-primary-foreground font-bold"
+            size="lg"
+          >
+            {gameState.isRolling ? "Rolling…" : "🎲 Roll Dice"}
+          </Button>
           <Button variant="outline" onClick={() => setTakeOpen(true)}>Take Loan</Button>
           <Button variant="outline" disabled={!bank || bank.principal <= 0 || gameState.cash <= 0} onClick={() => setRepayOpen(true)}>Repay Loan</Button>
           <Button variant="outline" className="col-span-2 sm:col-span-1" disabled={!otherDebts || gameState.cash <= 0} onClick={() => setPayoffOpen(true)}>Pay Off Debts</Button>
