@@ -69,7 +69,7 @@ export const GameBoard2D = ({ currentPosition, diceValue, gameState, isRolling, 
       className="relative w-full mx-auto rounded-3xl overflow-hidden"
       style={{
         aspectRatio: "1 / 1",
-        maxWidth: 820,
+        maxWidth: "min(820px, 100vw - 16px)",
         background:
           "radial-gradient(ellipse at 50% 50%, hsl(225 60% 11%) 0%, hsl(225 70% 6%) 60%, hsl(225 80% 3%) 100%)",
         boxShadow:
@@ -99,7 +99,7 @@ export const GameBoard2D = ({ currentPosition, diceValue, gameState, isRolling, 
 
       {/* 7x7 grid */}
       <div
-        className="relative grid h-full w-full p-3 gap-1.5"
+        className="relative grid h-full w-full p-1.5 sm:p-3 gap-1 sm:gap-1.5"
         style={{ gridTemplateColumns: `repeat(${boardSize}, 1fr)`, gridTemplateRows: `repeat(${boardSize}, 1fr)` }}
       >
         {tiles.map((tile, index) => {
@@ -136,7 +136,7 @@ export const GameBoard2D = ({ currentPosition, diceValue, gameState, isRolling, 
               )}
 
               <motion.div
-                className="relative w-full h-full rounded-lg flex flex-col items-center justify-between text-center overflow-hidden py-1.5 px-0.5"
+                className="relative w-full h-full rounded-md sm:rounded-lg flex flex-col items-center justify-between text-center overflow-hidden py-0.5 px-0.5 sm:py-1.5"
                 animate={{
                   scale: isCurrent ? [1, 1.08, 1.03] : 1,
                   boxShadow: isCurrent
@@ -160,7 +160,7 @@ export const GameBoard2D = ({ currentPosition, diceValue, gameState, isRolling, 
 
                 {/* Icon */}
                 <motion.div
-                  className="relative text-[22px] sm:text-[28px] leading-none"
+                  className="relative text-[14px] sm:text-[22px] md:text-[28px] leading-none"
                   style={{ filter: `drop-shadow(0 2px 6px ${neonGlow70})` }}
                   animate={isCurrent ? { scale: [1, 1.25, 1], rotate: [0, -8, 8, 0] } : { scale: 1 }}
                   transition={{ duration: 0.7 }}
@@ -172,7 +172,7 @@ export const GameBoard2D = ({ currentPosition, diceValue, gameState, isRolling, 
                 <div
                   className="relative font-extrabold leading-tight tracking-wide text-white"
                   style={{
-                    fontSize: "0.7rem",
+                    fontSize: "clamp(0.5rem, 1.6vw, 0.72rem)",
                     textShadow: `0 0 6px ${neonGlow70}, 0 1px 2px hsla(0,0%,0%,0.9)`,
                   }}
                 >
@@ -183,7 +183,7 @@ export const GameBoard2D = ({ currentPosition, diceValue, gameState, isRolling, 
                 <div
                   className="relative leading-none tracking-[0.08em] font-mono-num font-semibold"
                   style={{
-                    fontSize: "0.6rem",
+                    fontSize: "clamp(0.42rem, 1.3vw, 0.62rem)",
                     color: `hsl(${h}, ${s}, 80%)`,
                   }}
                 >
@@ -242,13 +242,13 @@ export const GameBoard2D = ({ currentPosition, diceValue, gameState, isRolling, 
           />
 
           {/* Glass dashboard */}
-          <div className="relative glass-card gold-border rounded-2xl px-6 py-5 w-[94%] h-[92%] max-w-[560px] flex flex-col items-center justify-between">
-            <div className="font-display text-[12px] tracking-[0.3em] text-gold font-bold">
+          <div className="relative glass-card gold-border rounded-xl sm:rounded-2xl px-2 py-2 sm:px-6 sm:py-5 w-[94%] h-[92%] max-w-[560px] flex flex-col items-center justify-between gap-1">
+            <div className="font-display text-[9px] sm:text-[12px] tracking-[0.2em] sm:tracking-[0.3em] text-gold font-bold text-center">
               FINANCIAL DASHBOARD
             </div>
 
             {gameState ? (
-              <div className="grid grid-cols-2 gap-x-8 gap-y-3 text-xs text-slate-200 w-full mt-2">
+              <div className="grid grid-cols-2 gap-x-2 sm:gap-x-8 gap-y-1 sm:gap-y-3 text-[10px] sm:text-xs text-slate-200 w-full">
                 <Stat label="Cash"          value={`₹${(gameState.cash ?? 0).toLocaleString()}`}          tone="green" />
                 <Stat label="Salary"        value={`₹${(gameState.salary ?? 0).toLocaleString()} /m`} />
                 <Stat label="Passive"       value={`₹${(gameState.passiveIncome ?? 0).toLocaleString()} /m`} tone="gold" />
@@ -261,7 +261,7 @@ export const GameBoard2D = ({ currentPosition, diceValue, gameState, isRolling, 
               <div className="text-slate-400 text-xs">Awaiting game state…</div>
             )}
 
-            <div className="w-full px-3 py-2 rounded-md border text-center" style={{ borderColor: "hsla(140, 90%, 55%, 0.4)", background: "hsla(140, 90%, 55%, 0.08)" }}>
+            <div className="hidden sm:block w-full px-3 py-2 rounded-md border text-center" style={{ borderColor: "hsla(140, 90%, 55%, 0.4)", background: "hsla(140, 90%, 55%, 0.08)" }}>
               <div className="text-[10px] tracking-[0.25em] text-gold-deep font-bold">GOAL</div>
               <div className="text-[11px] text-slate-300 mt-0.5">Grow Cash to ₹5 Crore</div>
               <div className="text-sm font-display font-bold mt-0.5" style={{ color: "hsl(140, 90%, 65%)", textShadow: "0 0 10px hsla(140, 90%, 55%, 0.6)" }}>
@@ -269,13 +269,13 @@ export const GameBoard2D = ({ currentPosition, diceValue, gameState, isRolling, 
               </div>
             </div>
 
-            <div className="text-[11px] text-slate-300">
+            <div className="text-[9px] sm:text-[11px] text-slate-300 text-center">
               <span className="text-slate-500">On Tile: </span>
               <span className="font-semibold">{currentMeta.icon} {currentMeta.category}</span>
             </div>
 
             {onRollDice && (
-              <div className="pt-3 w-full border-t border-amber-500/20 flex items-center justify-center gap-4">
+              <div className="pt-1 sm:pt-3 w-full border-t border-amber-500/20 flex items-center justify-center gap-2 sm:gap-4">
                   <DiceRoll
                     diceValue={diceValue}
                     isRolling={!!isRolling}
