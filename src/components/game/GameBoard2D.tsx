@@ -247,13 +247,13 @@ export const GameBoard2D = ({ currentPosition, diceValue, gameState, isRolling, 
           />
 
           {/* Glass dashboard */}
-          <div className="relative glass-card gold-border rounded-xl sm:rounded-2xl px-1.5 py-1.5 sm:px-6 sm:py-5 max-[359px]:px-1 max-[359px]:py-1 w-[94%] h-[92%] max-w-[90%] sm:max-w-[560px] flex flex-col items-center justify-between gap-1">
+          <div className="relative glass-card gold-border rounded-xl sm:rounded-2xl px-1.5 py-1.5 sm:px-6 sm:py-5 max-[359px]:px-1 max-[359px]:py-1 w-[94%] h-full sm:h-[92%] max-w-[90%] sm:max-w-[560px] flex flex-col items-center justify-between gap-0.5 sm:gap-1">
             <div className="font-display text-[8px] sm:text-[12px] max-[359px]:text-[7px] tracking-[0.15em] sm:tracking-[0.3em] text-gold font-bold text-center">
               FINANCIAL DASHBOARD
             </div>
 
             {gameState ? (
-              <div className="grid grid-cols-2 gap-x-1.5 sm:gap-x-8 gap-y-0.5 sm:gap-y-3 text-[9px] sm:text-xs max-[359px]:text-[8px] text-slate-200 w-full">
+              <div className="grid grid-cols-2 gap-x-1.5 sm:gap-x-8 gap-y-0 sm:gap-y-3 text-[9px] sm:text-xs max-[359px]:text-[8px] text-slate-200 w-full">
                 <Stat label="Cash"          value={`₹${(gameState.cash ?? 0).toLocaleString()}`}          tone="green" />
                 <Stat label="Salary"        value={`₹${(gameState.salary ?? 0).toLocaleString()} /m`} />
                 <Stat label="Passive"       value={`₹${(gameState.passiveIncome ?? 0).toLocaleString()} /m`} tone="gold" />
@@ -274,18 +274,19 @@ export const GameBoard2D = ({ currentPosition, diceValue, gameState, isRolling, 
               </div>
             </div>
 
-            <div className="text-[9px] sm:text-[11px] text-slate-300 text-center">
+            <div className="hidden sm:block text-[9px] sm:text-[11px] text-slate-300 text-center">
               <span className="text-slate-500">On Tile: </span>
               <span className="font-semibold">{currentMeta.icon} {currentMeta.category}</span>
             </div>
 
             {onRollDice && (
-              <div className="pt-1 sm:pt-3 w-full border-t border-amber-500/20 flex items-center justify-center gap-2 sm:gap-4">
-                  <DiceRoll
-                    diceValue={diceValue}
-                    isRolling={!!isRolling}
-                    onRoll={onRollDice}
-                  />
+              <div className="pt-1 sm:pt-3 pb-1 w-full border-t border-amber-500/20 flex items-center justify-center px-1 sm:px-2">
+                <DiceRoll
+                  diceValue={diceValue}
+                  isRolling={!!isRolling}
+                  disabled={!!isRolling || !!gameState?.isOut}
+                  onRoll={onRollDice}
+                />
               </div>
             )}
 
