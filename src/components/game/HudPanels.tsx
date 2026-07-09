@@ -304,35 +304,32 @@ export const DiceRoll = ({
   diceValue, isRolling, onRoll, disabled = false,
 }: { diceValue: number | null; isRolling: boolean; onRoll: () => void; disabled?: boolean }) => {
   return (
-    <div className="flex flex-col items-center gap-2 sm:gap-3 w-full">
-      <div className="flex gap-2 sm:gap-3 h-12 sm:h-16 items-center justify-center">
-        <motion.div
-          className="w-11 h-11 sm:w-14 sm:h-14 rounded-xl flex items-center justify-center font-display font-black text-xl sm:text-3xl text-slate-900"
-          style={{
-            background: "linear-gradient(160deg, #fff 0%, #d8dde6 100%)",
-            boxShadow: "0 6px 16px hsla(0,0%,0%,0.5), inset 0 -3px 6px hsla(0,0%,0%,0.15), inset 0 1px 0 hsla(0,0%,100%,0.9)",
-          }}
-          animate={
-            isRolling
-              ? { rotate: [0, 360, 720], scale: [1, 1.1, 1], y: [0, -8, 0] }
-              : { rotate: 0, scale: 1, y: 0 }
-          }
-          transition={{ duration: 0.5 }}
-        >
-          {isRolling ? "?" : (diceValue ?? 1)}
-        </motion.div>
-      </div>
+    <div className="flex flex-row items-center justify-center gap-3 w-full">
+      <motion.div
+        className="w-9 h-9 sm:w-11 sm:h-11 rounded-lg flex items-center justify-center font-display font-black text-lg sm:text-2xl text-slate-900"
+        style={{
+          background: "linear-gradient(160deg, #fff 0%, #d8dde6 100%)",
+          boxShadow: "0 4px 12px hsla(0,0%,0%,0.5), inset 0 -2px 4px hsla(0,0%,0%,0.15), inset 0 1px 0 hsla(0,0%,100%,0.9)",
+        }}
+        animate={
+          isRolling
+            ? { rotate: [0, 360, 720], scale: [1, 1.1, 1], y: [0, -6, 0] }
+            : { rotate: 0, scale: 1, y: 0 }
+        }
+        transition={{ duration: 0.5 }}
+      >
+        {isRolling ? "?" : (diceValue ?? 1)}
+      </motion.div>
       <button
         onClick={onRoll}
         disabled={isRolling || disabled}
-        className="relative w-[min(260px,100%)] rounded-full px-4 sm:px-6 py-2.5 sm:py-4 font-display font-bold text-white tracking-widest text-sm sm:text-lg disabled:opacity-70 disabled:cursor-not-allowed animate-roll-glow transition-transform hover:scale-105 active:scale-95 whitespace-nowrap"
+        className="relative rounded-full px-6 py-2.5 sm:px-8 sm:py-3 font-display font-bold text-white tracking-widest text-sm sm:text-base disabled:opacity-70 disabled:cursor-not-allowed animate-roll-glow transition-transform hover:scale-105 active:scale-95 whitespace-nowrap"
         style={{
           background: "linear-gradient(180deg, hsl(275, 75%, 60%) 0%, hsl(260, 70%, 45%) 100%)",
           border: "1.5px solid hsla(280, 90%, 75%, 0.6)",
         }}
       >
         ROLL DICE
-        <div className="text-[9px] sm:text-[10px] font-sans font-normal opacity-80 tracking-normal -mt-0.5">Click to Roll</div>
       </button>
     </div>
   );
