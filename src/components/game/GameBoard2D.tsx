@@ -155,7 +155,7 @@ export const GameBoard2D = ({ currentPosition, diceValue, gameState, isRolling, 
               )}
 
               <motion.div
-                className="relative w-full h-full rounded-md sm:rounded-lg flex flex-col items-center justify-between text-center overflow-hidden py-0.5 px-0.5 sm:py-1.5"
+                className="relative w-full h-full rounded-md sm:rounded-lg flex flex-col items-center justify-center sm:justify-between text-center overflow-hidden py-0.5 px-0.5 sm:py-1.5"
                 animate={{
                   scale: isCurrent ? [1, 1.08, 1.03] : 1,
                   boxShadow: isCurrent
