@@ -247,7 +247,7 @@ export const GameBoard2D = ({ currentPosition, diceValue, gameState, isRolling, 
           />
 
           {/* Glass dashboard */}
-          <div className="relative glass-card gold-border rounded-xl sm:rounded-2xl px-1.5 py-1.5 sm:px-6 sm:py-5 max-[359px]:px-1 max-[359px]:py-1 w-[94%] h-[92%] max-w-[90%] sm:max-w-[560px] flex flex-col items-center justify-between gap-1">
+          <div className="relative glass-card gold-border rounded-xl sm:rounded-2xl px-1.5 py-1.5 sm:px-6 sm:py-5 max-[359px]:px-1 max-[359px]:py-1 w-[94%] h-full sm:h-[92%] max-w-[90%] sm:max-w-[560px] flex flex-col items-center justify-between gap-0.5 sm:gap-1">
             <div className="font-display text-[8px] sm:text-[12px] max-[359px]:text-[7px] tracking-[0.15em] sm:tracking-[0.3em] text-gold font-bold text-center">
               FINANCIAL DASHBOARD
             </div>
