@@ -155,7 +155,7 @@ export const GameBoard2D = ({ currentPosition, diceValue, gameState, isRolling, 
               )}
 
               <motion.div
-                className="relative w-full h-full rounded-md sm:rounded-lg flex flex-col items-center justify-between text-center overflow-hidden py-0.5 px-0.5 sm:py-1.5"
+                className="relative w-full h-full rounded-md sm:rounded-lg flex flex-col items-center justify-center sm:justify-between text-center overflow-hidden py-0.5 px-0.5 sm:py-1.5"
                 animate={{
                   scale: isCurrent ? [1, 1.08, 1.03] : 1,
                   boxShadow: isCurrent
@@ -179,7 +179,7 @@ export const GameBoard2D = ({ currentPosition, diceValue, gameState, isRolling, 
 
                 {/* Icon */}
                 <motion.div
-                  className="relative text-[14px] sm:text-[22px] md:text-[28px] leading-none"
+                  className="relative text-[20px] sm:text-[22px] md:text-[28px] leading-none"
                   style={{ filter: `drop-shadow(0 2px 6px ${neonGlow70})` }}
                   animate={isCurrent ? { scale: [1, 1.25, 1], rotate: [0, -8, 8, 0] } : { scale: 1 }}
                   transition={{ duration: 0.7 }}
@@ -187,9 +187,9 @@ export const GameBoard2D = ({ currentPosition, diceValue, gameState, isRolling, 
                   {meta.icon}
                 </motion.div>
 
-                {/* Title */}
+                {/* Title — hidden on mobile (icon-only) so tiles stay legible */}
                 <div
-                  className="relative font-extrabold leading-[1.05] tracking-tight text-white break-words w-full px-0.5"
+                  className="relative font-extrabold leading-[1.05] tracking-tight text-white break-words w-full px-0.5 hidden sm:block"
                   style={{
                     fontSize: "clamp(0.42rem, 1.5vw, 0.72rem)",
                     textShadow: `0 0 6px ${neonGlow70}, 0 1px 2px hsla(0,0%,0%,0.9)`,
@@ -198,9 +198,9 @@ export const GameBoard2D = ({ currentPosition, diceValue, gameState, isRolling, 
                   {meta.category}
                 </div>
 
-                {/* Subtitle */}
+                {/* Subtitle — hidden on mobile */}
                 <div
-                  className="relative leading-tight tracking-[0.04em] font-mono-num font-semibold break-words w-full px-0.5"
+                  className="relative leading-tight tracking-[0.04em] font-mono-num font-semibold break-words w-full px-0.5 hidden sm:block"
                   style={{
                     fontSize: "clamp(0.38rem, 1.2vw, 0.62rem)",
                     color: `hsl(${h}, ${s}, 80%)`,
@@ -325,8 +325,8 @@ const Stat = ({
     tone === "gold"  ? "text-gold"        : "text-slate-100";
   return (
     <div className="text-left">
-      <div className="text-[10px] uppercase tracking-wider text-slate-500">{label}</div>
-      <div className={`font-mono-num font-bold text-[13px] ${color}`}>{value}</div>
+      <div className="text-[8px] sm:text-[10px] uppercase tracking-wider text-slate-500">{label}</div>
+      <div className={`font-mono-num font-bold text-[10px] sm:text-[13px] truncate ${color}`}>{value}</div>
     </div>
   );
 };
