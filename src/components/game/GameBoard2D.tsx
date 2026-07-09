@@ -189,9 +189,9 @@ export const GameBoard2D = ({ currentPosition, diceValue, gameState, isRolling, 
 
                 {/* Title */}
                 <div
-                  className="relative font-extrabold leading-tight tracking-wide text-white"
+                  className="relative font-extrabold leading-[1.05] tracking-tight text-white break-words w-full px-0.5"
                   style={{
-                    fontSize: "clamp(0.5rem, 1.6vw, 0.72rem)",
+                    fontSize: "clamp(0.42rem, 1.5vw, 0.72rem)",
                     textShadow: `0 0 6px ${neonGlow70}, 0 1px 2px hsla(0,0%,0%,0.9)`,
                   }}
                 >
@@ -200,9 +200,9 @@ export const GameBoard2D = ({ currentPosition, diceValue, gameState, isRolling, 
 
                 {/* Subtitle */}
                 <div
-                  className="relative leading-none tracking-[0.08em] font-mono-num font-semibold"
+                  className="relative leading-tight tracking-[0.04em] font-mono-num font-semibold break-words w-full px-0.5"
                   style={{
-                    fontSize: "clamp(0.42rem, 1.3vw, 0.62rem)",
+                    fontSize: "clamp(0.38rem, 1.2vw, 0.62rem)",
                     color: `hsl(${h}, ${s}, 80%)`,
                   }}
                 >
