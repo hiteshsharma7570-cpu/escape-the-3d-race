@@ -136,7 +136,7 @@ export const GameBoard2D = ({ currentPosition, diceValue, gameState, isRolling, 
               )}
 
               <motion.div
-                className="relative w-full h-full rounded-lg flex flex-col items-center justify-between text-center overflow-hidden py-1.5 px-0.5"
+                className="relative w-full h-full rounded-md sm:rounded-lg flex flex-col items-center justify-between text-center overflow-hidden py-0.5 px-0.5 sm:py-1.5"
                 animate={{
                   scale: isCurrent ? [1, 1.08, 1.03] : 1,
                   boxShadow: isCurrent
@@ -160,7 +160,7 @@ export const GameBoard2D = ({ currentPosition, diceValue, gameState, isRolling, 
 
                 {/* Icon */}
                 <motion.div
-                  className="relative text-[22px] sm:text-[28px] leading-none"
+                  className="relative text-[14px] sm:text-[22px] md:text-[28px] leading-none"
                   style={{ filter: `drop-shadow(0 2px 6px ${neonGlow70})` }}
                   animate={isCurrent ? { scale: [1, 1.25, 1], rotate: [0, -8, 8, 0] } : { scale: 1 }}
                   transition={{ duration: 0.7 }}
@@ -172,7 +172,7 @@ export const GameBoard2D = ({ currentPosition, diceValue, gameState, isRolling, 
                 <div
                   className="relative font-extrabold leading-tight tracking-wide text-white"
                   style={{
-                    fontSize: "0.7rem",
+                    fontSize: "clamp(0.5rem, 1.6vw, 0.72rem)",
                     textShadow: `0 0 6px ${neonGlow70}, 0 1px 2px hsla(0,0%,0%,0.9)`,
                   }}
                 >
@@ -183,7 +183,7 @@ export const GameBoard2D = ({ currentPosition, diceValue, gameState, isRolling, 
                 <div
                   className="relative leading-none tracking-[0.08em] font-mono-num font-semibold"
                   style={{
-                    fontSize: "0.6rem",
+                    fontSize: "clamp(0.42rem, 1.3vw, 0.62rem)",
                     color: `hsl(${h}, ${s}, 80%)`,
                   }}
                 >
