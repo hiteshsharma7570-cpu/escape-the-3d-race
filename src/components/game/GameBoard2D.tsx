@@ -274,7 +274,7 @@ export const GameBoard2D = ({ currentPosition, diceValue, gameState, isRolling, 
               </div>
             </div>
 
-            <div className="text-[9px] sm:text-[11px] text-slate-300 text-center">
+            <div className="hidden sm:block text-[9px] sm:text-[11px] text-slate-300 text-center">
               <span className="text-slate-500">On Tile: </span>
               <span className="font-semibold">{currentMeta.icon} {currentMeta.category}</span>
             </div>
