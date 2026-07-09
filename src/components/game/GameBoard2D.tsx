@@ -69,9 +69,13 @@ export const GameBoard2D = ({ currentPosition, diceValue, gameState, isRolling, 
       className="relative w-full mx-auto rounded-3xl overflow-hidden"
       style={{
         aspectRatio: "1 / 1",
-        // Cap by width AND height so the square board fits in landscape too
-        // (svh accounts for mobile browser chrome shrinking the viewport).
-        maxWidth: "min(820px, 100vw - 16px, 100svh - 40px)",
+        // Cap by width AND height so the square board fits in portrait AND
+        // landscape. The 220px offset approximates: top bar (~64px) + dice row
+        // (~56px) + GameDashboard panel below (~100px). dvh follows mobile
+        // browser chrome. svh caps landscape so board never exceeds height.
+        maxWidth: "min(820px, 100vw - 24px, calc(100dvh - 220px), 100svh - 40px)",
+        paddingLeft: "env(safe-area-inset-left)",
+        paddingRight: "env(safe-area-inset-right)",
         background:
           "radial-gradient(ellipse at 50% 50%, hsl(225 60% 11%) 0%, hsl(225 70% 6%) 60%, hsl(225 80% 3%) 100%)",
         boxShadow:
@@ -101,7 +105,7 @@ export const GameBoard2D = ({ currentPosition, diceValue, gameState, isRolling, 
 
       {/* 7x7 grid */}
       <div
-        className="relative grid h-full w-full p-1.5 sm:p-3 gap-1 sm:gap-1.5"
+        className="relative grid h-full w-full p-1.5 sm:p-3 gap-1 sm:gap-1.5 max-[359px]:p-1 max-[359px]:gap-0.5"
         style={{ gridTemplateColumns: `repeat(${boardSize}, 1fr)`, gridTemplateRows: `repeat(${boardSize}, 1fr)` }}
       >
         {tiles.map((tile, index) => {
@@ -244,13 +248,13 @@ export const GameBoard2D = ({ currentPosition, diceValue, gameState, isRolling, 
           />
 
           {/* Glass dashboard */}
-          <div className="relative glass-card gold-border rounded-xl sm:rounded-2xl px-2 py-2 sm:px-6 sm:py-5 w-[94%] h-[92%] max-w-[560px] flex flex-col items-center justify-between gap-1">
-            <div className="font-display text-[9px] sm:text-[12px] tracking-[0.2em] sm:tracking-[0.3em] text-gold font-bold text-center">
+          <div className="relative glass-card gold-border rounded-xl sm:rounded-2xl px-1.5 py-1.5 sm:px-6 sm:py-5 max-[359px]:px-1 max-[359px]:py-1 w-[94%] h-[92%] max-w-[90%] sm:max-w-[560px] flex flex-col items-center justify-between gap-1">
+            <div className="font-display text-[8px] sm:text-[12px] max-[359px]:text-[7px] tracking-[0.15em] sm:tracking-[0.3em] text-gold font-bold text-center">
               FINANCIAL DASHBOARD
             </div>
 
             {gameState ? (
-              <div className="grid grid-cols-2 gap-x-2 sm:gap-x-8 gap-y-1 sm:gap-y-3 text-[10px] sm:text-xs text-slate-200 w-full">
+              <div className="grid grid-cols-2 gap-x-1.5 sm:gap-x-8 gap-y-0.5 sm:gap-y-3 text-[9px] sm:text-xs max-[359px]:text-[8px] text-slate-200 w-full">
                 <Stat label="Cash"          value={`₹${(gameState.cash ?? 0).toLocaleString()}`}          tone="green" />
                 <Stat label="Salary"        value={`₹${(gameState.salary ?? 0).toLocaleString()} /m`} />
                 <Stat label="Passive"       value={`₹${(gameState.passiveIncome ?? 0).toLocaleString()} /m`} tone="gold" />
