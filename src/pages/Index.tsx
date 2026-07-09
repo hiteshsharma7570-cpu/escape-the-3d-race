@@ -586,7 +586,7 @@ const Index = () => {
         </div>
 
         {/* CENTER: board + dice + actions */}
-        <div className="flex-1 flex flex-col items-stretch gap-3 order-1 xl:order-2 landscape:max-[900px]:order-2 min-w-0">
+        <div className="flex-1 flex flex-col items-stretch gap-3 order-1 xl:order-2 landscape:max-[900px]:order-2 min-w-0 w-full max-w-full">
           <GameBoard2D
             currentPosition={gameState.position}
             diceValue={gameState.diceValue}
