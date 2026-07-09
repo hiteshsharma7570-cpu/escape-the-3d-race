@@ -12,6 +12,8 @@ interface GameBoard2DProps {
   gameState?: GameState;
   isRolling?: boolean;
   onRollDice?: () => void;
+  /** When true, board sizes itself to fill the entire viewport (immersive mode). */
+  immersive?: boolean;
 }
 
 
@@ -28,7 +30,7 @@ function buildPerimeter(n: number = BOARD_SIZE): Array<[number, number]> {
   return cells;
 }
 
-export const GameBoard2D = ({ currentPosition, diceValue, gameState, isRolling, onRollDice }: GameBoard2DProps) => {
+export const GameBoard2D = ({ currentPosition, diceValue, gameState, isRolling, onRollDice, immersive }: GameBoard2DProps) => {
   const vp = useViewport();
   const onFastTrack = !!gameState?.onFastTrack;
   const tiles = onFastTrack ? FAST_TRACK_TILES : BOARD_TILES;
@@ -73,14 +75,17 @@ export const GameBoard2D = ({ currentPosition, diceValue, gameState, isRolling, 
   //     phone-landscape layout (~72% of width goes to panels).
   // Reserved space above the board: top HUD (Month ribbon + icons) + page
   // padding + a bit of breathing room. Landscape has less vertical HUD.
-  const reservedHeight = vp.isShort ? 100 : 160;
+  const reservedHeight = immersive ? 40 : vp.isShort ? 100 : 160;
   // Horizontal reserve accounts for page padding (p-3 = 24px total) plus
-  // side panels in the phone-landscape 3-column layout.
-  const widthCap = vp.isShort && vp.width < 900
-    ? Math.floor(vp.width * 0.36)
-    : vp.width - 32;
+  // side panels in the phone-landscape 3-column layout. Immersive mode ignores
+  // panels entirely and lets the board consume the full viewport.
+  const widthCap = immersive
+    ? vp.width - 16
+    : vp.isShort && vp.width < 900
+      ? Math.floor(vp.width * 0.36)
+      : vp.width - 32;
   const heightCap = vp.height - reservedHeight;
-  const boardMax = Math.max(220, Math.min(820, widthCap, heightCap));
+  const boardMax = Math.max(220, Math.min(immersive ? 2000 : 820, widthCap, heightCap));
 
   return (
     <div
