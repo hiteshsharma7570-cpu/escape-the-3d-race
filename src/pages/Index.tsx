@@ -581,37 +581,48 @@ const Index = () => {
       }} />
 
       {/* === TOP BAR (mobile-first, wraps cleanly) === */}
+      {!immersive && (
       <div className="relative z-30 flex flex-wrap items-center justify-center gap-2 mb-3 md:mb-4 landscape:max-[900px]:mb-1 xl:absolute xl:top-3 xl:left-1/2 xl:-translate-x-1/2 xl:mb-0">
         <TopCenterHud gameState={gameState} />
       </div>
-      <div className="relative z-30 flex flex-wrap items-center justify-center gap-2 mb-3 landscape:max-[900px]:mb-1 xl:absolute xl:top-3 xl:right-3 xl:mb-0">
+      )}
+      <div className={`relative z-30 flex flex-wrap items-center justify-center gap-2 mb-3 landscape:max-[900px]:mb-1 xl:absolute xl:top-3 xl:right-3 xl:mb-0 ${immersive ? "!absolute !top-2 !right-2 !mb-0" : ""}`}>
         <IconBtn onClick={toggleSound} title="Sound">
           {isSoundEnabled ? <Volume2 className="w-4 h-4" /> : <VolumeX className="w-4 h-4" />}
         </IconBtn>
         <IconBtn onClick={toggleMusic} title="Music">
           {isMusicEnabled ? <Music className="w-4 h-4" /> : <VolumeX className="w-4 h-4" />}
         </IconBtn>
-        <IconBtn onClick={showInstructions} title="Help">
-          <HelpCircle className="w-4 h-4" />
+        <IconBtn onClick={toggleImmersive} title={immersive ? "Exit fullscreen" : "Fullscreen board"}>
+          {immersive ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}
         </IconBtn>
-        <IconBtn onClick={handleChangePlayer} title="Change player">
-          <LogOut className="w-4 h-4" />
-        </IconBtn>
-        <IconBtn onClick={handleResetMyGame} title="Restart">
-          <RotateCcw className="w-4 h-4" />
-        </IconBtn>
+        {!immersive && (
+          <>
+            <IconBtn onClick={showInstructions} title="Help">
+              <HelpCircle className="w-4 h-4" />
+            </IconBtn>
+            <IconBtn onClick={handleChangePlayer} title="Change player">
+              <LogOut className="w-4 h-4" />
+            </IconBtn>
+            <IconBtn onClick={handleResetMyGame} title="Restart">
+              <RotateCcw className="w-4 h-4" />
+            </IconBtn>
+          </>
+        )}
       </div>
 
       {/* === MAIN GRID LAYOUT === */}
       {/* On phone-landscape (short viewports) switch to a row so the square board
           shrinks to fit the height and panels sit alongside it. */}
-      <div className="max-w-[1600px] mx-auto xl:pt-16 pb-4 flex flex-col landscape:max-[900px]:flex-row xl:flex-row gap-4 items-stretch justify-center">
+      <div className={`max-w-[1600px] mx-auto xl:pt-16 pb-4 flex flex-col ${immersive ? "" : "landscape:max-[900px]:flex-row xl:flex-row"} gap-4 items-stretch justify-center`}>
 
         {/* LEFT column: player panel + game log */}
+        {!immersive && (
         <div className="flex flex-col justify-between gap-3 order-2 xl:order-1 landscape:max-[900px]:order-1 landscape:max-[900px]:w-[30%] landscape:max-[900px]:min-w-0">
           <PlayerPanel gameState={gameState} />
           <GameLogPanel gameState={gameState} />
         </div>
+        )}
 
         {/* CENTER: board + dice + actions */}
         <div className="flex-1 flex flex-col items-stretch gap-3 order-1 xl:order-2 landscape:max-[900px]:order-2 min-w-0">
@@ -621,16 +632,18 @@ const Index = () => {
             gameState={gameState}
             isRolling={gameState.isRolling}
             onRollDice={rollDice}
+            immersive={immersive}
           />
 
 
-          {saveStatus.show && (
+          {!immersive && saveStatus.show && (
             <div className="text-[10px] text-slate-500 flex items-center gap-1 self-center">
               <Check className="w-3 h-3 text-emerald-400" /> {saveStatus.message}
             </div>
           )}
 
           {/* Portfolio dashboard directly below the board, matching its width */}
+          {!immersive && (
           <div className="w-full">
             <GameDashboard
               gameState={gameState}
@@ -641,13 +654,16 @@ const Index = () => {
               onPayOffDebt={handlePayOffDebt}
             />
           </div>
+          )}
         </div>
 
         {/* RIGHT column: market status + players list */}
+        {!immersive && (
         <div className="flex flex-col gap-3 order-3 xl:w-[380px] landscape:max-[900px]:w-[30%] landscape:max-[900px]:min-w-0">
           <MarketStatusPanel gameState={gameState} />
           <PlayersPanel currentPlayerName={gameState.playerName} currentNetWorth={netWorth} />
         </div>
+        )}
       </div>
 
       <DecisionModal
