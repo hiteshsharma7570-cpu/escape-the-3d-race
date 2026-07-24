@@ -72,7 +72,7 @@ export const GameBoard2D = ({ currentPosition, diceValue, gameState, isRolling, 
         // Width caps to the parent flex column (100%) — never vw — so the
         // board never overflows its container. Height cap uses svh so the
         // square board also fits vertically alongside top bar + dice + dashboard.
-        maxWidth: "min(420px, 100%, calc(100svh - 220px))",
+        maxWidth: "min(820px, 100%, calc(100svh - 120px))",
         paddingLeft: "env(safe-area-inset-left)",
         paddingRight: "env(safe-area-inset-right)",
         background:
